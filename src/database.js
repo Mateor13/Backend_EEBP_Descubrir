@@ -10,4 +10,5 @@ const connection = async () => {
     console.log(error)
   }
 }
+
 export default connection
