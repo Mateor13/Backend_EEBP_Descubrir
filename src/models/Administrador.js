@@ -1,67 +1,50 @@
 import {Schema, model} from 'mongoose'
 import bcrypt from 'bcryptjs'
 
-const profesorSchema = new Schema({
+const adminSchema = new Schema({
     nombre:{
-        type: String,
         required: true,
-        trim: true
+        type: String
     },
     apellido:{
-        type: String,
         required: true,
-        trim: true
+        type: String
     },
     email:{
-        type: String,
         required: true,
-        trim: true,
+        type: String,
         unique: true
     },
     password:{
-        type: String,
         required: true,
-        trim: true
-    },
-    telefono:{
-        type: String,
-        required: true,
-        trim: true
-    },
-    direccion:{
-        type: String,
-        required: true,
-        trim: true
-    },
-    estado:{
-        type: Boolean,
-        default: true
-    },
-    token:{
-        type: String,
-        default: null
+        type: String
     },
     confirmEmail:{
-        type: Boolean,
-        default: false
+        default: false,
+        type: Boolean
+    },
+    token:{
+        default: null,
+        type: String
+    },
+    estado:{
+        default: true,
+        type: Boolean
     }
-},{
-    timestamps: true
 })
 
-//Metodo para encriptar la contraseña
-profesorSchema.methods.encriptarPassword = async password => {
+adminSchema.methods.encriptarPassword = async password => {
     const salt = await bcrypt.genSalt(10)
     return await bcrypt.hash(password, salt)
 }
 
-//Metodo para comparar la contraseña
-profesorSchema.methods.compararPassword = async function(password){
+adminSchema.methods.compararPassword = async function(password){
     return await bcrypt.compare(password, this.password)
 }
 
-//Metodo para crear Token 
-profesorSchema.methods.generarToken = async function(){
-    const tokenGenerado  = this.token = Math.random().toString(36).slice(2)
-    return tokenGenerado
+adminSchema.methods.generarToken = async function(){
+    const token = await Math.random().toString(36).slice(2)
+    this.token = token
 }
+
+export default model('Administrador', adminSchema)

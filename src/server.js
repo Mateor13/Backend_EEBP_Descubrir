@@ -2,6 +2,7 @@
 import express from 'express'
 import dotenv from 'dotenv'
 import cors from 'cors'
+import adminRouter from './routers/admin_routes.js'
 
 //inicializadores
 const app = express()
@@ -22,7 +23,7 @@ app.get('/', (req, res) => {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>ProyectoFullStack</title>
+            <title>Escuela Descubrir</title>
         </head>
         <body>
             <p>Server ON</p>
@@ -30,6 +31,8 @@ app.get('/', (req, res) => {
         </html>
     `);
 });
+
+app.use('/api', adminRouter)
 
 // Exportar la instancia de express por medio de app
 export default app
