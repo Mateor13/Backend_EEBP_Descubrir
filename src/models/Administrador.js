@@ -46,9 +46,5 @@ adminSchema.methods.generarToken = async function(){
     const token = Math.random().toString(36).slice(2)
     return token
 }
-adminSchema.methods.validarEmail = async function(){
-    var validEmail = /^\w+([.-_+]?\w+)*@\w+([.-]?\w+)*(\.\w{2,10})+$/
-    return validEmail.test(this.email)
-}
 
-export default model('Administrador', adminSchema)
+export default model('Administrador', adminSchema);

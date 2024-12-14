@@ -3,13 +3,18 @@ import { generarJWT } from '../helpers/JWT.js';
 import Administrador from '../models/administrador.js';
 import mongoose from 'mongoose'
 
+const validarEmail = email => {
+    const validEmail = /\S+@\S+\.\S+/;
+    return validEmail.test(email);
+}
+
 const registrarAdmin = async (req, res) => {
     //Paso 1: Obtener los datos
     const {nombre, apellido, email, password} = req.body;
     //Paso 2: Realizar validaciones
     const nuevoAdmin = new Administrador({nombre, apellido, email, password});
     if (Object.values(req.body).includes(' ')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
-    if (!Administrador.validarEmail(email)) return res.status(400).json({error: 'El email no es válido'});
+    if (!(validarEmail(email))) return res.status(400).json({error: 'El email no es válido'});
     const adminBDD = await Administrador.findOne({email});
     if (adminBDD) return res.status(400).json({error: 'El email ya esta registrado'})
     if (password.length < 6) return res.status(400).json({error: 'La contraseña debe tener al menos 6 caracteres'});
@@ -56,6 +61,7 @@ const recuperarPassword = async (req, res) => {
     const {email} = req.body
     //Paso 2: Realizar validaciones
     if(Object.values(req.body).includes('')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
+    if(!validarEmail(email)) return res.status(400).json({error: 'El email no es válido'});
     const adminBDD = await Administrador.findOne({email})
     if(!adminBDD) return res.status(400).json({error: 'El email no esta registrado'});
     const token = await adminBDD.generarToken();
