@@ -8,7 +8,8 @@ const registrarAdmin = async (req, res) => {
     const {nombre, apellido, email, password} = req.body;
     //Paso 2: Realizar validaciones
     const nuevoAdmin = new Administrador({nombre, apellido, email, password});
-    if (!nombre || !apellido || !email || !password) return res.status(400).json({error: 'Todos los campos son obligatorios'});
+    if (Object.values(req.body).includes(' ')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
+    if (!Administrador.validarEmail(email)) return res.status(400).json({error: 'El email no es válido'});
     const adminBDD = await Administrador.findOne({email});
     if (adminBDD) return res.status(400).json({error: 'El email ya esta registrado'})
     if (password.length < 6) return res.status(400).json({error: 'La contraseña debe tener al menos 6 caracteres'});
@@ -92,7 +93,41 @@ const nuevoPassword = async (req, res) => {
     res.status(200).json({msg: 'Contraseña actualizada correctamente'});
 }
 
+const cambiarPassword = async (req, res) => {
+    //Paso 1: Obtener los datos
+    const {password, newpassword, confirmpassword} = req.body;
+    //Paso 2: Realizar validaciones
+    if (Object.values(req.body).includes('')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
+    if (newpassword !== confirmpassword) return res.status(400).json({error: 'Las contraseñas no coinciden'});
+    const adminiBDD = await Administrador.findById(req.adminBDD.id);
+    const validarPassword = await adminiBDD.compararPassword(password);
+    if (!validarPassword) return res.status(400).json({error: 'La contraseña actual es incorrecta'});
+    if (newpassword.length < 6) return res.status(400).json({error: 'La contraseña debe tener al menos 6 caracteres'});
+    if (password === newpassword) return res.status(400).json({error: 'La nueva contraseña debe ser diferente a la actual'});
+    //Paso 3: Manipular la BDD
+    adminiBDD.password = await adminiBDD.encriptarPassword(newpassword);
+    await adminiBDD.save();
+    res.status(200).json({msg: 'Contraseña actualizada correctamente'});
+}
 
+const cambiarDatos = async (req, res) => {
+    //Paso 1: Obtener los datos
+    const {nombre, apellido, email} = req.body;
+    //Paso 2: Realizar validaciones
+    if (Object.values(req.body).includes('')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
+    const adminBDD = await Administrador.findById(req.adminBDD.id);
+    if (!Administrador.validarEmail(email)) return res.status(400).json({error: 'El email no es válido'});
+    if (adminBDD.email !== email) {
+        const existeEmail = await Administrador.findOne({email});
+        if (existeEmail) return res.status(400).json({error: 'El email ya esta registrado'});
+    }
+    //Paso 3: Manipular la BDD
+    adminBDD.nombre = nombre;
+    adminBDD.apellido = apellido;
+    adminBDD.email = email;
+    await adminBDD.save();
+    res.status(200).json({msg: 'Datos actualizados correctamente'});
+}
 
 export {
     registrarAdmin,
@@ -100,5 +135,7 @@ export {
     loginAdmin,
     recuperarPassword,
     comprobarTokenPassword,
-    nuevoPassword
+    nuevoPassword,
+    cambiarPassword,
+    cambiarDatos
 }
