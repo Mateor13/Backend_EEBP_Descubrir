@@ -13,12 +13,16 @@ let transporter = nodemailer.createTransport({
 });
 
 const sendMailToUser = (userMail, token) => {
-
     let mailOptions = {
         from: process.env.USER_MAILTRAP,
         to: userMail,
-        subject: "Verifica tu cuenta",
-        html: `<p>Hola, haz clic <a href="${process.env.URL_BACKEND}confirmar/${encodeURIComponent(token)}">aquí</a> para confirmar tu cuenta.</p>`
+        subject: "Verificar cuenta",
+        html: `
+        <h1>Escuela Descubrir</h1><hr>
+        <p>Gracias por registrarte en nuestra plataforma, para confirmar tu cuenta haz clic en el siguiente enlace:</p><hr>
+        <p><a href="${process.env.URL_BACKEND}confirmar/${encodeURIComponent(token)}">Verificar cuenta</a></p><hr>
+        <footer>Escuela Descubrir</footer>        
+        `
     };
     
 
@@ -35,13 +39,14 @@ const sendMailToRecoveryPassword = async(userMail,token)=>{
     let info = await transporter.sendMail({
     from: 'admin@vet.com',
     to: userMail,
-    subject: "Correo para reestablecer tu contraseña",
+    subject: "Correo para el reestablecimiento de contraseña",
     html: `
-    <h1>Sistema de gestión (VET-ESFOT 🐶 😺)</h1>
+    <h1>Sistema de Gestión Notas Escuela Descubrir</h1>
+    <p>Has solicitado un cambio de contraseña, haz clic en el siguiente enlace para reestablecer tu contraseña:</p>
     <hr>
-    <a href=${process.env.URL_BACKEND}recuperar-password/${token}>Clic para reestablecer tu contraseña</a>
+    <a href=${process.env.URL_BACKEND}recuperar/${token}>Reestablecer tu contraseña</a>
     <hr>
-    <footer>Grandote te da la Bienvenida!</footer>
+    <footer>Escuela Descubrir</footer>
     `
     });
     console.log("Mensaje enviado satisfactoriamente: ", info.messageId);

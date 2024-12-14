@@ -43,8 +43,8 @@ adminSchema.methods.compararPassword = async function(password){
 }
 
 adminSchema.methods.generarToken = async function(){
-    const token = await Math.random().toString(36).slice(2)
-    this.token = token
+    const token = Math.random().toString(36).slice(2)
+    return token
 }
 
 export default model('Administrador', adminSchema)
