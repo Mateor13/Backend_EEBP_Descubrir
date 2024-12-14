@@ -1,7 +1,6 @@
 import { sendMailToRecoveryPassword, sendMailToUser } from '../config/nodemailer.js';
 import { generarJWT } from '../helpers/JWT.js';
 import Administrador from '../models/administrador.js';
-import mongoose from 'mongoose'
 
 const validarEmail = email => {
     const validEmail = /\S+@\S+\.\S+/;
@@ -32,8 +31,8 @@ const confirmarCuenta = async (req, res) => {
     const {token} = req.params;
     //Paso 2: Realizar validaciones
     if (!token) return res.status(400).json({error: 'El token es obligatorio'});
-    const adminBDD = await Administrador.findOne({token})
-    if (!adminBDD) return res.status(400).json({error: 'La cuenta ya ha sido confirmada'});
+    const adminBDD = await Administrador.findOne({token});
+    if (!adminBDD) return res.status(400).json({error: 'La cuenta ya ha sido confirmada o el token no es válido'});
     //Paso 3: Manipular la BDD
     adminBDD.confirmEmail = true;
     adminBDD.token = null;

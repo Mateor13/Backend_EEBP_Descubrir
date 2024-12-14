@@ -11,6 +11,7 @@ router.post('/login', loginAdmin)
 router.post('/recuperar', recuperarPassword)
 router.get('/recuperar/:token', comprobarTokenPassword)
 router.post('/nuevo-password/:token', nuevoPassword)
+router.get('/confirmar/:token')
 
 //Ruta Privada
 router.post('/cambiar-password', verificarAutenticacion, verificarRolAdmin, cambiarPassword)
