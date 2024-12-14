@@ -26,13 +26,17 @@ app.get('/', (req, res) => {
             <title>Escuela Descubrir</title>
         </head>
         <body>
-            <p>Server ON</p>
+            <p>El servidor de la aplicación para la gestión de notas de la Escuela Descubrir está en línea</p>
         </body>
         </html>
     `);
 });
 
 app.use('/api', adminRouter)
+
+app.use((req, res) => {
+    res.status(404).json({error: 'Ruta no encontrada'})
+})
 
 // Exportar la instancia de express por medio de app
 export default app
