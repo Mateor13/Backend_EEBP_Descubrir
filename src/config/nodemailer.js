@@ -20,7 +20,7 @@ const sendMailToUser = (userMail, token) => {
         html: `
         <h1>Escuela Descubrir</h1><hr>
         <p>Gracias por registrarte en nuestra plataforma, para confirmar tu cuenta haz clic en el siguiente enlace:</p><hr>
-        <p><a href="${process.env.URL_BACKEND}confirmar/${encodeURIComponent(token)}">Verificar cuenta</a></p><hr>
+        <p><a href="${process.env.URL_PRODUCTION}confirmar/${encodeURIComponent(token)}">Verificar cuenta</a></p><hr>
         <footer>Escuela Descubrir</footer>        
         `
     };
@@ -44,7 +44,7 @@ const sendMailToRecoveryPassword = async(userMail,token)=>{
     <h1>Sistema de Gestión Notas Escuela Descubrir</h1>
     <p>Has solicitado un cambio de contraseña, haz clic en el siguiente enlace para reestablecer tu contraseña:</p>
     <hr>
-    <a href=${process.env.URL_BACKEND}recuperar/${token}>Reestablecer tu contraseña</a>
+    <a href=${process.env.URL_PRODUCTION}recuperar/${token}>Reestablecer tu contraseña</a>
     <hr>
     <footer>Escuela Descubrir</footer>
     `
