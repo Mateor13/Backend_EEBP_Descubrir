@@ -15,6 +15,6 @@ router.get('/confirmar/:token')
 
 //Ruta Privada
 router.post('/cambiar-password', verificarAutenticacion, verificarRolAdmin, cambiarPassword)
-router.post('/cambiar-datos', verificarAutenticacion, verificarRolAdmin, cambiarDatos)
+router.patch('/cambiar-datos', verificarAutenticacion, verificarRolAdmin, cambiarDatos)
 
 export default router
