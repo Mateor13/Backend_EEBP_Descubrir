@@ -1,4 +1,4 @@
-import {Schema, model} from 'mongoose'
+import {Collection, Schema, model} from 'mongoose'
 import bcrypt from 'bcryptjs'
 
 const adminSchema = new Schema({
@@ -31,7 +31,12 @@ const adminSchema = new Schema({
         default: true,
         type: Boolean
     }
-})
+},
+    {
+        timestamps: true
+    },
+    {Collection: 'administradores'}
+)
 
 adminSchema.methods.encriptarPassword = async password => {
     const salt = await bcrypt.genSalt(10)
