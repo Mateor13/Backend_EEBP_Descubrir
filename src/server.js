@@ -3,6 +3,7 @@ import express from 'express'
 import dotenv from 'dotenv'
 import cors from 'cors'
 import adminRouter from './routers/admin_routes.js'
+import profesorRouter from './routers/profesor_routes.js'
 
 //inicializadores
 const app = express()
@@ -32,7 +33,9 @@ app.get('/', (req, res) => {
     `);
 });
 
-app.use('/api', adminRouter)
+app.use('/api/', adminRouter)
+
+app.use('/api/', profesorRouter)
 
 app.use((req, res) => {
     res.status(404).json({error: 'Ruta no encontrada'})

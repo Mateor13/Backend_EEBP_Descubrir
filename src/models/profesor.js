@@ -1,4 +1,4 @@
-import {Schema, model} from 'mongoose'
+import mongoose, {Schema, model} from 'mongoose'
 import bcrypt from 'bcryptjs'
 
 const profesorSchema = new Schema({
@@ -44,6 +44,10 @@ const profesorSchema = new Schema({
     confirmEmail:{
         type: Boolean,
         default: false
+    },
+    profesor:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'Veterinario'
     }
 },{
     timestamps: true
@@ -60,8 +64,9 @@ profesorSchema.methods.compararPassword = async function(password){
     return await bcrypt.compare(password, this.password)
 }
 
-//Metodo para crear Token 
-profesorSchema.methods.generarToken = async function(){
-    const tokenGenerado  = this.token = Math.random().toString(36).slice(2)
-    return tokenGenerado
+profesorSchema.methods.generarPassword = async function() {
+    const password = Math.random().toString(36).slice(2,10)
+    return `prof-${password}`
 }
+
+export default model('Profesor', profesorSchema)

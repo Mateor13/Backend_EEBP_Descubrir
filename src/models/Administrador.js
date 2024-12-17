@@ -52,4 +52,9 @@ administradorSchema.methods.generarToken = async function(){
     return token
 }
 
+administradorSchema.methods.validarEmail = async function(email){
+    const regExp = new RegExp(/\S+@\S+\.\S+/)
+    return regExp.test(email)
+}
+
 export default model('Administrador', administradorSchema);

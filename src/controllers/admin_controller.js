@@ -2,10 +2,6 @@ import { sendMailToRecoveryPassword, sendMailToUser } from '../config/nodemailer
 import { generarJWT } from '../helpers/JWT.js';
 import Administrador from '../models/administrador.js';
 
-const validarEmail = email => {
-    const validEmail = /\S+@\S+\.\S+/;
-    return validEmail.test(email);
-}
 
 const registrarAdmin = async (req, res) => {
     //Paso 1: Obtener los datos
@@ -13,7 +9,7 @@ const registrarAdmin = async (req, res) => {
     //Paso 2: Realizar validaciones
     const nuevoAdmin = new Administrador({nombre, apellido, email, password});
     if (Object.values(req.body).includes(' ')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
-    if (!(validarEmail(email))) return res.status(400).json({error: 'El email no es válido'});
+    if (!(await nuevoAdmin.validarEmail(email))) return res.status(400).json({error: 'El email no es válido'});
     const adminBDD = await Administrador.findOne({email});
     if (adminBDD) return res.status(400).json({error: 'El email ya esta registrado'})
     if (password.length < 6) return res.status(400).json({error: 'La contraseña debe tener al menos 6 caracteres'});
@@ -121,7 +117,7 @@ const cambiarDatos = async (req, res) => {
     //Paso 2: Realizar validaciones
     if (Object.values(req.body).includes('')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
     const adminBDD = await Administrador.findById(req.adminBDD.id);
-    if (!Administrador.validarEmail(email)) return res.status(400).json({error: 'El email no es válido'});
+    if (!(await adminBDD.validarEmail(email))) return res.status(400).json({error: 'El email no es válido'});
     if (adminBDD.email !== email) {
         const existeEmail = await Administrador.findOne({email});
         if (existeEmail) return res.status(400).json({error: 'El email ya esta registrado'});
