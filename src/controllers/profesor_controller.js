@@ -163,6 +163,10 @@ const subirNotasEstudiantes  = async (req, res) => {
     const {estudianteId, nota, materia, motivo} = req.body;
     //Paso 2: Realizar validaciones
     if (Object.values(req.body).includes('')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
+    if (!estudianteId) return res.status(400).json({error: 'Especificar ID'});
+    if (!materia) return res.status(400).json({error: 'Especificar materia'});
+    if (!nota) return res.status(400).json({error: 'Especificar nota'});
+    if (!motivo) return res.status(400).json({error: 'Especificar motivo'});
     const estudianteBDD = await estudiantes.findOne({_id: estudianteId});
     if (!estudianteBDD) return res.status(400).json({error: 'El estudiante no registrado en esta materia'});
     if (nota <= 0 || nota >= 10) return res.status(400).json({error: 'La nota debe estar entre 0 y 10'});
