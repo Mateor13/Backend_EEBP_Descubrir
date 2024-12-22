@@ -197,8 +197,21 @@ const modificarNotasEstudiantes = async (req, res) => {
     res.status(200).json({msg: 'Nota actualizada correctamente'});
 }
 
-const comportamientoEstudiantes  = async (req, res) => {
-    
+const observacionesEstudiantes  = async (req, res) => {
+    //Paso 1: Obtener los datos
+    const {estudianteId, observacion} = req.body;
+    //Paso 2: Realizar validaciones
+    if (Object.values(req.body).includes('')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
+    if (!estudianteId) return res.status(400).json({error: 'Especificar ID'});
+    if (!observacion) return res.status(400).json({error: 'Especificar observacion'});
+    const estudianteBDD = await estudiantes.findOne({_id: estudianteId});
+    if (!estudianteBDD) return res.status(400).json({error: 'El estudiante no registrado en esta materia'});
+    //Paso 3: Manipular la BDD
+    const fecha = new Date();
+    const nuevaObservacion = {fecha, observacion};
+    await estudianteBDD.registrarObservacion(nuevaObservacion);
+    estudianteBDD.save();
+    res.status(200).json({msg: 'Observación registrada correctamente'});
 }
 
 
@@ -215,5 +228,5 @@ export  {
     registroAsistenciaEstudiantes,
     subirNotasEstudiantes,
     modificarNotasEstudiantes,
-    comportamientoEstudiantes
+    observacionesEstudiantes
 }

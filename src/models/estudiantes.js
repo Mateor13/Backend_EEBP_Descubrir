@@ -112,7 +112,6 @@ estudianteSchema.methods.actualizarNota = async function (materia, idTrabajo, nu
         this.materias[materiaIndex].notas[notaIndex].nota = nuevaNota;
     }
     await this.save();
-    return { msg: 'Nota actualizada correctamente' };
 };
 
 export default model('Estudiante', estudianteSchema);
