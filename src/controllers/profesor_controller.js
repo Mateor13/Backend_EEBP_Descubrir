@@ -6,14 +6,14 @@ import estudiantes from "../models/estudiantes.js";
 
 const registrarProfesor = async (req, res) => {
     //Paso 1: Obtener los datos
-    const {nombre, apellido, email, password} = req.body;
+    const {nombre, apellido, email, password, direccion, telefono} = req.body;
     //Paso 2: Realizar validaciones
-    const nuevoProfesor = new Profesor({nombre, apellido, email, password});
     if (Object.values(req.body).includes(' ')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
     const profBDD = await Profesor.findOne({email});
     if (profBDD) return res.status(400).json({error: 'El email ya esta registrado'})
     if (password.length < 6) return res.status(400).json({error: 'La contraseña debe tener al menos 6 caracteres'});
     //Paso 3: Manipular la BDD
+    const nuevoProfesor = new Profesor({nombre, apellido, email, direccion, telefono});
     nuevoProfesor.password = await nuevoProfesor.encriptarPassword(password);
     const token = await nuevoProfesor.generarToken();
     await sendMailToUser(email, token);
