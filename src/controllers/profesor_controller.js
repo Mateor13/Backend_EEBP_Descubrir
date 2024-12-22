@@ -159,6 +159,18 @@ const registroAsistenciaEstudiantes = async (req, res) => {
 }
 
 const subirNotasEstudiantes  = async (req, res) => {
+    //Paso 1: Obtener los datos
+    const {estudianteId, nota, materia, motivo} = req.body;
+    //Paso 2: Realizar validaciones
+    if (Object.values(req.body).includes('')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
+    const estudianteBDD = await estudiantes.findOne({_id: estudianteId});
+    if (!estudianteBDD) return res.status(400).json({error: 'El estudiante no registrado en esta materia'});
+    if (nota <= 0 || nota >= 10) return res.status(400).json({error: 'La nota debe estar entre 0 y 10'});
+    //Paso 3: Manipular la BDD
+    const asignacion = {nota, motivo};
+    await estudianteBDD.registrarNota(materia, asignacion);
+    estudianteBDD.save();
+    res.status(200).json({msg: 'Nota registrada correctamente'});
 }
 
 const modificarNotasEstudiantes = async (req, res) => {
