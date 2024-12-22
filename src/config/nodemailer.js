@@ -117,7 +117,7 @@ const sendMailToRecoveryPasswordProfesor = async(userMail,token)=>{
         <p>Hola,</p>
         <p>Has solicitado un cambio de contraseña. Para reestablecer tu contraseña, por favor haz clic en el siguiente enlace:</p><br>
         <p style="text-align: center;">
-            <a href="${process.env.URL_BACKEND}nuevo-password/${encodeURIComponent(token)}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Reestablecer tu contraseña</a>
+            <a href="${process.env.URL_BACKEND}comprobar-cuenta/${encodeURIComponent(token)}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Reestablecer tu contraseña</a>
         </p>
         <br>
         <p>Si no has solicitado este cambio, por favor ignora este correo.</p>
