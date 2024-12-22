@@ -1,5 +1,5 @@
 import Profesor from "../models/profesor.js"
-import { sendMailToRecoveryPassword, sendMailToUser } from '../config/nodemailer.js';
+import { sendMailToProfesor, sendMailToRecoveryPasswordProfesor } from '../config/nodemailer.js';
 import { generarJWT } from '../helpers/JWT.js';
 import estudiantes from "../models/estudiantes.js";
 
@@ -16,7 +16,7 @@ const registrarProfesor = async (req, res) => {
     const nuevoProfesor = new Profesor({nombre, apellido, email, direccion, telefono});
     nuevoProfesor.password = await nuevoProfesor.encriptarPassword(password);
     const token = await nuevoProfesor.generarToken();
-    await sendMailToUser(email, token);
+    await sendMailToProfesor(email, token);
     await nuevoProfesor.save();
     res.status(201).json({msg: 'Profesor registrado, verifique el email para confirmar su cuenta'});
 }
@@ -61,7 +61,7 @@ const recuperarPassword = async (req, res) => {
     const token = await profBDD.generarToken();
     //Paso 3: Manipular la BDD
     profBDD.token = token;
-    await sendMailToRecoveryPassword(email, token);
+    await sendMailToRecoveryPasswordProfesor(email, token);
     await profBDD.save();
     res.status(200).json({msg: 'Revise su email para recuperar su contraseña, para reestablecer su contraseña'});
 }

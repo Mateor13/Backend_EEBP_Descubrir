@@ -1,13 +1,14 @@
 import Router from 'express'
-import { comprobarTokenPassword, loginProfesor, nuevoPassword, recuperarPassword, registrarEstudiantes, registrarProfesor, registroAsistenciaEstudiantes } from '../controllers/profesor_controller.js'
+import { comprobarTokenPassword, confirmarCuenta, loginProfesor, nuevoPassword, recuperarPassword, registrarEstudiantes, registrarProfesor, registroAsistenciaEstudiantes } from '../controllers/profesor_controller.js'
 import { verificarAutenticacion, verificarRolAdmin, verificarRolProfesor } from '../helpers/JWT.js'
 
 const router = Router()
 
 //Ruta pública
 router.post('/login-profesor', loginProfesor)
+router.get('/confirmar-token/:token', confirmarCuenta)
 router.post('/recuperar-password', recuperarPassword)
-router.get('/comprobar-password/:token', comprobarTokenPassword)
+router.get('/comprobar-cuenta/:token', comprobarTokenPassword)
 router.patch('/nuevo-password/:token', nuevoPassword)
 
 //Ruta privada
