@@ -1,5 +1,5 @@
 import Router from 'express'
-import { comprobarTokenPassword, confirmarCuenta, loginProfesor, nuevoPassword, recuperarPassword, registrarEstudiantes, registrarProfesor, registroAsistenciaEstudiantes, subirNotasEstudiantes } from '../controllers/profesor_controller.js'
+import { comprobarTokenPassword, confirmarCuenta, loginProfesor, modificarNotasEstudiantes, nuevoPassword, recuperarPassword, registrarEstudiantes, registrarProfesor, registroAsistenciaEstudiantes, subirNotasEstudiantes } from '../controllers/profesor_controller.js'
 import { verificarAutenticacion, verificarRolAdmin, verificarRolProfesor } from '../helpers/JWT.js'
 
 const router = Router()
@@ -16,5 +16,6 @@ router.post('/registro-profesor', verificarAutenticacion, verificarRolAdmin, reg
 router.post('/registro-asistencia', verificarAutenticacion, verificarRolProfesor, registroAsistenciaEstudiantes)
 router.post('/registro-estudiante', verificarAutenticacion, verificarRolProfesor, registrarEstudiantes)
 router.post('/registro-nota', verificarAutenticacion, verificarRolProfesor, subirNotasEstudiantes)
+router.patch('/actualizar-nota', verificarAutenticacion, verificarRolProfesor, modificarNotasEstudiantes)
 
 export default router

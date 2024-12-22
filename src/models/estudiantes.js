@@ -102,4 +102,17 @@ estudianteSchema.methods.registrarObservacion = async function (observacion) {
     await this.save();
 }
 
+estudianteSchema.methods.actualizarNota = async function (materia, idTrabajo, nuevaNota) {
+    const materiaIndex = this.materias.findIndex(m => m.nombre === materia);
+    if (materiaIndex === -1) return { error: 'La materia no existe' };
+    const notaIndex = this.materias[materiaIndex].notas.findIndex(n => n._id.toString() === idTrabajo);
+    if (notaIndex === -1) {
+        return { error: 'Nota no encontrada' };
+    } else {
+        this.materias[materiaIndex].notas[notaIndex].nota = nuevaNota;
+    }
+    await this.save();
+    return { msg: 'Nota actualizada correctamente' };
+};
+
 export default model('Estudiante', estudianteSchema);
