@@ -168,7 +168,8 @@ const subirNotasEstudiantes  = async (req, res) => {
     if (nota <= 0 || nota >= 10) return res.status(400).json({error: 'La nota debe estar entre 0 y 10'});
     //Paso 3: Manipular la BDD
     const asignacion = {nota, motivo};
-    await estudianteBDD.registrarNota(materia, asignacion);
+    const subirNota = await estudianteBDD.registrarNota(materia, asignacion);
+    if (subirNota.error) return res.status(400).json(subirNota.error);
     estudianteBDD.save();
     res.status(200).json({msg: 'Nota registrada correctamente'});
 }

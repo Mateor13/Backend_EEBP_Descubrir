@@ -92,7 +92,7 @@ estudianteSchema.methods.registrarAsistencia = async function (asistencia) {
 
 estudianteSchema.methods.registrarNota = async function (materia, nota) {
     const materiaIndex = this.materias.findIndex(m => m.nombre === materia);
-    if (materiaIndex === -1) return 'La materia no existe';
+    if (materiaIndex === -1) return {error:'La materia no existe'};
     this.materias[materiaIndex].notas.push(nota);
     await this.save();
 }
