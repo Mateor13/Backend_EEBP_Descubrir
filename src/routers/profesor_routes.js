@@ -15,6 +15,6 @@ router.patch('/nuevo-password/:token', nuevoPassword)
 router.post('/registro-profesor', verificarAutenticacion, verificarRolAdmin, registrarProfesor)
 router.post('/registro-asistencia', verificarAutenticacion, verificarRolProfesor, registroAsistenciaEstudiantes)
 router.post('/registro-estudiante', verificarAutenticacion, verificarRolProfesor, registrarEstudiantes)
-router,post('/registro-nota', verificarAutenticacion, verificarRolProfesor, subirNotasEstudiantes)
+router.post('/registro-nota', verificarAutenticacion, verificarRolProfesor, subirNotasEstudiantes)
 
 export default router
