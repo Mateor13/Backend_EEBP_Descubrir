@@ -23,10 +23,10 @@ const registrarProfesor = async (req, res) => {
 
 const confirmarCuenta = async (req, res) => {
     //Paso 1: Obtener el token
-    const {tokenV} = req.params;
+    const {token} = req.params;
     //Paso 2: Realizar validaciones
-    if (!tokenV) return res.status(400).json({error: 'El token es obligatorio'});
-    const profBDD = await Profesor.findOne({token: tokenV});
+    if (!token) return res.status(400).json({error: 'El token es obligatorio'});
+    const profBDD = await Profesor.findOne({token});
     if (!profBDD) return res.status(400).json({error: 'La cuenta ya ha sido confirmada o el token no es válido'});
     //Paso 3: Manipular la BDD
     profBDD.confirmEmail = true;
