@@ -26,7 +26,7 @@ const confirmarCuenta = async (req, res) => {
     const {token} = req.params;
     //Paso 2: Realizar validaciones
     if (!token) return res.status(400).json({error: 'El token es obligatorio'});
-    const profBDD = await Administrador.findOne({token});
+    const profBDD = await Administrador.findOne({token: token});
     if (!profBDD) return res.status(400).json({error: 'La cuenta ya ha sido confirmada o el token no es válido'});
     //Paso 3: Manipular la BDD
     profBDD.confirmEmail = true;
