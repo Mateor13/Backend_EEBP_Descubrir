@@ -10,7 +10,6 @@ const registrarProfesor = async (req, res) => {
     //Paso 2: Realizar validaciones
     const nuevoProfesor = new Profesor({nombre, apellido, email, password});
     if (Object.values(req.body).includes(' ')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
-    if (!(await nuevoProfesor.validarEmail(email))) return res.status(400).json({error: 'El email no es válido'});
     const profBDD = await Profesor.findOne({email});
     if (profBDD) return res.status(400).json({error: 'El email ya esta registrado'})
     if (password.length < 6) return res.status(400).json({error: 'La contraseña debe tener al menos 6 caracteres'});

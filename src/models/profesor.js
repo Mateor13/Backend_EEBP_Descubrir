@@ -47,7 +47,7 @@ const profesorSchema = new Schema({
     },
     profesor:{
         type:mongoose.Schema.Types.ObjectId,
-        ref:'profesor'
+        ref:'profesores'
     }
 },{
     timestamps: true
