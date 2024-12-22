@@ -1,6 +1,8 @@
 import Profesor from "../models/profesor.js"
 import { sendMailToRecoveryPassword, sendMailToUser } from '../config/nodemailer.js';
 import { generarJWT } from '../helpers/JWT.js';
+import estudiantes from "../models/estudiantes.js";
+
 
 const registrarProfesor = async (req, res) => {
     //Paso 1: Obtener los datos
@@ -129,11 +131,33 @@ const cambiarDatos = async (req, res) => {
     res.status(200).json({msg: 'Datos actualizados correctamente'});
 }
 
+const registrarEstudiantes = async (req, res) => {
+    //Paso 1: Obtener los datos
+    const {nombre, apellido, cedula, nombreRepresentante, telefonoRepresentante} = req.body;
+    //Paso 2: Realizar validaciones
+    if (Object.values(req.body).includes('')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
+    const nuevoEstudiante = new estudiantes({nombre, apellido, cedula, nombreRepresentante, telefonoRepresentante});
+    const estudianteBDD = await estudiantes.findOne({cedula});
+    if (estudianteBDD) return res.status(400).json({error: 'El estudiante ya esta registrado'});
+    if (cedula.length !== 10) return res.status(400).json({error: 'La cedula debe tener 10 caracteres'});
+    if (telefonoRepresentante.length !== 10) return res.status(400).json({error: 'El telefono debe tener 10 caracteres'});
+    //Paso 3: Manipular la BDD
+    await nuevoEstudiante.save();
+    res.status(201).json({msg: 'Estudiante registrado correctamente'});
+}
+
 const registroAsistenciaEstudiantes = async (req, res) => {
-
     //Paso 1: Obtener Datos
-    const {estudiante, asistencia, fecha} = req.body;
-
+    const {nombre, asistencia} = req.body;
+    //Paso 2: Realizar validaciones
+    if(Object.values(req.body).includes('')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
+    const estudianteBDD = await estudiantes.findOne({nombre});
+    if (!estudianteBDD) return res.status(400).json({error: 'El estudiante no registrado en esta materia'});
+    //Paso 3: Manipular la BDD
+    const fecha = new Date();
+    await estudianteBDD.registrarAsistencia(asistencia);
+    estudianteBDD.save();
+    res.status(200).json({msg: 'Asistencia registrada correctamente'});
 }
 
 const subirNotasEstudiantes  = async (req, res) => {
@@ -157,5 +181,10 @@ export  {
     comprobarTokenPassword,
     nuevoPassword,
     cambiarDatos,
-    cambiarPassword
+    cambiarPassword,
+    registrarEstudiantes,
+    registroAsistenciaEstudiantes,
+    subirNotasEstudiantes,
+    modificarNotasEstudiantes,
+    comportamientoEstudiantes
 }
