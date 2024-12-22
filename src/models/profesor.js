@@ -47,7 +47,7 @@ const profesorSchema = new Schema({
     },
     profesor:{
         type:mongoose.Schema.Types.ObjectId,
-        ref:'Veterinario'
+        ref:'profesor'
     }
 },{
     timestamps: true
@@ -69,4 +69,4 @@ profesorSchema.methods.generarPassword = async function() {
     return `prof-${password}`
 }
 
-export default model('Profesor', profesorSchema)
+export default model('profesor', profesorSchema)
