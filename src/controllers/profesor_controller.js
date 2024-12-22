@@ -23,10 +23,10 @@ const registrarProfesor = async (req, res) => {
 
 const confirmarCuenta = async (req, res) => {
     //Paso 1: Obtener el token
-    const {token} = req.params;
+    const {tokenV} = req.params;
     //Paso 2: Realizar validaciones
-    if (!token) return res.status(400).json({error: 'El token es obligatorio'});
-    const profBDD = await Administrador.findOne({token: token});
+    if (!tokenV) return res.status(400).json({error: 'El token es obligatorio'});
+    const profBDD = await Profesor.findOne({token: tokenV});
     if (!profBDD) return res.status(400).json({error: 'La cuenta ya ha sido confirmada o el token no es válido'});
     //Paso 3: Manipular la BDD
     profBDD.confirmEmail = true;
@@ -42,7 +42,7 @@ const loginProfesor = async (req, res) => {
     if (Object.values(req.body).includes('')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
     const profBDD = await Profesor.findOne({email}).select('-estado');
     if (!profBDD) return res.status(400).json({error: 'El email no esta registrado'});
-    const validarPassword = await adminBDD.compararPassword(password);
+    const validarPassword = await Profesor.compararPassword(password);
     if (!validarPassword) return res.status(400).json({error: 'La contraseña es incorrecta'});
     if (profBDD?.confirmEmail === false) return res.status(400).json({error: 'Confirma tu cuenta para poder ingresar'});
     //Paso 3: Generar JWT
