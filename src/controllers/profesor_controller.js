@@ -16,7 +16,6 @@ const registrarProfesor = async (req, res) => {
     //Paso 3: Manipular la BDD
     nuevoProfesor.password = await nuevoProfesor.encriptarPassword(password);
     const token = await nuevoProfesor.generarToken();
-    nuevoProfesor.token = token;
     await sendMailToUser(email, token);
     await nuevoProfesor.save();
     res.status(201).json({msg: 'Profesor registrado, verifique el email para confirmar su cuenta'});

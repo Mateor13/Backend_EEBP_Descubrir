@@ -69,4 +69,10 @@ profesorSchema.methods.generarPassword = async function() {
     return `prof-${password}`
 }
 
+profesorSchema.methods.generarToken = async function() {
+    const token = Math.random().toString(36).slice(2)
+    this.token = token
+    return token
+}
+
 export default model('profesor', profesorSchema)
