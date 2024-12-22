@@ -145,10 +145,10 @@ const registrarEstudiantes = async (req, res) => {
 
 const registroAsistenciaEstudiantes = async (req, res) => {
     //Paso 1: Obtener Datos
-    const {nombre, asistencia} = req.body;
+    const {estudianteId, asistencia} = req.body;
     //Paso 2: Realizar validaciones
     if(Object.values(req.body).includes('')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
-    const estudianteBDD = await estudiantes.findOne({nombre});
+    const estudianteBDD = await estudiantes.findOne({_id: estudianteId});
     if (!estudianteBDD) return res.status(400).json({error: 'El estudiante no registrado en esta materia'});
     //Paso 3: Manipular la BDD
     const fecha = new Date();
@@ -158,7 +158,6 @@ const registroAsistenciaEstudiantes = async (req, res) => {
 }
 
 const subirNotasEstudiantes  = async (req, res) => {
-
 }
 
 const modificarNotasEstudiantes = async (req, res) => {
