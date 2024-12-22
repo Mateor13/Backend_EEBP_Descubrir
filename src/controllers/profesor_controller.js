@@ -55,7 +55,6 @@ const recuperarPassword = async (req, res) => {
     const {email} = req.body
     //Paso 2: Realizar validaciones
     if(Object.values(req.body).includes('')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
-    if(!validarEmail(email)) return res.status(400).json({error: 'El email no es válido'});
     const profBDD = await Profesor.findOne({email})
     if(!profBDD) return res.status(400).json({error: 'El email no esta registrado'});
     const token = await profBDD.generarToken();
