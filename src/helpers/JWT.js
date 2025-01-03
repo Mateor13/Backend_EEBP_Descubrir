@@ -12,7 +12,7 @@ if(!req.headers.authorization) return res.status(404).json({msg:"Lo sentimos, de
     const {authorization} = req.headers
     try {
         const {id,rol} = jwt.verify(authorization.split(' ')[1],process.env.JWT_SECRET)
-        req.adminBDD = {id,rol}
+        req.userBDD = {id,rol}
         next()
     } catch (error) {
         const e = new Error("Formato del token no válido")
@@ -21,16 +21,16 @@ if(!req.headers.authorization) return res.status(404).json({msg:"Lo sentimos, de
 }
 
 const verificarRolProfesor = (req,res,next)=>{
-    if(req.adminBDD.rol === "profesor") next()
+    if(req.userBDD.rol === "profesor") next()
     else return res.status(404).json({msg:"Lo sentimos, no tienes permisos de profesor para realizar esta acción"})
 }
 
 const verificarRolAdmin = (req,res,next)=>{
-    if(req.adminBDD.rol === "administrador") next()
+    if(req.userBDD.rol === "administrador") next()
     else return res.status(404).json({msg:"Lo sentimos, no tienes permisos de administrador para realizar esta acción"})
 }
 const verificarRolRepresentante = (req,res,next)=>{
-    if(req.adminBDD.rol === "representante") next()
+    if(req.userBDD.rol === "representante") next()
     else return res.status(404).json({msg:"Lo sentimos, no tienes permisos para realizar esta acción"})
 }
 

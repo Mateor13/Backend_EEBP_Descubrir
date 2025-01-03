@@ -2,6 +2,10 @@ import { sendMailToRecoveryPassword, sendMailToUser } from '../config/nodemailer
 import { generarJWT } from '../helpers/JWT.js';
 import Administrador from '../models/administrador.js';
 
+const validarEmail = (email) => {
+    const expresion = /\w+@\w+\.[a-z]{2,}$/;
+    return expresion.test(email);
+}
 
 const registrarAdmin = async (req, res) => {
     //Paso 1: Obtener los datos
@@ -100,7 +104,7 @@ const cambiarPassword = async (req, res) => {
     //Paso 2: Realizar validaciones
     if (Object.values(req.body).includes('')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
     if (newpassword !== confirmpassword) return res.status(400).json({error: 'Las contraseñas no coinciden'});
-    const adminiBDD = await Administrador.findById(req.adminBDD.id);
+    const adminiBDD = await Administrador.findById(req.userBDD.id);
     const validarPassword = await adminiBDD.compararPassword(password);
     if (!validarPassword) return res.status(400).json({error: 'La contraseña actual es incorrecta'});
     if (newpassword.length < 6) return res.status(400).json({error: 'La contraseña debe tener al menos 6 caracteres'});
@@ -116,7 +120,7 @@ const cambiarDatos = async (req, res) => {
     const {nombre, apellido, email} = req.body;
     //Paso 2: Realizar validaciones
     if (Object.values(req.body).includes('')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
-    const adminBDD = await Administrador.findById(req.adminBDD.id);
+    const adminBDD = await Administrador.findById(req.userBDD.id);
     if (!(await adminBDD.validarEmail(email))) return res.status(400).json({error: 'El email no es válido'});
     if (adminBDD.email !== email) {
         const existeEmail = await Administrador.findOne({email});

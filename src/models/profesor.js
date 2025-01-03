@@ -1,4 +1,4 @@
-import mongoose, {Schema, model} from 'mongoose'
+import {Schema, model} from 'mongoose'
 import bcrypt from 'bcryptjs';
 
 const profesorSchema = new Schema({
@@ -44,9 +44,14 @@ const profesorSchema = new Schema({
     confirmEmail:{
         type: Boolean,
         default: false
+    }, 
+    admin:{
+        type: Schema.Types.ObjectId,
+        ref: 'admin'
     }
 },{
-    timestamps: true
+    timestamps: true,
+    collection: 'profesores'
 })
 
 //Metodo para encriptar la contraseña
@@ -61,7 +66,7 @@ profesorSchema.methods.compararPassword = async function(password) {
 };
 
 profesorSchema.methods.generarPassword = async function() {
-    const password = Math.random().toString(36).slice(2,10)
+    const password = Math.random().toString(36).slice(2,7)
     return `prof-${password}`
 }
 
