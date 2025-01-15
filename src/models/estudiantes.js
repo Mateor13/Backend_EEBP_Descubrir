@@ -30,11 +30,15 @@ const estudianteSchema = new Schema({
         type:Schema.Types.ObjectId,
         ref:'Representante'
     }],
-    profesor:
-    {
+    notas:[{
         type:Schema.Types.ObjectId,
-        ref:'Profesor'
-    }
+        ref:'Nota'
+    }],
+    observaciones:[{
+        type:Schema.Types.ObjectId,
+        ref:'Observacion'
+    }],
+    
 }, {
     timestamps: true,
     collection: 'estudiantes'

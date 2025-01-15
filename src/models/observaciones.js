@@ -11,8 +11,9 @@ const observacionSchema = new Schema({
             type: String,
             required: true
         },
-        autor: {
-            type: String,
+        profesor: {
+            type: Schema.Types.ObjectId,
+            ref: 'Profesor',
             required: true
         }
     }],
@@ -33,13 +34,7 @@ const observacionSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'Estudiante',
         required: true
-    },
-    profesor:{
-        type: Schema.Types.ObjectId,
-        ref: 'Profesor',
-        required: true
     }
-
 },{
     timestamps: true,
     collection: 'observaciones'

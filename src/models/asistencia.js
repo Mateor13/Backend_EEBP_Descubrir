@@ -34,16 +34,10 @@ const asistenciaSchema = new Schema({
         ref: 'Estudiante',
         required: true
     },
-    profesor:{
-        type: Schema.Types.ObjectId,
-        ref: 'Profesor',
-        required: true
-    },
     nombreEstudiante:{
         type: String,
         required: true
     }
-
 },{
     timestamps: true,
     collection: 'asistencias'
@@ -51,7 +45,7 @@ const asistenciaSchema = new Schema({
 
 asistenciaSchema.methods.marcarAsistencia = async function(asistencia){
     const fechaActual = new Date();
-    const fechaSinHora = (`${fechaActual.getFullYear()} - ${fechaActual.getMonth()+1} - ${fechaActual.getDate()}`);
+    const fechaSinHora = (`${fechaActual.getFullYear()}-${fechaActual.getMonth()+1}-${fechaActual.getDate()}`);
     const index = this.asistencia.findIndex(asis => asis.fecha === fechaSinHora)
     if(index !== -1) return {error: 'Ya se ha registrado la asistencia'}
     if(!asistencia.presente) {this.faltas = this.faltas + 1}

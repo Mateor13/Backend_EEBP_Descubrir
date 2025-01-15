@@ -33,6 +33,12 @@ const profesorSchema = new Schema({
         required: true,
         trim: true
     },
+    cedula:{
+        type: String,
+        required: true,
+        trim: true,
+        unique: true
+    },
     estado:{
         type: Boolean,
         default: true
@@ -48,7 +54,11 @@ const profesorSchema = new Schema({
     admin:{
         type: Schema.Types.ObjectId,
         ref: 'admin'
-    }
+    },
+    cursos:[{
+        type: Schema.Types.ObjectId,
+        ref: 'curso'
+    }]
 },{
     timestamps: true,
     collection: 'profesores'
@@ -74,6 +84,11 @@ profesorSchema.methods.generarToken = async function() {
     const token = Math.random().toString(36).slice(2)
     this.token = token
     return token
+}
+
+profesorSchema.methods.ingresarCurso = async function(curso) {
+    this.cursos.push(curso)
+    await this.save()
 }
 
 export default model('profesor', profesorSchema)

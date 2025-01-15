@@ -198,6 +198,34 @@ const estudianteRegistrado = async (userMail, cedula, nombre, apellido) => {
 })
 }
 
+const sendMailToRecoveryPasswordRepresentante = async (userMail, token) => {
+  let info = await transporter.sendMail({
+    from:"info@eebpd.edu",
+    to: userMail,
+    subject: "Correo para el reestablecimiento de contraseña",
+    html: `	
+    <div style="font-family: Arial, sans-serif; color: #333; text-align: center;">
+    <h1 style="color: #4CAF50;">Sistema de Gestión de Notas Escuela Descubrir</h1>
+    <br>
+    <p>Hola,</p>
+    <p>Has solicitado un cambio de contraseña. Para reestablecer tu contraseña, por favor haz clic en el siguiente enlace:</p><br>
+    <p style="text-align: center;">
+        <a href="${process.env.URL_PRODUCTION}recuperar-contrasena/${encodeURIComponent(token)}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Reestablecer tu contraseña</a>
+    </p>
+    <br>
+    <br>
+    <p>Si no has solicitado este cambio, por favor ignora este correo.</p>
+    <p>Saludos cordiales,</p>
+    <p><strong>Equipo de Escuela Descubrir</strong></p>
+    <footer style="text-align: center; color: #777; margin-top: 20px;">
+        <p>Escuela Descubrir</p>
+        <p>&copy; ${new Date().getFullYear()} Escuela Descubrir. Todos los derechos reservados.</p>
+    </footer>
+</div>`
+  })
+}
+
+
 export {
     sendMailToUser,
     sendMailToRecoveryPassword,
