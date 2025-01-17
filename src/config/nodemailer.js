@@ -79,8 +79,8 @@ const sendMailToRecoveryPassword = async(userMail,token)=>{
     console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
 }
 
-const sendMailToProfesor = (userMail, token) => {
-    let info = transporter.sendMail({
+const sendMailToProfesor = async (userMail, token, password) => {
+    let info = await transporter.sendMail({
         from: 'admin@ued.com',
         to: userMail,
         subject: "Verificar cuenta profesor",
@@ -90,6 +90,10 @@ const sendMailToProfesor = (userMail, token) => {
         <br>
         <p>Hola,</p>
         <p>Haz sido registrado como profesor. Estamos encantados de tenerte con nosotros.</p>
+        <p>Estas son tus credenciales de acceso:</p>
+        <p><strong>Correo:</strong> ${userMail}</p>
+        <p><strong>Contraseña:</strong> ${password}</p>
+        <br>
         <p>Para confirmar tu cuenta, por favor haz clic en el siguiente enlace:</p><br>
         <p style="text-align: center;">
             <a href="${process.env.URL_PRODUCTION}confirmar-token/${encodeURIComponent(token)}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Verificar cuenta</a>
@@ -105,6 +109,7 @@ const sendMailToProfesor = (userMail, token) => {
         </footer>`
 
     });
+    console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
 }
 
 const sendMailToRecoveryPasswordProfesor = async(userMail,token)=>{
@@ -133,9 +138,10 @@ const sendMailToRecoveryPasswordProfesor = async(userMail,token)=>{
         </footer>
     </div>`
     });
+    console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
 }
 
-const envioCredenciales = async (nombre, apellido, userMail, password) => {
+const envioCredenciales = async (nombre, apellido, userMail, password, token) => {
     let info = await transporter.sendMail({
         from: 'info@eebpd.gob.ec',
         to: userMail,
@@ -152,7 +158,13 @@ const envioCredenciales = async (nombre, apellido, userMail, password) => {
         <p><strong>Correo:</strong> ${userMail}</p>
         <p><strong>Contraseña: </strong>${password}</p>
         <br>
-        <p>Por favor, ingrese al siguiente enlace para acceder al sistema:</p><br>
+        <p>Por favor, ingrese al siguiente enlace para verificar su cuenta:</p><br>
+        <p style="text-align: center;">
+            <a href="${process.env.URL_PRODUCTION}/confirmar/representante/${encodeURIComponent(token)}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Verificar cuenta</a>
+        </p>
+        <br>
+        <br>
+        <p>Una vez verificada su cuenta, podrá acceder al sistema con las credenciales proporcionadas.</p>
         <p style="text-align: center;">
             <a href="${process.env.URL_PRODUCTION}/login-representante" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Acceder al sistema</a>
         <br>
@@ -165,8 +177,8 @@ const envioCredenciales = async (nombre, apellido, userMail, password) => {
             <p>&copy; ${new Date().getFullYear()} Escuela Descubrir. Todos los derechos reservados.</p>
         </footer>
     </div>`
-    })
-  
+    });
+    console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
 }
 
 const estudianteRegistrado = async (userMail, cedula, nombre, apellido) => {
@@ -195,7 +207,8 @@ const estudianteRegistrado = async (userMail, cedula, nombre, apellido) => {
             <p>&copy; ${new Date().getFullYear()} Escuela Descubrir
         </footer>
     </div>`
-})
+});
+console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
 }
 
 const sendMailToRecoveryPasswordRepresentante = async (userMail, token) => {
@@ -208,13 +221,13 @@ const sendMailToRecoveryPasswordRepresentante = async (userMail, token) => {
     <h1 style="color: #4CAF50;">Sistema de Gestión de Notas Escuela Descubrir</h1>
     <br>
     <p>Hola,</p>
-    <p>Has solicitado un cambio de contraseña. Para reestablecer tu contraseña, por favor haz clic en el siguiente enlace:</p><br>
+    <p>Haz solicitado un reestablecimiento de tu contraseña, por favor haz clic en el siguiente enlace:</p><br>
     <p style="text-align: center;">
-        <a href="${process.env.URL_PRODUCTION}recuperar-contrasena/${encodeURIComponent(token)}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Reestablecer tu contraseña</a>
+        <a href="${process.env.URL_PRODUCTION}recuperar-password/representante/${encodeURIComponent(token)}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Reestablecer tu contraseña</a>
     </p>
     <br>
     <br>
-    <p>Si no has solicitado este cambio, por favor ignora este correo.</p>
+    <p>Si no haz solicitado este cambio, por favor ignora este correo.</p>
     <p>Saludos cordiales,</p>
     <p><strong>Equipo de Escuela Descubrir</strong></p>
     <footer style="text-align: center; color: #777; margin-top: 20px;">
@@ -222,7 +235,8 @@ const sendMailToRecoveryPasswordRepresentante = async (userMail, token) => {
         <p>&copy; ${new Date().getFullYear()} Escuela Descubrir. Todos los derechos reservados.</p>
     </footer>
 </div>`
-  })
+  });
+  console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
 }
 
 
@@ -232,5 +246,6 @@ export {
     sendMailToProfesor,
     sendMailToRecoveryPasswordProfesor,
     envioCredenciales,
-    estudianteRegistrado
+    estudianteRegistrado,
+    sendMailToRecoveryPasswordRepresentante
 }

@@ -3,9 +3,12 @@ import {Schema, model} from 'mongoose'
 const observacionSchema = new Schema({
     observaciones:[{
         fecha: {
-            type: Date,
+            type: String,
             required: true,
-            default: Date.now()
+            default: function(){
+                const date = new Date()
+                return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
+            }
         },
         observacion: {
             type: String,

@@ -45,7 +45,7 @@ const asistenciaSchema = new Schema({
 
 asistenciaSchema.methods.marcarAsistencia = async function(asistencia){
     const fechaActual = new Date();
-    const fechaSinHora = (`${fechaActual.getFullYear()}-${fechaActual.getMonth()+1}-${fechaActual.getDate()}`);
+    const fechaSinHora = (`${fechaActual.getFullYear()}/${fechaActual.getMonth()+1}/${fechaActual.getDate()}`);
     const index = this.asistencia.findIndex(asis => asis.fecha === fechaSinHora)
     if(index !== -1) return {error: 'Ya se ha registrado la asistencia'}
     if(!asistencia.presente) {this.faltas = this.faltas + 1}

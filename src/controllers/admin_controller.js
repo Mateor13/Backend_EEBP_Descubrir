@@ -1,11 +1,13 @@
-import { sendMailToRecoveryPassword, sendMailToUser, sendMailToProfesor } from '../config/nodemailer.js';
+import { sendMailToRecoveryPassword, sendMailToUser, sendMailToProfesor, envioCredenciales, estudianteRegistrado } from '../config/nodemailer.js';
 import { generarJWT } from '../helpers/JWT.js';
-import Administrador from '../models/administrador.js';
+import Administrador from '../models/administradores.js';
 import Profesor from '../models/profesor.js';
-import representantes from '../models/representantes.js';
+import representantes from '../models/representante.js';
 import cursos from '../models/cursos.js';
 import estudiantes from '../models/estudiantes.js';
 import materias from '../models/materias.js';
+import asistencia from '../models/asistencia.js';
+import Observaciones from '../models/observaciones.js';
 
 const validarEmail = (email) => {
     const regExp = new RegExp(/\S+@\S+\.\S+/)
@@ -17,7 +19,7 @@ const validarCurso = (curso) => {
     return regExp.test(curso)
 }
 const validarFecha = (fecha) => {
-    const regExp = new RegExp(/^\d{4} - \d{2} - \d{2}$/);
+    const regExp = new RegExp(/^\d{4}\/\d\/\d{2}$/);
     return regExp.test(fecha);
 };
 
@@ -150,38 +152,38 @@ const cambiarDatos = async (req, res) => {
 
 const registrarProfesor = async (req, res) => {
     //Paso 1: Obtener los datos
-    const {nombre, apellido, email, password, direccion, telefono, cedula} = req.body;
+    const {nombre, apellido, email, direccion, telefono, cedula} = req.body;
     //Paso 2: Realizar validaciones
     if (Object.values(req.body).includes(' ')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
-    if (!(await Profesor.validarEmail(email))) return res.status(400).json({error: 'El email no es válido'});
-    if (password.length < 6) return res.status(400).json({error: 'La contraseña debe tener al menos 6 caracteres'});
+    if (!(validarEmail(email))) return res.status(400).json({error: 'El email no es válido'});
     const profBDD = await Profesor.findOne({email});
     if (profBDD) return res.status(400).json({error: 'El email ya esta registrado'})
     if (telefono.length !== 10) return res.status(400).json({error: 'El telefono debe tener 10 caracteres'});
-    if (cedula.length !== 10) return res.status(400).json({error: 'La cedula debe tener 10 caracteres'});
+    if (cedula.length !== 10) return res.status(400).json({error: 'La cédula debe tener 10 caracteres'});
     //Paso 3: Manipular la BDD
     const nuevoProfesor = new Profesor({nombre, apellido, email, direccion, telefono, cedula,admin: req.userBDD.id});
-    nuevoProfesor.password = await nuevoProfesor.encriptarPassword(password);
+    const password = await nuevoProfesor.generarPassword();
     const token = await nuevoProfesor.generarToken();
-    await sendMailToProfesor(email, token);
+    await sendMailToProfesor(email, token, password);
     await nuevoProfesor.save();
     res.status(201).json({msg: 'Profesor registrado, verifique el email para confirmar su cuenta'});
 }
 
 const registrarRepresentante = async (req, res) => {
     //Paso 1: Obtener los datos
-    const {nombre, apellido, correo, telefono, cedula} = req.body;
+    const {nombre, apellido, email, telefono, cedula} = req.body;
     //Paso 2: Realizar validaciones
     if (Object.values(req.body).includes('')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
-    const representanteBDD = await representantes.findOne({cedula});
-    if (representanteBDD) return res.status(400).json({error: 'El representante ya esta registrado'});
-    if (!validarEmail(correo)) return res.status(400).json({error:'El email es inválido'});
+    if (!validarEmail(email)) return res.status(400).json({error:'El email es inválido'});
     if (telefono.length !== 10) return res.status(400).json({error: 'El telefono debe tener 10 caracteres'});
     if (cedula.length !== 10) return res.status(400).json({error: 'La cedula debe tener 10 caracteres'});
+    const representanteBDD = await representantes.findOne({cedula});
+    if (representanteBDD) return res.status(400).json({error: 'El representante ya esta registrado'});
     //Paso 3: Manipular la BDD
-    const nuevoRepresentante = new representantes({nombre, apellido, correo, telefono, cedula});
+    const nuevoRepresentante = new representantes({nombre, apellido, email, telefono, cedula});
     const password = await nuevoRepresentante.generarPassword();
-    await envioCredenciales(nombre, apellido, correo, password);
+    const token = await nuevoRepresentante.generarToken();
+    await envioCredenciales(nombre, apellido, email, password, token);
     await nuevoRepresentante.save();
     res.status(201).json({msg: 'Representante registrado correctamente'});
 }
@@ -215,7 +217,9 @@ const registrarMaterias = async (req, res) => {
     if (materiasRegistradas.length > 0) return res.status(400).json({error: 'La materia ya esta registrada en este curso'});  
     //Paso 3: Manipular la BDD
     const nuevaMateria = new materias({nombre, profesores: profesorBDD._id});
+    await profesorBDD.ingresarCurso(cursoBDD._id);
     await cursoBDD.agregarMaterias(nuevaMateria._id);
+    await profesorBDD.save();
     await nuevaMateria.save();
     await cursoBDD.save();
     res.status(201).json({msg: 'Materia registrada correctamente'});
@@ -229,18 +233,21 @@ const registrarEstudiantes = async (req, res) => {
     if (cedula.length !== 10) return res.status(400).json({error: 'La cedula debe tener 10 caracteres'});
     if(!validarCurso(curso)) return res.status(400).json({error: 'El curso no es válido'});
     if (cedulaRepresentante.length !== 10) return res.status(400).json({error: 'La cedula del representante debe tener 10 caracteres'});
-    const representanteBDD = await representantes.findOne({cedula: cedulaRepresentante}).select('_id correo -password');
+    const representanteBDD = await representantes.findOne({cedula: cedulaRepresentante}).select('-password');
     if (!representanteBDD) return res.status(400).json({error: 'El representante no esta registrado'});
     const estudianteBDD = await estudiantes.findOne({cedula})
     if (estudianteBDD) return res.status(400).json({error: 'El estudiante ya esta registrado'});
-    
+    const cursoBDD = await cursos.findOne({nombre: curso});
+    if (!cursoBDD) return res.status(400).json({error: 'El curso no esta registrado'});
     //Paso 3: Manipular la BDD
-    const nuevoEstudiante = new estudiantes({nombre, apellido, cedula, curso});
-    const asignarRepre = await nuevoEstudiante.asignarRepresentante(representanteBDD._id);
-    if (asignarRepre.error) return res.status(400).json({error: asignarRepre.error});
-    await estudianteRegistrado(representanteBDD.correo, cedula, nombre, apellido);
+    const nuevoEstudiante = new estudiantes({nombre, apellido, cedula});
+    const asignarEstudiante = await cursoBDD.agregarEstudiante(nuevoEstudiante._id);
+    if (asignarEstudiante?.error) return res.status(400).json({error: asignarEstudiante.error});
+    const asignarRepresentante = await representanteBDD.asignarEstudiante(nuevoEstudiante._id);
+    if (asignarRepresentante?.error) return res.status(400).json({error: asignarRepresentante.error});
+    await estudianteRegistrado(representanteBDD.email, cedula, nombre, apellido);
     const nuevaAsistencia = new asistencia({estudiante: nuevoEstudiante._id, cedula: cedula, nombreEstudiante: `${nombre} ${apellido}`});
-    const nuevaObservacion = new observaciones({estudiante: nuevoEstudiante._id, cedula: cedula, nombreEstudiante: `${nombre} ${apellido}`});
+    const nuevaObservacion = new Observaciones({estudiante: nuevoEstudiante._id, cedula: cedula, nombreEstudiante: `${nombre} ${apellido}`});
     await nuevoEstudiante.save();
     await nuevaAsistencia.save();
     await nuevaObservacion.save();
@@ -261,7 +268,7 @@ const asignarRepresentante = async (req, res) => {
     //Paso 3: Manipular la BDD
     const asignar = await estudianteBDD.asignarRepresentante(representanteBDD._id);
     if (asignar?.error) return res.status(400).json({error: asignar.error});
-    await estudianteRegistrado(representanteBDD.correo, cedulaEstudiante, estudianteBDD.nombre, estudianteBDD.apellido);
+    await estudianteRegistrado(representanteBDD.email, cedulaEstudiante, estudianteBDD.nombre, estudianteBDD.apellido);
     res.status(200).json({msg: 'Representante asignado correctamente'});
 }
 
@@ -281,6 +288,24 @@ const registroAsistenciaEstudiantes = async (req, res) => {
     res.status(200).json({msg: 'Asistencia registrada correctamente'});
 }
 
+const justificacionesEstudiantes = async (req, res) => {
+    //Paso 1: Obtener los datos
+    const {cedula, fecha, justificacion} = req.body;
+    //Paso 2: Realizar validaciones
+    if (Object.values(req.body).includes('')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
+    if (!cedula) return res.status(400).json({error: 'Especificar cédula estudiante'});
+    if (!fecha) return res.status(400).json({error: 'Especificar fecha'});
+    if (!justificacion) return res.status(400).json({error: 'Especificar justificación'});
+    if (!validarFecha(fecha)) return res.status(400).json({error: 'La fecha no es válida, el formato es aaaa/mm/dd'});
+    const estudianteBDD = await asistencia.findOne({cedula});
+    if (!estudianteBDD) return res.status(400).json({error: 'El estudiante no registrado en esta materia'});
+    //Paso 3: Manipular la BDD
+    const justificar = await estudianteBDD.justificarInasistencia(fecha, justificacion);
+    if (justificar?.error) return res.status(400).json({error: justificar.error});
+    estudianteBDD.save();
+    res.status(200).json({msg: 'Justificación registrada correctamente'});
+}
+
 export {
     registrarAdmin,
     confirmarCuenta,
@@ -296,5 +321,6 @@ export {
     registrarEstudiantes,
     asignarRepresentante,
     registrarMaterias,
-    registroAsistenciaEstudiantes
+    registroAsistenciaEstudiantes,
+    justificacionesEstudiantes
 }

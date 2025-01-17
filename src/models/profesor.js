@@ -50,7 +50,7 @@ const profesorSchema = new Schema({
     confirmEmail:{
         type: Boolean,
         default: false
-    }, 
+    },
     admin:{
         type: Schema.Types.ObjectId,
         ref: 'admin'
@@ -64,21 +64,17 @@ const profesorSchema = new Schema({
     collection: 'profesores'
 })
 
-//Metodo para encriptar la contraseña
-profesorSchema.methods.encriptarPassword = async password => {
-    const salt = await bcrypt.genSalt(10)
-    return await bcrypt.hash(password, salt)
-}
-
 //Metodo para comparar la contraseña
 profesorSchema.methods.compararPassword = async function(password) {
     return await bcrypt.compare(password, this.password);
 };
 
-profesorSchema.methods.generarPassword = async function() {
-    const password = Math.random().toString(36).slice(2,7)
-    return `prof-${password}`
-}
+profesorSchema.methods.generarPassword = async function () {
+    const password = Math.random().toString(36).slice(2, 7)
+    const salt = await bcrypt.genSalt(10)
+    this.password = await bcrypt.hash('prof-'+password, salt)
+    return 'prof-' + password
+};
 
 profesorSchema.methods.generarToken = async function() {
     const token = Math.random().toString(36).slice(2)
@@ -87,6 +83,8 @@ profesorSchema.methods.generarToken = async function() {
 }
 
 profesorSchema.methods.ingresarCurso = async function(curso) {
+    const existeCurso = this.cursos.includes(curso)
+    if(existeCurso)return {error: 'El curso ya está registrado'}
     this.cursos.push(curso)
     await this.save()
 }

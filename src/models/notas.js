@@ -19,14 +19,23 @@ const notaSchema = new Schema({
     motivo:{
         type: String,
         required: true
-    }
-}]
+    },
+    fecha:{
+        type: String,
+        default: function(){
+            const date = new Date()
+            return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
+        }
+    }}
+]
 },{
     timestamps: true,
     collection: 'notas'
 })
 
 notaSchema.methods.agregarNota = async function(nota, motivo){
+    const existeNota = this.notas.find(n => n.motivo === motivo)
+    if(existeNota) return {error: 'La nota ya existe'}
     this.notas.push({nota, motivo})
     await this.save()
 }

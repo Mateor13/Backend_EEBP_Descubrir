@@ -1,6 +1,6 @@
 import Router from 'express'
-import { comprobarTokenPassword, confirmarCuenta, loginProfesor, modificarNotasEstudiantes, nuevoPassword, observacionesEstudiantes, recuperarPassword, registrarEstudiantes, registrarProfesor, registroAsistenciaEstudiantes, registrarRepresentante, subirNotasEstudiantes, asignarRepresentante } from '../controllers/profesor_controller.js'
-import { verificarAutenticacion, verificarRolAdmin, verificarRolProfesor } from '../helpers/JWT.js'
+import { comprobarTokenPassword, confirmarCuenta, loginProfesor, modificarNotasEstudiantes, nuevoPassword, observacionesEstudiantes, recuperarPassword, subirNotasEstudiantes, visualizarCursosAsignados, visualizarEstudiante, visualizarEstudiantesCurso} from '../controllers/profesor_controller.js'
+import { verificarAutenticacion, verificarRolProfesor } from '../helpers/JWT.js'
 
 const router = Router()
 
@@ -12,13 +12,11 @@ router.get('/comprobar-cuenta/:token', comprobarTokenPassword)
 router.patch('/nuevo-password/:token', nuevoPassword)
 
 //Ruta privada
-router.post('/registro-profesor', verificarAutenticacion, verificarRolAdmin, registrarProfesor)
-router.post('/registro-representante', verificarAutenticacion, verificarRolProfesor, registrarRepresentante)
-router.post('/registro-estudiante', verificarAutenticacion, verificarRolProfesor, registrarEstudiantes)
-router.post('/asignar-representante', verificarAutenticacion, verificarRolProfesor, asignarRepresentante)
-router.post('/registro-asistencia', verificarAutenticacion, verificarRolProfesor, registroAsistenciaEstudiantes)
 router.post('/registro-nota', verificarAutenticacion, verificarRolProfesor, subirNotasEstudiantes)
 router.patch('/actualizar-nota', verificarAutenticacion, verificarRolProfesor, modificarNotasEstudiantes)
 router.post('/observacion-estudiante', verificarAutenticacion, verificarRolProfesor, observacionesEstudiantes)
+router.get('/estudiantes/curso', verificarAutenticacion, verificarRolProfesor, visualizarEstudiantesCurso)
+router.get('/cursos', verificarAutenticacion, verificarRolProfesor, visualizarCursosAsignados)
+router.get('/estudiante-materia', verificarAutenticacion, verificarRolProfesor, visualizarEstudiante) 
 
 export default router

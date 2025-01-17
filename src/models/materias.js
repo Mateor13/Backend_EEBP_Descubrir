@@ -6,7 +6,7 @@ const materiaSchema = new Schema({
         required: true,
         trim: true
     },
-    profesores: {
+    profesor: {
         type: Schema.Types.ObjectId,
         ref: 'Profesor',
         required: true
