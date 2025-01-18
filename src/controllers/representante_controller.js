@@ -44,7 +44,8 @@ const verEstudiantes = async (req, res) => {
                 'estudiantes._id': 1
             }
         }
-    ])
+    ]);
+    if(representante.length === 0) return res.status(404).json({mensaje: 'No se encontraron estudiantes registrados'})
     return res.status(200).json(representante)
 }
 
@@ -106,6 +107,7 @@ const verNotasEstudiante = async (req, res) => {
             }
         }
     ]);
+    if(representante.length === 0) return res.status(404).json({mensaje: 'No se encontraron notas para el estudiante'})
     return res.status(200).json(representante)
 }
 
@@ -158,11 +160,65 @@ const verObservacionesEstudiante = async (req, res) => {
             }
         }
     ]);
+    if(representante.length === 0) return res.status(404).json({mensaje: 'No se encontraron observaciones para el estudiante'})
+    return res.status(200).json(representante)
+}
+
+const verAsistenciaEstudiante = async (req, res) => {
+    //Paso 1: Obtener el id del representante
+    const {id} = req.userBDD
+    const {idEstudiante} = req.params
+    //Paso 2: Buscar al representante en la base de datos
+    const representante = await Representante.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(id)
+            }
+        },
+        {
+            $lookup: {
+                from: 'estudiantes',
+                localField: 'estudiantes',
+                foreignField: '_id',
+                as: 'estudiantes'
+            }
+        },
+        {
+            $unwind: '$estudiantes'
+        },
+        {
+            $match: {
+                'estudiantes._id': new mongoose.Types.ObjectId(idEstudiante)
+            }
+        },
+        {
+            $lookup: {
+                from: 'asistencias',
+                localField: 'estudiantes._id',
+                foreignField: 'estudiante',
+                as: 'asistenciasDetalle'
+            }
+        },
+        {
+            $unwind: '$asistenciasDetalle'
+        },
+        {
+            $project: {
+                _id: 0,
+                'estudiantes.nombre': 1,
+                'estudiantes.apellido': 1,
+                'estudiantes.cedula': 1,
+                'asistenciasDetalle.faltas':1,
+                'asistenciasDetalle.asistencia':1
+            }
+        }
+    ]);
     return res.status(200).json(representante)
 }
 
 export {
     verEstudiantes,
     verNotasEstudiante,
-    verObservacionesEstudiante
+    verObservacionesEstudiante,
+    verAsistenciaEstudiante
 };
