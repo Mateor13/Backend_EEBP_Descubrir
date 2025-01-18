@@ -19,18 +19,18 @@ const sendMailToUser = (userMail, token) => {
         subject: "Verificar cuenta",
         html: `
         <div style="font-family: Arial, sans-serif; color: #333; text-align: center;">
-        <h1 style="color: #4CAF50;">Bienvenido a Escuela Descubrir</h1>
+        <h1 style="color: #82a915;">Bienvenido a Escuela Descubrir</h1>
         <br>
-        <p>Hola,</p>
+        <p>Hola</p>
         <p>Gracias por registrarte en nuestra plataforma. Estamos encantados de tenerte con nosotros.</p>
         <p>Para confirmar tu cuenta, por favor haz clic en el siguiente enlace:</p><br>
         <p style="text-align: center;">
-            <a href="${process.env.URL_PRODUCTION}confirmar/${encodeURIComponent(token)}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Verificar cuenta</a>
+            <a href="${process.env.URL_PRODUCTION}confirmar-cuenta/${encodeURIComponent(token)}" style="background-color: #82a915; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Verificar cuenta</a>
         </p>
         <br>
         <br>
         <p>Si no te has registrado en nuestra plataforma, por favor ignora este correo.</p>
-        <p>Saludos cordiales,</p>
+        <p>Saludos cordiales</p>
         <p><strong>Equipo de Escuela Descubrir</strong></p>
         <footer style="text-align: center; color: #777; margin-top: 20px;">
             <p>Escuela Descubrir</p>
@@ -56,18 +56,18 @@ const sendMailToRecoveryPassword = async(userMail,token)=>{
     to: userMail,
     subject: "Correo para el reestablecimiento de contraseña",
     html: `
-    <div style="font-family: Arial, sans-serif; color: #333; text-align: center;">
-        <h1 style="color: #4CAF50;">Sistema de Gestión de Notas Escuela Descubrir</h1>
+    <div style="background-color:#1e3148; font-family: Arial, sans-serif; color: #333; text-align: center;">
+        <h1 style="color: #82a915;">Sistema de Gestión de Notas Escuela Descubrir</h1>
         <br>
-        <p>Hola,</p>
+        <p>Hola</p>
         <p>Has solicitado un cambio de contraseña. Para reestablecer tu contraseña, por favor haz clic en el siguiente enlace:</p><br>
         <p style="text-align: center;">
-            <a href="${process.env.URL_PRODUCTION}recuperar/${encodeURIComponent(token)}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Reestablecer tu contraseña</a>
+            <a href="${process.env.URL_PRODUCTION}confirmar-token/${encodeURIComponent(token)}" style="background-color: #82a915; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Reestablecer tu contraseña</a>
         </p>
         <br>
         <br>
         <p>Si no has solicitado este cambio, por favor ignora este correo.</p>
-        <p>Saludos cordiales,</p>
+        <p>Saludos cordiales</p>
         <p><strong>Equipo de Escuela Descubrir</strong></p>
         <footer style="text-align: center; color: #777; margin-top: 20px;">
             <p>Escuela Descubrir</p>
@@ -86,9 +86,9 @@ const sendMailToProfesor = async (userMail, token, password) => {
         subject: "Verificar cuenta profesor",
         html: `
         <div style="font-family: Arial, sans-serif; color: #333; text-align: center;">
-        <h1 style="color: #4CAF50;">Bienvenido a Escuela Descubrir</h1>
+        <h1 style="color: #82a915;">Bienvenido a Escuela Descubrir</h1>
         <br>
-        <p>Hola,</p>
+        <p>Hola</p>
         <p>Haz sido registrado como profesor. Estamos encantados de tenerte con nosotros.</p>
         <p>Estas son tus credenciales de acceso:</p>
         <p><strong>Correo:</strong> ${userMail}</p>
@@ -96,12 +96,12 @@ const sendMailToProfesor = async (userMail, token, password) => {
         <br>
         <p>Para confirmar tu cuenta, por favor haz clic en el siguiente enlace:</p><br>
         <p style="text-align: center;">
-            <a href="${process.env.URL_PRODUCTION}confirmar-token/${encodeURIComponent(token)}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Verificar cuenta</a>
+            <a href="${process.env.URL_PRODUCTION}confirmar-cuenta/${encodeURIComponent(token)}" style="background-color: #82a915; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Verificar cuenta</a>
         </p>
         <br>
         <br>
         <p>Si no te has registrado en nuestra plataforma, por favor ignora este correo.</p>
-        <p>Saludos cordiales,</p>
+        <p>Saludos cordiales</p>
         <p><strong>Equipo de Escuela Descubrir</strong></p>
         <footer style="text-align: center; color: #777; margin-top: 20px;">
             <p>Escuela Descubrir</p>
@@ -120,17 +120,17 @@ const sendMailToRecoveryPasswordProfesor = async(userMail,token)=>{
     html: `
     <div style="font-family: Arial, sans-serif; color: #333; text-align: center;">
 
-        <h1 style="color: #4CAF50;">Sistema de Gestión de Notas Escuela Descubrir</h1>
+        <h1 style="color: #82a915;">Sistema de Gestión de Notas Escuela Descubrir</h1>
         <br>
-        <p>Hola,</p>
+        <p>Hola</p>
         <p>Has solicitado un cambio de contraseña. Para reestablecer tu contraseña, por favor haz clic en el siguiente enlace:</p><br>
         <p style="text-align: center;">
-            <a href="${process.env.URL_PRODUCTION}comprobar-cuenta/${encodeURIComponent(token)}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Reestablecer tu contraseña</a>
+            <a href="${process.env.URL_PRODUCTION}confirmar-token/${encodeURIComponent(token)}" style="background-color: #82a915; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Reestablecer tu contraseña</a>
         </p>
         <br>
         <br>
         <p>Si no has solicitado este cambio, por favor ignora este correo.</p>
-        <p>Saludos cordiales,</p>
+        <p>Saludos cordiales</p>
         <p><strong>Equipo de Escuela Descubrir</strong></p>
         <footer style="text-align: center; color: #777; margin-top: 20px;">
             <p>Escuela Descubrir</p>
@@ -150,9 +150,9 @@ const envioCredenciales = async (nombre, apellido, userMail, password, token) =>
         `
         <div style="font-family: Arial, sans-serif; color: #333; text-align: center;">
 
-        <h1 style="color: #4CAF50;">Sistema de Gestión de Notas Escuela Descubrir</h1>
+        <h1 style="color: #82a915;">Sistema de Gestión de Notas Escuela Descubrir</h1>
         <br>
-        <p>Saludos estimad@ ${nombre} ${apellido},</p>
+        <p>Saludos estimad@ ${nombre} ${apellido}</p>
         <p>Ha sido registrad@ como representante en la Escuela de Educacion Básica Particular Descubrir</p><br>
         <p>Estas son las credenciales de acceso:</p>
         <p><strong>Correo:</strong> ${userMail}</p>
@@ -160,17 +160,17 @@ const envioCredenciales = async (nombre, apellido, userMail, password, token) =>
         <br>
         <p>Por favor, ingrese al siguiente enlace para verificar su cuenta:</p><br>
         <p style="text-align: center;">
-            <a href="${process.env.URL_PRODUCTION}/confirmar/representante/${encodeURIComponent(token)}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Verificar cuenta</a>
+            <a href="${process.env.URL_PRODUCTION}confirmar-cuenta/${encodeURIComponent(token)}" style="background-color: #82a915; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Verificar cuenta</a>
         </p>
         <br>
         <br>
         <p>Una vez verificada su cuenta, podrá acceder al sistema con las credenciales proporcionadas.</p>
         <p style="text-align: center;">
-            <a href="${process.env.URL_PRODUCTION}/login-representante" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Acceder al sistema</a>
+            <a href="${process.env.URL_PRODUCTION}/login" style="background-color: #82a915; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Acceder al sistema</a>
         <br>
         <br>
         <p>Si ha recibido este correo por error, por favor ignorelo.</p>
-        <p>Saludos cordiales,</p>
+        <p>Saludos cordiales</p>
         <p><strong>Equipo de Escuela Descubrir</strong></p>
         <footer style="text-align: center; color: #777; margin-top: 20px;">
             <p>Escuela Descubrir</p>
@@ -189,18 +189,18 @@ const estudianteRegistrado = async (userMail, cedula, nombre, apellido) => {
         html:
         `
         <div style="font-family: Arial, sans-serif; color: #333; text-align: center;">
-        <h1 style="color: #4CAF50;">Sistema de Gestión de Notas Escuela Descubrir</h1>
+        <h1 style="color: #82a915;">Sistema de Gestión de Notas Escuela Descubrir</h1>
         <br>
-        <p>Hola,</p>
+        <p>Hola</p>
         <p>Ha sido registrado el/la estudiante ${nombre} ${apellido} con C.I: ${cedula} en la Escuela de Educacion Básica Particular Descubrir</p><br>
         <p>El/la cual ha sido asignado a su cuenta como representante</p>
         <br>
         <p>Por favor, ingrese al siguiente enlace para acceder al sistema:</p><br>
         <p style="text-align: center;">
-            <a href="${process.env.URL_PRODUCTION}/login-representante" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Acceder al sistema</a>
+            <a href="${process.env.URL_PRODUCTION}/login" style="background-color: #82a915; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Acceder al sistema</a>
         <br>
         <p>Si has recibido este correo por error, por favor ignora este correo.</p>
-        <p>Saludos cordiales,</p>
+        <p>Saludos cordiales</p>
         <p><strong>Equipo de Escuela Descubrir</strong></p>
         <footer style="text-align: center; color: #777; margin-top: 20px;">
             <p>Escuela Descubrir</p>
@@ -218,17 +218,17 @@ const sendMailToRecoveryPasswordRepresentante = async (userMail, token) => {
     subject: "Correo para el reestablecimiento de contraseña",
     html: `	
     <div style="font-family: Arial, sans-serif; color: #333; text-align: center;">
-    <h1 style="color: #4CAF50;">Sistema de Gestión de Notas Escuela Descubrir</h1>
+    <h1 style="color: #82a915;">Sistema de Gestión de Notas Escuela Descubrir</h1>
     <br>
-    <p>Hola,</p>
+    <p>Hola</p>
     <p>Haz solicitado un reestablecimiento de tu contraseña, por favor haz clic en el siguiente enlace:</p><br>
     <p style="text-align: center;">
-        <a href="${process.env.URL_PRODUCTION}recuperar-password/representante/${encodeURIComponent(token)}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Reestablecer tu contraseña</a>
+        <a href="${process.env.URL_PRODUCTION}confirmar-token/${encodeURIComponent(token)}" style="background-color: #82a915; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Reestablecer tu contraseña</a>
     </p>
     <br>
     <br>
     <p>Si no haz solicitado este cambio, por favor ignora este correo.</p>
-    <p>Saludos cordiales,</p>
+    <p>Saludos cordiales</p>
     <p><strong>Equipo de Escuela Descubrir</strong></p>
     <footer style="text-align: center; color: #777; margin-top: 20px;">
         <p>Escuela Descubrir</p>

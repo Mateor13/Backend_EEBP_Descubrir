@@ -5,6 +5,7 @@ import cors from 'cors'
 import adminRouter from './routers/admin_routes.js'
 import profesorRouter from './routers/profesor_routes.js'
 import representanteRouter from './routers/representante_routes.js'
+import publicRouter from './routers/common_routes.js'
 
 //inicializadores
 const app = express()
@@ -33,6 +34,8 @@ app.get('/', (req, res) => {
         </html>
     `);
 });
+
+app.use('/api/', publicRouter)
 
 app.use('/api/', adminRouter)
 

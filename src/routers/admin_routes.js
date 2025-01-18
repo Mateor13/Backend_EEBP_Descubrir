@@ -1,21 +1,13 @@
 import Router from 'express'
-import { asignarRepresentante, cambiarDatos, cambiarPassword, comprobarTokenPassword, confirmarCuenta, justificacionesEstudiantes, loginAdmin, nuevoPassword, recuperarPassword, registrarAdmin, registrarCurso, registrarEstudiantes, registrarMaterias, registrarProfesor, registrarRepresentante, registroAsistenciaEstudiantes } from '../controllers/admin_controller.js'
+import { asignarRepresentante, justificacionesEstudiantes, registrarAdmin, registrarCurso, registrarEstudiantes, registrarMaterias, registrarProfesor, registrarRepresentante, registroAsistenciaEstudiantes } from '../controllers/admin_controller.js'
 import { verificarAutenticacion, verificarRolAdmin } from '../helpers/JWT.js'
 
 const router = Router()
 
-//Ruta Pública
+//Rutas Públicas
 router.post('/registro', registrarAdmin)
-router.get('/confirmar/:token', confirmarCuenta)
-router.post('/login', loginAdmin)
-router.post('/recuperar', recuperarPassword)
-router.get('/recuperar/:token', comprobarTokenPassword)
-router.post('/nuevo-password/:token', nuevoPassword)
-router.get('/confirmar/:token')
 
-//Ruta Privada
-router.post('/cambiar-password', verificarAutenticacion, verificarRolAdmin, cambiarPassword)
-router.patch('/cambiar-datos', verificarAutenticacion, verificarRolAdmin, cambiarDatos)
+//Rutas Privadas
 router.post('/registro-profesor', verificarAutenticacion, verificarRolAdmin, registrarProfesor)
 router.post('/registro-representante', verificarAutenticacion, verificarRolAdmin, registrarRepresentante)
 router.post('/registro-curso', verificarAutenticacion, verificarRolAdmin, registrarCurso)

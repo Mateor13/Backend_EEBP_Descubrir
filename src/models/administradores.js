@@ -38,9 +38,10 @@ const administradorSchema = new Schema({
     }
 )
 
-administradorSchema.methods.encriptarPassword = async password => {
+administradorSchema.methods.encriptarPassword = async function(password) {
     const salt = await bcrypt.genSalt(10)
-    return await bcrypt.hash(password, salt)
+    this.password = await bcrypt.hash(password, salt)
+    this.save()
 }
 
 administradorSchema.methods.compararPassword = async function(password){
@@ -49,12 +50,9 @@ administradorSchema.methods.compararPassword = async function(password){
 
 administradorSchema.methods.generarToken = async function(){
     const token = Math.random().toString(36).slice(2)
+    this.token = token
+    await this.save()
     return token
-}
-
-administradorSchema.methods.validarEmail = async function(email){
-    const regExp = new RegExp(/\S+@\S+\.\S+/)
-    return regExp.test(email)
 }
 
 export default model('Administrador', administradorSchema);

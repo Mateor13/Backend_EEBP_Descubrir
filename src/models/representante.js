@@ -81,10 +81,10 @@ representanteSchema.methods.asignarEstudiante = async function(estudianteId){
     await this.save()
 }
 
-representanteSchema.methods.encriptarPassword = async function(password){
+representanteSchema.methods.encriptarPassword = async function(password) {
     const salt = await bcrypt.genSalt(10)
     this.password = await bcrypt.hash(password, salt)
-    await this.save()
+    this.save()
 }
 
 export default model('Representante', representanteSchema)

@@ -56,9 +56,12 @@ asistenciaSchema.methods.marcarAsistencia = async function(asistencia){
 asistenciaSchema.methods.justificarInasistencia = async function(fecha, justificacion){
     const index = this.asistencia.findIndex(asistencia => asistencia.fecha === fecha)
     if(index === -1) return {error: 'La fecha no existe'}
+    if (this.asistencia[index].justificacion !== "") return {error: 'El estudiante ya está justificado'}
+    if (this.asistencia[index].presente) return {error: 'El estudiante está presente'}
     this.asistencia[index].justificacion = justificacion
     this.asistencia[index].presente = true
-    this.asistencia[index].faltas = this.faltas - 1
+    if (this.faltas > 0){
+    this.faltas = this.faltas - 1}
     await this.save()
 }
 

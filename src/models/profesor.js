@@ -79,6 +79,7 @@ profesorSchema.methods.generarPassword = async function () {
 profesorSchema.methods.generarToken = async function() {
     const token = Math.random().toString(36).slice(2)
     this.token = token
+    await this.save()
     return token
 }
 
@@ -87,6 +88,12 @@ profesorSchema.methods.ingresarCurso = async function(curso) {
     if(existeCurso)return {error: 'El curso ya está registrado'}
     this.cursos.push(curso)
     await this.save()
+}
+
+profesorSchema.methods.encriptarPassword = async function(password) {
+    const salt = await bcrypt.genSalt(10)
+    this.password = await bcrypt.hash(password, salt)
+    this.save()
 }
 
 export default model('profesor', profesorSchema)

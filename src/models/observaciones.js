@@ -1,13 +1,13 @@
-import {Schema, model} from 'mongoose'
+import { Schema, model } from 'mongoose';
 
 const observacionSchema = new Schema({
-    observaciones:[{
+    observaciones: [{
         fecha: {
             type: String,
             required: true,
-            default: function(){
-                const date = new Date()
-                return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
+            default: function() {
+                const date = new Date();
+                return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
             }
         },
         observacion: {
@@ -20,33 +20,33 @@ const observacionSchema = new Schema({
             required: true
         }
     }],
-    numeroObservaciones:{
+    numeroObservaciones: {
         type: Number,
         default: 0
     },
-    cedula:{
+    cedula: {
         type: String,
         required: true,
         trim: true
     },
-    nombreEstudiante:{
+    nombreEstudiante: {
         type: String,
         required: true
     },
-    estudiante:{
+    estudiante: {
         type: Schema.Types.ObjectId,
         ref: 'Estudiante',
         required: true
     }
-},{
+}, {
     timestamps: true,
     collection: 'observaciones'
-})
+});
 
-observacionSchema.methods.registrarObservacion = async function(fecha, observacion){
-    this.observaciones.push({fecha, observacion})
-    this.numeroObservaciones = this.numeroObservaciones + 1
-    await this.save()
-}
+observacionSchema.methods.registrarObservacion = async function(observacion) {
+    this.observaciones.push(observacion);
+    this.numeroObservaciones = this.numeroObservaciones + 1;
+    await this.save();
+};
 
-export default model('Observacion', observacionSchema)
+export default model('Observacion', observacionSchema);
