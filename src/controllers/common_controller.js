@@ -81,18 +81,21 @@ const recuperarPassword = async (req, res) => {
     if (representanteBDD) {
         const token = await representanteBDD.generarToken()
         await sendMailToRecoveryPasswordRepresentante(email, token)
+        await representanteBDD.save()
         return res.status(200).json({ mensaje: 'Correo enviado' })
     }
     const profesorBDD = await profesor.findOne({email})
     if (profesorBDD) {
         const token = await profesorBDD.generarToken()
         await sendMailToRecoveryPasswordProfesor(email, token)
+        await profesorBDD.save()
         return res.status(200).json({ mensaje: 'Correo enviado' })
     }
     const adminBDD = await administradores.findOne({email})
     if (adminBDD) {
         const token = await adminBDD.generarToken()
         await sendMailToRecoveryPassword(email, token)
+        await adminBDD.save()
         return res.status(200).json({ mensaje: 'Correo enviado' })
     }
     return res.status(400).json({ error: 'Email no registrado' })
@@ -134,21 +137,24 @@ const nuevaContrasena = async (req, res) => {
     if (representanteBDD) {
         if (representanteBDD.token !== token) return res.status(400).json({ error: 'Token no válido' })
         representanteBDD.token = null
-        representanteBDD.encriptarPassword(password)
+        await representanteBDD.encriptarPassword(password)
+        await representanteBDD.save()
         return res.status(200).json({ mensaje: 'Contraseña actualizada' })
     }
     const profesorBDD = await profesor.findOne({token})
     if (profesorBDD) {
         if (profesorBDD.token !== token) return res.status(400).json({ error: 'Token no válido' })
         profesorBDD.token = null
-        profesorBDD.encriptarPassword(password)
+        await profesorBDD.encriptarPassword(password)
+        await profesorBDD.save()
         return res.status(200).json({ mensaje: 'Contraseña actualizada' })
     }
     const adminBDD = await administradores.findOne({token})
     if (adminBDD) {
         if (adminBDD.token !== token) return res.status(400).json({ error: 'Token no válido' })
         adminBDD.token = null
-        adminBDD.encriptarPassword(password)
+        await adminBDD.encriptarPassword(password)
+        await adminBDD.save()
         return res.status(200).json({ mensaje: 'Contraseña actualizada' })
     }
     return res.status(400).json({ error: 'Token no registrado' })
@@ -168,21 +174,24 @@ const cambiarPassword = async (req, res) => {
     if (representanteBDD) {
         const verificarPassword = await representanteBDD.compararPassword(password)
         if (!verificarPassword) return res.status(400).json({ error: 'La Contraseña actual es incorrecta' })
-        representanteBDD.encriptarPassword(newpassword)
+        await representanteBDD.encriptarPassword(newpassword)
+        await representanteBDD.save()
         return res.status(200).json({ mensaje: 'Contraseña actualizada' })
     }
     const profesorBDD = await profesor.findById(id)
     if (profesorBDD) {
         const verificarPassword = await profesorBDD.compararPassword(password)
         if (!verificarPassword) return res.status(400).json({ error: 'La Contraseña actual es incorrecta' })
-        profesorBDD.encriptarPassword(newpassword)
+        await profesorBDD.encriptarPassword(newpassword)
+        await profesorBDD.save()
         return res.status(200).json({ mensaje: 'Contraseña actualizada' })
     }
     const adminBDD = await administradores.findById(id)
     if (adminBDD) {
         const verificarPassword = await adminBDD.compararPassword(password)
         if (!verificarPassword) return res.status(400).json({ error: 'La Contraseña actual es incorrecta' })
-        adminBDD.encriptarPassword(newpassword)
+        await adminBDD.encriptarPassword(newpassword)
+        await adminBDD.save()
         return res.status(200).json({ mensaje: 'Contraseña actualizada' })
     }
     return res.status(400).json({ error: 'Usuario no registrado' })
