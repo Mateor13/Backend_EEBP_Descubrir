@@ -37,7 +37,7 @@ const registrarAdmin = async (req, res) => {
     if (profesorBDD) return res.status(400).json({error: 'El usuario ya esta registrado'})
     if (password.length < 6) return res.status(400).json({error: 'La contraseña debe tener al menos 6 caracteres'});
     //Paso 3: Manipular la BDD
-    nuevoAdmin.password = await nuevoAdmin.encriptarPassword(password);
+    await nuevoAdmin.encriptarPassword(password);
     const token = await nuevoAdmin.generarToken();
     nuevoAdmin.token = token;
     await sendMailToUser(email, token);
