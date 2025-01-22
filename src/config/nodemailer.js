@@ -56,7 +56,7 @@ const sendMailToRecoveryPassword = async(userMail,token)=>{
     to: userMail,
     subject: "Correo para el reestablecimiento de contraseña",
     html: `
-    <div style="background-color:#1e3148; font-family: Arial, sans-serif; color: #333; text-align: center;">
+    <div style="font-family: Arial, sans-serif; color: #333; text-align: center;">
         <h1 style="color: #82a915;">Sistema de Gestión de Notas Escuela Descubrir</h1>
         <br>
         <p>Hola</p>
@@ -168,7 +168,7 @@ const envioCredenciales = async (nombre, apellido, userMail, password, token) =>
         <p style="text-align: center;">
             <a href="${process.env.URL_PRODUCTION}/login" style="background-color: #82a915; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Acceder al sistema</a>
         <br>
-        <br>
+        <br><br>
         <p>Si ha recibido este correo por error, por favor ignorelo.</p>
         <p>Saludos cordiales</p>
         <p><strong>Equipo de Escuela Descubrir</strong></p>

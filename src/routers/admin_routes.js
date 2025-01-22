@@ -4,10 +4,8 @@ import { verificarAutenticacion, verificarRolAdmin } from '../helpers/JWT.js'
 
 const router = Router()
 
-//Rutas Públicas
-router.post('/registro', registrarAdmin)
-
 //Rutas Privadas
+router.post('/registro', verificarAutenticacion, verificarRolAdmin, registrarAdmin)
 router.post('/registro-profesor', verificarAutenticacion, verificarRolAdmin, registrarProfesor)
 router.post('/registro-representante', verificarAutenticacion, verificarRolAdmin, registrarRepresentante)
 router.post('/registro-curso', verificarAutenticacion, verificarRolAdmin, registrarCurso)
