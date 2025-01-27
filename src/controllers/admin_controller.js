@@ -185,7 +185,7 @@ const listarCursos = async (req, res) => {
 
 const listarEstudiantesXCurso = async (req, res) => {
     const {cursoId} = req.params;
-    const cursoBDD = await cursos.findById(cursoId).populate({
+    const cursoBDD = await cursos.findOne({nombre: cursoId}).populate({
         path: 'estudiantes',
         select: 'nombre apellido _id'
     });
