@@ -193,20 +193,47 @@ const listarEstudiantesXCurso = async (req, res) => {
 }
 
 const registroAsistenciaEstudiantes = async (req, res) => {
-    //Paso 1: Obtener Datos
-    const {cedula, presente, justificacion, atraso} = req.body;
-    //Paso 2: Realizar validaciones
-    if(!cedula) return res.status(400).json({error: 'Especificar cédula estudiante'});
-    const estudianteBDD = await asistencia.findOne({cedula});
-    if (!estudianteBDD) return res.status(400).json({error: 'El estudiante no registrado en esta materia'});
-    //Paso 3: Manipular la BDD
-    const fecha = new Date();
-    const nuevaAsistencia = {fecha, presente, justificacion, atraso};
-    const registroAsistencia = await estudianteBDD.marcarAsistencia(nuevaAsistencia);
-    if (registroAsistencia?.error) return res.status(400).json({error: registroAsistencia.error});
-    estudianteBDD.save();
-    res.status(200).json({msg: 'Asistencia registrada correctamente'});
-}
+    // Paso 1: Obtener Datos
+    const { curso, asistencias } = req.body;
+
+    // Paso 2: Realizar validaciones
+    if (!curso) return res.status(400).json({ error: 'Especificar curso' });
+    if (!asistencias || typeof asistencias !== 'object') return res.status(400).json({ error: 'Especificar asistencias' });
+
+    try {
+        const cursoBDD = await cursos.findOne({nombre: curso}).populate('estudiantes');
+        if (!cursoBDD) return res.status(400).json({ error: 'El curso no está registrado' });
+        const errores = [];
+
+        // Paso 3: Manipular la BDD
+        for (const [estudianteId, presente] of Object.entries(asistencias)) {
+            const estudianteBDD = cursoBDD.estudiantes.find(est => est._id.toString() === estudianteId);
+            console.log(estudianteBDD)
+            if (!estudianteBDD) {
+                errores.push(`Estudiante con ID ${estudianteId} no encontrado en el curso`);
+                continue;
+            }
+
+            const nuevaAsistencia = { presente, justificacion: '', atraso: false };
+            const registroAsistencia = await asistencia.findOne({estudiante: estudianteId});
+            if (registroAsistencia) {
+                const comprobar = await registroAsistencia.marcarAsistencia(nuevaAsistencia);
+                if (comprobar?.error) errores.push(`${comprobar.error} del estudiante ${estudianteBDD.nombre} ${estudianteBDD.apellido}`);
+                continue;
+            }else{
+                errores.push(`Error al registrar asistencia para el estudiante con ID ${estudianteBDD.nombre} ${estudianteBDD.apellido}`);
+            }
+        }
+
+        if (errores.length > 0) {
+            return res.status(400).json({ error: errores.join(', ') });
+        }
+
+        res.status(200).json({ msg: 'Asistencia registrada correctamente' });
+    } catch (error) {
+        console.log(error)
+    }
+};
 
 const justificacionesEstudiantes = async (req, res) => {
     //Paso 1: Obtener los datos
