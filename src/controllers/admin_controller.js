@@ -208,7 +208,6 @@ const registroAsistenciaEstudiantes = async (req, res) => {
         // Paso 3: Manipular la BDD
         for (const [estudianteId, presente] of Object.entries(asistencias)) {
             const estudianteBDD = cursoBDD.estudiantes.find(est => est._id.toString() === estudianteId);
-            console.log(estudianteBDD)
             if (!estudianteBDD) {
                 errores.push(`Estudiante con ID ${estudianteId} no encontrado en el curso`);
                 continue;
