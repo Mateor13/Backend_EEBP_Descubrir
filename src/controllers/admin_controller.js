@@ -178,6 +178,11 @@ const asignarRepresentante = async (req, res) => {
     res.status(200).json({msg: 'Representante asignado correctamente'});
 }
 
+const listarCursos = async (req, res) => {
+    const cursosBDD = await cursos.find().select('-__v -createdAt -updatedAt -estudiantes -materias');
+    res.status(200).json(cursosBDD);
+}
+
 const registroAsistenciaEstudiantes = async (req, res) => {
     //Paso 1: Obtener Datos
     const {cedula, presente, justificacion, atraso} = req.body;
@@ -221,5 +226,6 @@ export {
     asignarRepresentante,
     registrarMaterias,
     registroAsistenciaEstudiantes,
-    justificacionesEstudiantes
+    justificacionesEstudiantes,
+    listarCursos
 }
