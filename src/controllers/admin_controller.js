@@ -183,6 +183,15 @@ const listarCursos = async (req, res) => {
     res.status(200).json(cursosBDD);
 }
 
+const listarEstudiantesXCurso = async (req, res) => {
+    const {cursoId} = req.params;
+    const cursoBDD = await cursos.findById(cursoId).populate({
+        path: 'estudiantes',
+        select: 'nombre apellido _id'
+    });
+    res.status(200).json(cursoBDD.estudiantes);
+}
+
 const registroAsistenciaEstudiantes = async (req, res) => {
     //Paso 1: Obtener Datos
     const {cedula, presente, justificacion, atraso} = req.body;
@@ -227,5 +236,6 @@ export {
     registrarMaterias,
     registroAsistenciaEstudiantes,
     justificacionesEstudiantes,
-    listarCursos
+    listarCursos,
+    listarEstudiantesXCurso
 }
