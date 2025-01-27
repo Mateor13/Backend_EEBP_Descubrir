@@ -172,7 +172,7 @@ const asignarRepresentante = async (req, res) => {
     const estudianteBDD = await estudiantes.findOne({cedula: cedulaEstudiante});
     if (!estudianteBDD) return res.status(400).json({error: 'El estudiante no esta registrado'});
     //Paso 3: Manipular la BDD
-    const asignar = await estudianteBDD.asignarRepresentante(representanteBDD._id);
+    const asignar = await representanteBDD.asignarEstudiante(estudianteBDD._id);
     if (asignar?.error) return res.status(400).json({error: asignar.error});
     await estudianteRegistrado(representanteBDD.email, cedulaEstudiante, estudianteBDD.nombre, estudianteBDD.apellido);
     res.status(200).json({msg: 'Representante asignado correctamente'});
