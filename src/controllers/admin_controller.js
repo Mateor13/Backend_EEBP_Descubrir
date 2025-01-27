@@ -18,8 +18,18 @@ const validarCurso = (curso) => {
     return regExp.test(curso)
 }
 const validarFecha = (fecha) => {
-    const regExp = new RegExp(/^\d{4}\/\d\/\d{2}$/);
-    return regExp.test(fecha);
+    const regExp = new RegExp(/^\d{4}\/\d{1,2}\/\d{1,2}$/);
+    if (!regExp.test(fecha)) {
+        return false;
+    }
+    const [year, month, day] = fecha.split('/').map(Number);
+    if (month < 1 || month > 12) {
+        return false;
+    }
+    if (day < 1 || day > 31) {
+        return false;
+    }
+    return true;
 };
 
 const registrarAdmin = async (req, res) => {
