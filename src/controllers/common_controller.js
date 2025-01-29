@@ -21,7 +21,7 @@ const login = async (req, res) => {
         const verificarPassword = await representanteBDD.compararPassword(password)
         if (!verificarPassword) return res.status(400).json({ error: 'Contraseña incorrecta' })
         const token = generarJWT(representanteBDD._id, 'representante')
-        return res.status(200).json({ rol: `representante`, token })
+        return res.status(200).json({ rol: `Bienvenido representante ${representanteBDD.nombre} ${representanteBDD.apellido}`, token })
     }
     const profesorBDD = await profesor.findOne({email});
     if (profesorBDD) {
@@ -29,7 +29,7 @@ const login = async (req, res) => {
         const verificarPassword = await profesorBDD.compararPassword(password)
         if (!verificarPassword) return res.status(400).json({ error: 'Contraseña incorrecta' })
         const token = generarJWT(profesorBDD._id, 'profesor')
-        return res.status(200).json({ rol: `profesor`, token })
+        return res.status(200).json({ rol: `Bienvenido profesor/a ${profesorBDD.nombre} ${profesorBDD.apellido}`, token })
     }
     const adminBDD = await administradores.findOne({email})
     if (adminBDD) {
@@ -37,7 +37,7 @@ const login = async (req, res) => {
         const verificarPassword = await adminBDD.compararPassword(password)
         if (!verificarPassword) return res.status(400).json({ error: 'Contraseña incorrecta' })
         const token = generarJWT(adminBDD._id, 'administrador')
-        return res.status(200).json({ rol: `administrador`, token })
+        return res.status(200).json({ rol: `Bienvenido administrador/a ${adminBDD.nombre} ${adminBDD.apellido}`, token })
     }
     return res.status(400).json({ error: 'Email no registrado' })
 }
