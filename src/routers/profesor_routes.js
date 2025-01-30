@@ -1,5 +1,5 @@
 import Router from 'express'
-import { modificarNotasEstudiantes, observacionesEstudiantes, subirNotasEstudiantes, visualizarCursosAsignados, visualizarEstudiante, visualizarEstudiantesCurso, visualizarMateriasAsignadas} from '../controllers/profesor_controller.js'
+import { modificarNotasEstudiantes, observacionesEstudiantes, subirNotasEstudiantes, visualizarEstudiante, visualizarEstudiantesCurso, visualizarMateriasAsignadas} from '../controllers/profesor_controller.js'
 import { verificarAutenticacion, verificarRolProfesor } from '../helpers/JWT.js'
 
 const router = Router()
