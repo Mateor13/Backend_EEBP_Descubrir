@@ -175,70 +175,75 @@ const visualizarMateriasAsignadas = async (req, res) => {
     res.status(200).json({materiasAsignadas})
 }
 
-const visualizarEstudiante = async (req, res) => {
-    //Paso 1: Obtener los datos
-    const {cedula, materia} = req.body;
-    //Paso 2: Realizar validaciones
-    if (Object.values(req.body).includes('')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
-    if (!cedula) return res.status(400).json({error: 'Especificar cédula estudiante'});
-    const estudianteXCurso = await cursos.aggregate([
-        {
-            $lookup: {
-                from: 'estudiantes',
-                localField: 'estudiantes',
-                foreignField: '_id',
-                as: 'estudiantesDetalle'
-            }
-        },
-        {
-            $lookup: {
-                from: 'materias',
-                localField: 'materias',
-                foreignField: '_id',
-                as: 'materiasDetalle'
-            }
-        },
-        {
-            $unwind: '$estudiantesDetalle'
-        },
-        {
-            $unwind: '$materiasDetalle'
-        },
-        {
-            $match: {
-                'estudiantesDetalle.cedula': cedula,
-                'materiasDetalle._id': new mongoose.Types.ObjectId(materia)
-            }
-        },
-        {
-            $lookup: {
-                from: 'notas',
-                let: { estudianteId: '$estudiantesDetalle._id', materiaId: '$materiasDetalle._id' },
-                pipeline: [
-                    { $match: { $expr: { $and: [{ $eq: ['$estudiante', '$$estudianteId'] }, { $eq: ['$materia', '$$materiaId'] }] } } },
-                    { $unwind: '$notas' },
-                    { $project: { 'notas.nota': 1, 'notas.motivo': 1, 'notas.fecha': 1, _id: 0 } }
-                ],
-                as: 'notasDetalle'
-            }
-        },
-        {
-            $project: {
-                _id: 0,
-                'materiasDetalle.nombre': 1,
-                'estudiantesDetalle.nombre': 1,
-                'estudiantesDetalle.apellido': 1,
-                'notasDetalle': 1
-            }
-        }
-    ]);   
-    if (!estudianteXCurso || estudianteXCurso.length === 0) {
-        return res.status(404).json({ error: 'Estudiante no encontrado en la materia especificada' });
-    }
+const visualizarEstudiantesPorMateria = async (req, res) => {
+    // Paso 1: Obtener los datos
+    const { materiaId } = req.params;
 
-    // Paso 3: Manipular la BDD
-    res.status(200).json({ estudianteXCurso });   
-}
+    // Paso 2: Realizar validaciones
+    if (!materiaId) return res.status(400).json({ error: 'Especificar ID de la materia' });
+
+    try {
+        const estudiantesPorMateria = await cursos.aggregate([
+            {
+                $lookup: {
+                    from: 'estudiantes',
+                    localField: 'estudiantes',
+                    foreignField: '_id',
+                    as: 'estudiantesDetalle'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'materias',
+                    localField: 'materias',
+                    foreignField: '_id',
+                    as: 'materiasDetalle'
+                }
+            },
+            {
+                $unwind: '$estudiantesDetalle'
+            },
+            {
+                $unwind: '$materiasDetalle'
+            },
+            {
+                $match: {
+                    'materiasDetalle._id': new mongoose.Types.ObjectId(materiaId)
+                }
+            },
+            {
+                $lookup: {
+                    from: 'notas',
+                    let: { estudianteId: '$estudiantesDetalle._id', materiaID: '$materiasDetalle._id' },
+                    pipeline: [
+                        { $match: { $expr: { $and: [{ $eq: ['$estudiante', '$$estudianteId'] }, { $eq: ['$materia', '$$materiaID'] }] } } },
+                        { $unwind: '$notas' },
+                        { $project: { 'notas.nota': 1, 'notas.motivo': 1, 'notas.fecha': 1, _id: 0 } }
+                    ],
+                    as: 'notasDetalle'
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    'materiasDetalle.nombre': 1,
+                    'estudiantesDetalle.nombre': 1,
+                    'estudiantesDetalle.apellido': 1,
+                    'notasDetalle': 1
+                }
+            }
+        ]);
+
+        if (!estudiantesPorMateria || estudiantesPorMateria.length === 0) {
+            return res.status(404).json({ error: 'No se encontraron estudiantes para la materia especificada' });
+        }
+
+        // Paso 3: Manipular la BDD
+        res.status(200).json({ estudiantesPorMateria });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al obtener los estudiantes de la materia' });
+    }
+};
 
 export  {
     subirNotasEstudiantes,
@@ -247,5 +252,5 @@ export  {
     observacionesEstudiantes,
     visualizarEstudiantesCurso,
     visualizarMateriasAsignadas,
-    visualizarEstudiante
+    visualizarEstudiantesPorMateria
 }
