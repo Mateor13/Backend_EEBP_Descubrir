@@ -168,7 +168,6 @@ const visualizarMateriasAsignadas = async (req, res) => {
         }},
         {$project: {'materiasDetalle.nombre': 1}}
     ]);
-    console.log(materiasAsignadas)
     res.status(200).json({materiasAsignadas})
 }
 
