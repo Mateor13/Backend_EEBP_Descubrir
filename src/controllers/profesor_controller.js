@@ -138,7 +138,7 @@ const visualizarMateriasAsignadas = async (req, res) => {
     //Paso 1: Obtener los datos
     const {id} = req.userBDD;
     //Paso 2: Manipular la BDD
-    const cursosAsignados = await materias.find({profesor: id}).select('-createdAt -updatedAt -__v');
+    const cursosAsignados = await materias.find({profesor: id}).select('-createdAt -updatedAt -__v -profesor');
     if (!cursosAsignados || cursosAsignados.length === 0) return res.status(404).json({error: 'No hay materias asignadas'});
     res.status(200).json({cursosAsignados})
 }
