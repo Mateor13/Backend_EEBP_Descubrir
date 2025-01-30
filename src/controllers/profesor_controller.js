@@ -134,13 +134,42 @@ const visualizarEstudiantesCurso = async (req, res) => {
     res.status(200).json({estudiantes});
 }
 
-const visualizarMateriasAsignadas = async (req, res) => {
+const visualizarCursosAsociados = async (req, res) => {
     //Paso 1: Obtener los datos
     const {id} = req.userBDD;
     //Paso 2: Manipular la BDD
-    const cursosAsignados = await materias.find({profesor: id}).select('-createdAt -updatedAt -__v -profesor');
-    if (!cursosAsignados || cursosAsignados.length === 0) return res.status(404).json({error: 'No hay materias asignadas'});
-    res.status(200).json({cursosAsignados})
+    const cursosAsociados = await cursos.aggregate([
+        {$lookup:{
+            from: 'materias',
+            localField: 'materias',
+            foreignField: '_id',
+            as: 'materiasDetalle'
+        }},
+        {$match: {'materiasDetalle.profesor': new mongoose.Types.ObjectId(id)}},
+        {$project: {nombre: 1
+        }}
+    ])
+    if (!cursosAsociados || cursosAsociados.length === 0) return res.status(404).json({error: 'No hay cursos asociados'});
+    res.status(200).json({cursosAsociados});
+}
+
+const visualizarMateriasAsignadas = async (req, res) => {
+    //Paso 1: Obtener los datos
+    const {id} = req.userBDD;
+    const {cursoId} = req.params;
+    //Paso 2: Manipular la BDD
+    const materiasAsignadas = await cursos.aggregate([
+        {$match: {_id: new mongoose.Types.ObjectId(cursoId)}},
+        {$lookup:{
+            from: 'materias',
+            localField: 'materias',
+            foreignField: '_id',
+            as: 'materiasDetalle'
+        }},
+        {$project: {'materiasDetalle.nombre': 1}}
+    ]);
+    console.log(materiasAsignadas)
+    res.status(200).json({materiasAsignadas})
 }
 
 const visualizarEstudiante = async (req, res) => {
@@ -211,6 +240,7 @@ const visualizarEstudiante = async (req, res) => {
 export  {
     subirNotasEstudiantes,
     modificarNotasEstudiantes,
+    visualizarCursosAsociados,
     observacionesEstudiantes,
     visualizarEstudiantesCurso,
     visualizarMateriasAsignadas,
