@@ -166,7 +166,11 @@ const visualizarMateriasAsignadas = async (req, res) => {
             foreignField: '_id',
             as: 'materiasDetalle'
         }},
-        {$project: {'materiasDetalle.nombre': 1}}
+        {$project: {
+            _id: 0,
+            'materiasDetalle.nombre': 1,
+            'materiasDetalle._id': 1
+        }}
     ]);
     res.status(200).json({materiasAsignadas})
 }
