@@ -134,27 +134,13 @@ const visualizarEstudiantesCurso = async (req, res) => {
     res.status(200).json({estudiantes});
 }
 
-const visualizarCursosAsignados = async (req, res) => {
+const visualizarMateriasAsignadas = async (req, res) => {
     //Paso 1: Obtener los datos
     const {id} = req.userBDD;
     //Paso 2: Manipular la BDD
-    const cursosAsignados = await cursos.aggregate([
-        {$lookup:{
-            from: 'materias',
-            localField: 'materias',
-            foreignField: '_id',
-            as: 'materiasAsig'
-        }},
-        {$match: {'materiasAsig.profesor': new mongoose.Types.ObjectId(id)}},
-        {$project:{
-            _id:1,
-            nombre:1,
-            'materiasAsig.nombre':1,
-            'materiasAsig.profesor':1
-        }}
-    ]);
-    if (!cursosAsignados || cursosAsignados.length === 0) return res.status(400).json({ error: 'No tiene cursos asignados' });
-    res.status(200).json({cursosAsignados});
+    const cursosAsignados = await materias.find({profesor: id});
+    if (!cursosAsignados || cursosAsignados.length === 0) return res.status(404).json({error: 'No hay materias asignadas'});
+    res.status(200).json({cursosAsignados})
 }
 
 const visualizarEstudiante = async (req, res) => {
@@ -227,6 +213,6 @@ export  {
     modificarNotasEstudiantes,
     observacionesEstudiantes,
     visualizarEstudiantesCurso,
-    visualizarCursosAsignados,
+    visualizarMateriasAsignadas,
     visualizarEstudiante
 }
