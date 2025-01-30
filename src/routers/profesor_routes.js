@@ -11,6 +11,6 @@ router.post('/observacion-estudiante', verificarAutenticacion, verificarRolProfe
 router.get('/estudiantes/curso', verificarAutenticacion, verificarRolProfesor, visualizarEstudiantesCurso)
 router.get('/profesor/cursos', verificarAutenticacion, verificarRolProfesor, visualizarCursosAsociados)
 router.get('/profesor/:cursoId/materias', verificarAutenticacion, verificarRolProfesor, visualizarMateriasAsignadas)
-router.get('/profesor/:materiaId/estudiante', verificarAutenticacion, verificarRolProfesor, visualizarEstudiantesPorMateria) 
+router.get('/profesor/:materiaId/estudiantes', verificarAutenticacion, verificarRolProfesor, visualizarEstudiantesPorMateria) 
 
 export default router
