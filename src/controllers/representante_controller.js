@@ -150,18 +150,43 @@ const verObservacionesEstudiante = async (req, res) => {
             $unwind: '$observacionesDetalle'
         },
         {
+            $lookup: {
+                from: 'profesores',
+                localField: 'observacionesDetalle.observaciones.profesor',
+                foreignField: '_id',
+                as: 'profesorDetalle'
+            }
+        },
+        {
+            $addFields: {
+                'observacionesDetalle.observaciones.profesor': {
+                    $concat: [
+                        { $arrayElemAt: ['$profesorDetalle.nombre', 0] },
+                        ' ',
+                        { $arrayElemAt: ['$profesorDetalle.apellido', 0] }
+                    ]
+                }
+            }
+        },
+        {
             $project: {
                 _id: 0,
                 'estudiantes.nombre': 1,
                 'estudiantes.apellido': 1,
                 'estudiantes.cedula': 1,
-                'observacionesDetalle.observaciones': 1,
+                'observacionesDetalle.observaciones.fecha': 1,
+                'observacionesDetalle.observaciones.observacion': 1,
+                'observacionesDetalle.observaciones.profesor': 1,
                 'observacionesDetalle.numeroObservaciones': 1
             }
         }
     ]);
-    if(representante.length === 0) return res.status(404).json({mensaje: 'No se encontraron observaciones para el estudiante'})
-    return res.status(200).json(representante)
+
+    if (!representante || representante.length === 0) {
+        return res.status(404).json({ error: 'No se encontraron observaciones para el estudiante especificado' });
+    }
+    // Paso 3: Manipular la BDD
+    res.status(200).json({ representante });
 }
 
 const verAsistenciaEstudiante = async (req, res) => {
