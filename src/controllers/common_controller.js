@@ -124,6 +124,17 @@ const comprobarTokenPassword = async (req, res) => {
     return res.status(400).json({ error: 'Token no registrado' })
 }
 
+const perfil = async (req, res) => {
+    const {nombre, apellido, email, telefono, direccion} = req.userBDD
+    res.status(200).json({
+            nombre,
+            apellido,
+            email,
+            telefono,
+            direccion
+        })
+}
+
 const nuevaContrasena = async (req, res) => {
     //Paso 1: Extraer los datos
     const { password, confirmPassword } = req.body
@@ -279,5 +290,6 @@ export {
     comprobarTokenPassword,
     nuevaContrasena,
     cambiarPassword,
-    cambiarDatos
+    cambiarDatos,
+    perfil
 }

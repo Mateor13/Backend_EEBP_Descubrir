@@ -1,5 +1,5 @@
 import Router from 'express';
-import { cambiarDatos, cambiarPassword, comprobarTokenPassword, confirmarCuenta, login, nuevaContrasena, recuperarPassword } from '../controllers/common_controller.js';
+import { cambiarDatos, cambiarPassword, comprobarTokenPassword, confirmarCuenta, login, nuevaContrasena, perfil, recuperarPassword } from '../controllers/common_controller.js';
 import { verificarAutenticacion, verificarRolAdmin, verificarRolProfesor, verificarRolRepresentante } from '../helpers/JWT.js';
 
 const router = Router();
@@ -12,6 +12,7 @@ router.get('/confirmar-token/:token', comprobarTokenPassword)
 router.patch('/nuevo-password/:token', nuevaContrasena)
 
 //Rutas privadas
+router.get('/perfil', verificarAutenticacion, perfil)
 router.patch('/cambiar-password', verificarAutenticacion, cambiarPassword)
 router.patch('/cambiar-datos', verificarAutenticacion, cambiarDatos)
 
