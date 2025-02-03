@@ -125,14 +125,21 @@ const comprobarTokenPassword = async (req, res) => {
 }
 
 const perfil = async (req, res) => {
-    const {nombre, apellido, email, telefono, direccion} = req.userBDD
-    res.status(200).json({
-            nombre,
-            apellido,
-            email,
-            telefono,
-            direccion
-        })
+    const {id} = req.userBDD
+    const representanteBDD = await representante.findById(id).select('-_id -password -token -estudiantes -confirmEmail -estado -__v -createdAt -updatedAt')
+    if (representanteBDD) {
+        console.log(representanteBDD)
+        return res.status(200).json(representanteBDD)
+    }
+    const profesorBDD = await profesor.findById(id).select('-_id -password -token -confirmEmail -admin -cursos -estado -__v -createdAt -updatedAt')
+    if (profesorBDD) {
+        return res.status(200).json(profesorBDD)
+    }
+    const adminBDD = await administradores.findById(id).select('-_id -password -token -confirmEmail -estado -__v -createdAt -updatedAt')
+    if (adminBDD) {
+        return res.status(200).json(adminBDD)
+    }
+    return res.status(400).json({ error: 'Usuario no registrado' })
 }
 
 const nuevaContrasena = async (req, res) => {
