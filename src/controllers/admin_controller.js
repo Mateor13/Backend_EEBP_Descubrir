@@ -205,7 +205,6 @@ const listarEstudiantesXCurso = async (req, res) => {
 const registroAsistenciaEstudiantes = async (req, res) => {
     // Paso 1: Obtener Datos
     const { curso, asistencias } = req.body;
-
     // Paso 2: Realizar validaciones
     if (!curso) return res.status(400).json({ error: 'Especificar curso' });
     if (!asistencias || typeof asistencias !== 'object') return res.status(400).json({ error: 'Especificar asistencias' });
@@ -216,13 +215,13 @@ const registroAsistenciaEstudiantes = async (req, res) => {
         const errores = [];
 
         // Paso 3: Manipular la BDD
-        for (const [estudianteId, presente] of Object.entries(asistencias)) {
+        for (const [estudianteId, estado] of Object.entries(asistencias)) {
             const estudianteBDD = cursoBDD.estudiantes.find(est => est._id.toString() === estudianteId);
             if (!estudianteBDD) {
                 errores.push(`Estudiante con ID ${estudianteId} no encontrado en el curso`);
                 continue;
             }
-
+            const presente = estado == 'presente'? true : false;
             const nuevaAsistencia = { presente, justificacion: '', atraso: false };
             const registroAsistencia = await asistencia.findOne({estudiante: estudianteId});
             if (registroAsistencia) {
