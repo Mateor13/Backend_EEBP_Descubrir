@@ -8,7 +8,7 @@ const generarJWT = (id, rol) => {
 }
 
 const verificarAutenticacion = async (req,res,next)=>{
-if(!req.headers.authorization) return res.status(404).json({msg:"Lo sentimos, debes proprocionar un token"})    
+if(!req.headers.authorization) return res.status(404).json({error:"Lo sentimos, debes proprocionar un token"})    
     const {authorization} = req.headers
     try {
         const {id,rol} = jwt.verify(authorization.split(' ')[1],process.env.JWT_SECRET)
@@ -16,22 +16,22 @@ if(!req.headers.authorization) return res.status(404).json({msg:"Lo sentimos, de
         next()
     } catch (error) {
         const e = new Error("Formato del token no válido")
-        return res.status(404).json({msg:e.message})
+        return res.status(404).json({error:e.message})
     }
 }
 
 const verificarRolProfesor = (req,res,next)=>{
     if(req.userBDD.rol === "profesor") next()
-    else return res.status(404).json({msg:"Lo sentimos, no tienes permisos de profesor para realizar esta acción"})
+    else return res.status(404).json({error:"Lo sentimos, no tienes permisos de profesor para realizar esta acción"})
 }
 
 const verificarRolAdmin = (req,res,next)=>{
     if(req.userBDD.rol === "administrador") next()
-    else return res.status(404).json({msg:"Lo sentimos, no tienes permisos de administrador para realizar esta acción"})
+    else return res.status(404).json({error:"Lo sentimos, no tienes permisos de administrador para realizar esta acción"})
 }
 const verificarRolRepresentante = (req,res,next)=>{
     if(req.userBDD.rol === "representante") next()
-    else return res.status(404).json({msg:"Lo sentimos, no tienes permisos para realizar esta acción"})
+    else return res.status(404).json({error:"Lo sentimos, no tienes permisos para realizar esta acción"})
 }
 
 export {

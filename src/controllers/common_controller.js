@@ -57,7 +57,6 @@ const confirmarCuenta = async (req, res) => {
 
     // Buscar el representante por token
     const representanteBDD = await representante.findOne({ token });
-    console.log('Representante encontrado:', representanteBDD); // Registro de depuración
     if (representanteBDD) {
         representanteBDD.confirmEmail = true;
         representanteBDD.token = null;
@@ -67,7 +66,6 @@ const confirmarCuenta = async (req, res) => {
 
     // Buscar el profesor por token
     const profesorBDD = await profesor.findOne({ token });
-    console.log('Profesor encontrado:', profesorBDD); // Registro de depuración
     if (profesorBDD) {
         profesorBDD.confirmEmail = true;
         profesorBDD.token = null;
@@ -77,15 +75,13 @@ const confirmarCuenta = async (req, res) => {
 
     // Buscar el administrador por token
     const adminBDD = await administradores.findOne({ token });
-    console.log('Administrador encontrado:', adminBDD); // Registro de depuración
     if (adminBDD) {
         adminBDD.confirmEmail = true;
         adminBDD.token = null;
         await adminBDD.save();
         return res.status(200).json({ mensaje: 'Su cuenta se ha confirmado exitosamente, ya puede iniciar sesión' });
     }
-
-    return res.status(400).json({ error: 'Token no registrado', token });
+    return res.status(400).json({ error: 'El token no se encuetra registrado' });
 }
 
 const recuperarPassword = async (req, res) => {
@@ -99,21 +95,21 @@ const recuperarPassword = async (req, res) => {
         const token = await representanteBDD.generarToken()
         await sendMailToRecoveryPasswordRepresentante(email, token)
         await representanteBDD.save()
-        return res.status(200).json({ mensaje: 'Correo enviado' })
+        return res.status(200).json({ mensaje: 'Para recuperar su contraseña, se le ha enviado un correo' })
     }
     const profesorBDD = await profesor.findOne({email})
     if (profesorBDD) {
         const token = await profesorBDD.generarToken()
         await sendMailToRecoveryPasswordProfesor(email, token)
         await profesorBDD.save()
-        return res.status(200).json({ mensaje: 'Correo enviado' })
+        return res.status(200).json({ mensaje: 'Para recuperar su contraseña, se le ha enviado un correo' })
     }
     const adminBDD = await administradores.findOne({email})
     if (adminBDD) {
         const token = await adminBDD.generarToken()
         await sendMailToRecoveryPassword(email, token)
         await adminBDD.save()
-        return res.status(200).json({ mensaje: 'Correo enviado' })
+        return res.status(200).json({ mensaje: 'Para recuperar su contraseña, se le ha enviado un correo' })
     }
     return res.status(400).json({ error: 'Email no registrado' })
 }
@@ -122,21 +118,21 @@ const comprobarTokenPassword = async (req, res) => {
     //Paso 1: Extraer los datos
     const { token } = req.params
     //Paso 2: Realizar validaciones
-    if (!token) return res.status(400).json({ error: 'Faltan campos por llenar' })
+    if (!token) return res.status(400).json({ error: 'Falta el token para recuperar contraseña' })
     const representanteBDD = await representante.findOne({token})
     if (representanteBDD) {
-        if (representanteBDD.token !== token) return res.status(400).json({ error: 'Token no válido' })
-        return res.status(200).json({ mensaje: 'Token válido' })
+        if (representanteBDD.token !== token) return res.status(400).json({ error: 'Este token no es válido' })
+        return res.status(200).json({ mensaje: 'Este token es válido' })
     }
     const profesorBDD = await profesor.findOne({token})
     if (profesorBDD) {
-        if (profesorBDD.token !== token) return res.status(400).json({ error: 'Token no válido' })
-        return res.status(200).json({ mensaje: 'Token válido' })
+        if (profesorBDD.token !== token) return res.status(400).json({ error: 'Este token no es válido' })
+        return res.status(200).json({ mensaje: 'Este token es válido' })
     }
     const adminBDD = await administradores.findOne({token})
     if (adminBDD) {
-        if (adminBDD.token !== token) return res.status(400).json({ error: 'Token no válido' })
-        return res.status(200).json({ mensaje: 'Token válido' })
+        if (adminBDD.token !== token) return res.status(400).json({ error: 'Este token no es válido' })
+        return res.status(200).json({ mensaje: 'Este token es válido' })
     }
     return res.status(400).json({ error: 'Token no registrado' })
 }
@@ -267,7 +263,7 @@ const cambiarDatos = async (req, res) => {
         representanteBDD.telefono = telefono
         representanteBDD.direccion = direccion
         await representanteBDD.save()
-        return res.status(200).json({ mensaje: 'Datos actualizados' })
+        return res.status(200).json({ mensaje: 'Los datos se han actualizado correctamente' })
     }
     const profesorBDD = await profesor.findById(id)
     if (profesorBDD){
@@ -292,7 +288,7 @@ const cambiarDatos = async (req, res) => {
         profesorBDD.telefono = telefono
         profesorBDD.direccion = direccion
         await profesorBDD.save()
-        return res.status(200).json({ mensaje: 'Datos actualizados' })
+        return res.status(200).json({ mensaje: 'Los datos se han actualizado correctamente' })
     }
     const adminBDD = await administradores.findById(id)
     if (adminBDD){
@@ -309,7 +305,7 @@ const cambiarDatos = async (req, res) => {
         adminBDD.apellido = apellido
         adminBDD.email = email
         await adminBDD.save()
-        return res.status(200).json({ mensaje: 'Datos actualizados' })
+        return res.status(200).json({ mensaje: 'Los datos se han actualizado correctamente' })
     }
     return res.status(400).json({ error: 'Usuario no registrado' })
 }
