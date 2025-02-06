@@ -26,10 +26,6 @@ const subirNotasEstudiantes = async (req, res) => {
 
     // Paso 2: Realizar validaciones
     if (Object.values(req.body).includes('')) return res.status(400).json({ error: 'Todos los campos son obligatorios' });
-    if (!cedula) return res.status(400).json({ error: 'Especificar cédula estudiante' });
-    if (!materia) return res.status(400).json({ error: 'Especificar el id de la materia' });
-    if (!nota) return res.status(400).json({ error: 'Especificar nota o que diferente de 0' });
-    if (!motivo) return res.status(400).json({ error: 'Especificar motivo' });
     if (nota < 0 || nota > 10.0) return res.status(400).json({ error: 'La nota debe estar entre 0.1 y 10' });
 
     // Buscar al estudiante por cédula

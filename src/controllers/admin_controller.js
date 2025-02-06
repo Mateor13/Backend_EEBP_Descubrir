@@ -112,7 +112,7 @@ const registrarCurso = async (req, res) => {
     const {nombre} = req.body;
     //Paso 2: Realizar validaciones
     if (Object.values(req.body).includes('')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
-    if(!validarCurso(nombre)) return res.status(400).json({error: 'El curso no es válido'});
+    if(!validarCurso(nombre)) return res.status(400).json({error: 'El curso no es válido, debe ser un número del 0 al 7 y una letra de la A a la E'});
     const cursoBDD = await cursos.findOne({nombre});
     if (cursoBDD) return res.status(400).json({error: 'El curso ya esta registrado'});
     //Paso 3: Manipular la BDD
@@ -149,7 +149,7 @@ const registrarEstudiantes = async (req, res) => {
     //Paso 2: Realizar validaciones
     if (Object.values(req.body).includes('')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
     if (cedula.length !== 10) return res.status(400).json({error: 'La cedula debe tener 10 caracteres'});
-    if(!validarCurso(curso)) return res.status(400).json({error: 'El curso no es válido'});
+    if(!validarCurso(curso)) return res.status(400).json({error: 'El curso no es válido, debe ser un número del 0 al 7 y una letra de la A a la E'});
     if (cedulaRepresentante.length !== 10) return res.status(400).json({error: 'La cedula del representante debe tener 10 caracteres'});
     const representanteBDD = await representantes.findOne({cedula: cedulaRepresentante}).select('-password');
     if (!representanteBDD) return res.status(400).json({error: 'El representante no esta registrado'});
@@ -196,6 +196,7 @@ const asignarRepresentante = async (req, res) => {
 
 const listarCursos = async (req, res) => {
     const cursosBDD = await cursos.find().select('-__v -createdAt -updatedAt -estudiantes -materias');
+    if (!cursosBDD) return res.status(400).json({error: 'No hay cursos registrados'});
     res.status(200).json(cursosBDD);
 }
 
@@ -205,6 +206,7 @@ const listarEstudiantesXCurso = async (req, res) => {
         path: 'estudiantes',
         select: 'nombre apellido _id'
     });
+    if (!cursoBDD) return res.status(400).json({error: 'El curso no esta registrado'});
     res.status(200).json(cursoBDD.estudiantes);
 }
 
@@ -235,7 +237,7 @@ const registroAsistenciaEstudiantes = async (req, res) => {
                 if (comprobar?.error) errores.push(`${comprobar.error} del estudiante ${estudianteBDD.nombre} ${estudianteBDD.apellido}`);
                 continue;
             }else{
-                errores.push(`Error al registrar asistencia para el estudiante con ID ${estudianteBDD.nombre} ${estudianteBDD.apellido}`);
+                errores.push(`Error al registrar asistencia para el estudiante ${estudianteBDD.nombre} ${estudianteBDD.apellido}`);
             }
         }
 
