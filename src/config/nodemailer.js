@@ -249,11 +249,10 @@ const sendMailToChangeEmail = async (userMail, newEmail) => {
         <h1 style="color: #82a915;">Sistema de Gestión de Notas Escuela Descubrir</h1>
         <br>
         <p>Hola</p>
-        <p>Haz solicitado un cambio de correo electrónico. Por favor, verifica tu nueva dirección de correo electrónico.</p><br>
+        <p>Se cambiad correctamente el correo electrónico. Por favor, verifica tu nueva dirección de correo electrónico.</p><br>
         <p><strong>Nuevo correo electrónico:</strong> ${newEmail}</p>
         <br>
         <br>
-        <p>Si no haz solicitado este cambio, por favor ignora este correo.</p>
         <p>Saludos cordiales</p>
         <p><strong>Equipo de Escuela Descubrir</strong></p>
         <footer style="text-align: center; color: #777; margin-top: 20px;">
