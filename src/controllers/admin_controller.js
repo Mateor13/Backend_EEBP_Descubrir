@@ -40,11 +40,9 @@ const registrarAdmin = async (req, res) => {
     if (Object.values(req.body).includes(' ')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
     if (!(validarEmail(email))) return res.status(400).json({error: 'El email no es válido'});
     const adminBDD = await Administrador.findOne({email});
-    if (adminBDD) return res.status(400).json({error: 'El usuario ya esta registrado'})
     const representanteBDD = await representantes.findOne({email});
-    if (representanteBDD) return res.status(400).json({error: 'El usuario ya esta registrado'})
     const profesorBDD = await Profesor.findOne({email});
-    if (profesorBDD) return res.status(400).json({error: 'El usuario ya esta registrado'})
+    if (adminBDD || representanteBDD || profesorBDD) return res.status(400).json({error: 'El email ya esta registrado'})
     if (password.length < 6) return res.status(400).json({error: 'La contraseña debe tener al menos 6 caracteres'});
     //Paso 3: Manipular la BDD
     await nuevoAdmin.encriptarPassword(password);
@@ -61,12 +59,16 @@ const registrarProfesor = async (req, res) => {
     //Paso 2: Realizar validaciones
     if (Object.values(req.body).includes(' ')) return res.status(400).json({error: 'Todos los campos son obligatorios'});
     if (!(validarEmail(email))) return res.status(400).json({error: 'El email no es válido'});
-    const profBDD = await Profesor.findOne({email});
-    if (profBDD) return res.status(400).json({error: 'El usuario ya esta registrado'})
-    const repBDD = await representantes.findOne({email});
-    if (repBDD) return res.status(400).json({error: 'El usuario ya esta registrado'})
-    const adminBDD = await Administrador.findOne({email})
-    if (adminBDD) return res.status(400).json({error: 'El usuario ya esta registrado'})
+    const representanteCedula = await representantes.findOne({ cedula });
+    const profesorCedula = await Profesor.findOne({ cedula });
+    const administradorEmail = await Administrador.findOne({ email });
+    const representanteEmail = await representantes.findOne({ email });
+    const profesorEmail = await Profesor.findOne({ email });
+    const profesorTel = await Profesor.findOne({ telefono });
+    const representanteTel = await representantes.findOne({ telefono });
+    if (representanteCedula || profesorCedula ) return res.status(400).json({ error: 'La cédula ya esta registrada' });
+    if (administradorEmail || representanteEmail || profesorEmail) return res.status(400).json({error: 'El email ya esta registrado'});
+    if (profesorTel || representanteTel) return res.status(400).json({error: 'El teléfono ya esta registrado'});
     if (telefono.length !== 10) return res.status(400).json({error: 'El telefono debe tener 10 caracteres'});
     if (cedula.length !== 10) return res.status(400).json({error: 'La cédula debe tener 10 caracteres'});
     //Paso 3: Manipular la BDD
@@ -86,12 +88,16 @@ const registrarRepresentante = async (req, res) => {
     if (!validarEmail(email)) return res.status(400).json({error:'El email es inválido'});
     if (telefono.length !== 10) return res.status(400).json({error: 'El telefono debe tener 10 caracteres'});
     if (cedula.length !== 10) return res.status(400).json({error: 'La cedula debe tener 10 caracteres'});
-    const representanteBDD = await representantes.findOne({email});
-    if (representanteBDD) return res.status(400).json({error: 'El usuario ya esta registrado'});
-    const profesorBDD = await Profesor.findOne({email});
-    if (profesorBDD) return res.status(400).json({error: 'El usuario ya esta registrado'});
-    const adminBDD = await Administrador.findOne({email})
-    if (adminBDD) return res.status(400).json({error: 'El usuario ya esta registrado'})
+    const representanteCedula = await representantes.findOne({ cedula });
+    const profesorCedula = await Profesor.findOne({ cedula });
+    const administradorEmail = await Administrador.findOne({ email });
+    const representanteEmail = await representantes.findOne({ email });
+    const profesorEmail = await Profesor.findOne({ email });
+    const profesorTel = await Profesor.findOne({ telefono });
+    const representanteTel = await representantes.findOne({ telefono });
+    if (representanteCedula || profesorCedula ) return res.status(400).json({ error: 'La cédula ya esta registrada' });
+    if (administradorEmail || representanteEmail || profesorEmail) return res.status(400).json({error: 'El email ya esta registrado'});
+    if (profesorTel || representanteTel) return res.status(400).json({error: 'El teléfono ya esta registrado'});
     //Paso 3: Manipular la BDD
     const nuevoRepresentante = new representantes({nombre, apellido, email, telefono, cedula});
     const password = await nuevoRepresentante.generarPassword();
@@ -150,9 +156,9 @@ const registrarEstudiantes = async (req, res) => {
     const estudianteBDD = await estudiantes.findOne({cedula})
     if (estudianteBDD) return res.status(400).json({error: 'El estudiante ya esta registrado'});
     const representanteBDD2 =await representantes.findOne({cedula});
-    if (representanteBDD2) return res.status(400).json({error: 'Cédula inválida'});
+    if (representanteBDD2) return res.status(400).json({error: 'Cédula ya registrada'});
     const profesorBDD = await Profesor.findOne({cedula});
-    if (profesorBDD) return res.status(400).json({error: 'Cédula inválida'});
+    if (profesorBDD) return res.status(400).json({error: 'Cédula ya registrada'});
     const cursoBDD = await cursos.findOne({nombre: curso});
     if (!cursoBDD) return res.status(400).json({error: 'El curso no esta registrado'});
     //Paso 3: Manipular la BDD

@@ -2,7 +2,7 @@ import representante from "../models/representante.js";
 import profesor from "../models/profesor.js";
 import administradores from "../models/administradores.js";
 import { generarJWT } from "../helpers/JWT.js";
-import { sendMailToRecoveryPassword, sendMailToRecoveryPasswordProfesor, sendMailToRecoveryPasswordRepresentante } from "../config/nodemailer.js";
+import { sendMailToChangeEmail, sendMailToRecoveryPassword, sendMailToRecoveryPasswordProfesor, sendMailToRecoveryPasswordRepresentante } from "../config/nodemailer.js";
 
 const validarEmail = (email) => {
     const regExp = new RegExp(/\S+@\S+\.\S+/)
@@ -247,6 +247,11 @@ const cambiarDatos = async (req, res) => {
         if (representanteBDD.email !== email) {
             const existeEmail = await representante.findOne({ email })
             if (existeEmail) return res.status(400).json({ error: 'El email ya está registrado' })
+            await sendMailToChangeEmail(email, representanteBDD.email)
+        }
+        if (representanteBDD.telefono !== telefono) {
+            const existeTelefono = await representante.findOne({ telefono })
+            if (existeTelefono) return res.status(400).json({ error: 'El teléfono ya está registrado' })
         }
         const adminBDD = await administradores.findOne({ email })
         if (adminBDD) return res.status(400).json({ error: 'El email ya está registrado' })
@@ -271,6 +276,7 @@ const cambiarDatos = async (req, res) => {
         if (profesorBDD.email !== email) {
             const existeEmail = await profesor.findOne({ email })
             if (existeEmail) return res.status(400).json({ error: 'El email ya está registrado' })
+            await sendMailToChangeEmail(email, profesorBDD.email)
         }
         const adminBDD = await administradores.findOne({ email })
         if (adminBDD) return res.status(400).json({ error: 'El email ya está registrado' })
@@ -293,6 +299,7 @@ const cambiarDatos = async (req, res) => {
         if (adminBDD.email !== email) {
             const existeEmail = await administradores.findOne({ email })
             if (existeEmail) return res.status(400).json({ error: 'El email ya está registrado' })
+            await sendMailToChangeEmail(email, adminBDD.email)
         }
         const profesorBDD = await profesor.findOne({ email })
         if (profesorBDD) return res.status(400).json({ error: 'El email ya está registrado' })

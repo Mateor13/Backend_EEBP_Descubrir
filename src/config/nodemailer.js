@@ -239,6 +239,31 @@ const sendMailToRecoveryPasswordRepresentante = async (userMail, token) => {
   console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
 }
 
+const sendMailToChangeEmail = async (userMail, newEmail) => {
+    let info = await transporter.sendMail({
+        from: 'info@eebpd.edu',
+        to: userMail,
+        subject: "Cambio de correo electrónico",
+        html: `
+        <div style="font-family: Arial, sans-serif; color: #333; text-align: center;">
+        <h1 style="color: #82a915;">Sistema de Gestión de Notas Escuela Descubrir</h1>
+        <br>
+        <p>Hola</p>
+        <p>Haz solicitado un cambio de correo electrónico. Por favor, verifica tu nueva dirección de correo electrónico.</p><br>
+        <p><strong>Nuevo correo electrónico:</strong> ${newEmail}</p>
+        <br>
+        <br>
+        <p>Si no haz solicitado este cambio, por favor ignora este correo.</p>
+        <p>Saludos cordiales</p>
+        <p><strong>Equipo de Escuela Descubrir</strong></p>
+        <footer style="text-align: center; color: #777; margin-top: 20px;">
+            <p>Escuela Descubrir</p>
+            <p>&copy; ${new Date().getFullYear()} Escuela Descubrir. Todos los derechos reservados.</p>
+        </footer>
+    </div>`
+});
+console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
+}
 
 export {
     sendMailToUser,
@@ -247,5 +272,6 @@ export {
     sendMailToRecoveryPasswordProfesor,
     envioCredenciales,
     estudianteRegistrado,
-    sendMailToRecoveryPasswordRepresentante
+    sendMailToRecoveryPasswordRepresentante,
+    sendMailToChangeEmail
 }
