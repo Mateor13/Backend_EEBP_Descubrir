@@ -243,7 +243,7 @@ const cambiarDatos = async (req, res) => {
         if (representanteBDD.email !== email) {
             const existeEmail = await representante.findOne({ email })
             if (existeEmail) return res.status(400).json({ error: 'El email ya está registrado' })
-            await sendMailToChangeEmail(email, representanteBDD.email)
+            await sendMailToChangeEmail(representanteBDD.email, email)
         }
         if (representanteBDD.telefono !== telefono) {
             const existeTelefono = await representante.findOne({ telefono })
