@@ -20,12 +20,7 @@ const estudianteSchema = new Schema({
     estado: {
         type: Boolean,
         default: true
-    },
-    observaciones:[{
-        type:Schema.Types.ObjectId,
-        ref:'Observacion'
-    }],
-    
+    }
 }, {
     timestamps: true,
     collection: 'estudiantes'

@@ -39,36 +39,53 @@ const login = async (req, res) => {
         const token = generarJWT(adminBDD._id, 'administrador')
         return res.status(200).json({ mensaje: `Bienvenido administrador/a ${adminBDD.nombre} ${adminBDD.apellido}`, token })
     }
+    const emailAdmin = process.env.ADMIN_EMAIL
+    if (email === emailAdmin) {
+        if (password !== process.env.ADMIN_PASSWORD) return res.status(400).json({ error: 'Contraseña incorrecta' })
+        const token = generarJWT(process.env.ADMIN_ID, 'administrador')
+        return res.status(200).json({ mensaje: `Bienvenido administrador/a ${process.env.ADMIN_NAME} ${process.env.ADMIN_LASTNAME}`, token })
+    }
     return res.status(400).json({ error: 'Email no registrado' })
 }
 
 const confirmarCuenta = async (req, res) => {
-    //Paso 1: Extraer los datos
-    const { token } = req.params
-    //Paso 2: Realizar validaciones
-    if (!token) return res.status(400).json({ error: 'Faltan campos por llenar' })
-    const representanteBDD = await representante.findOne({token});
+    // Paso 1: Extraer los datos
+    const { token } = req.params;
+
+    // Paso 2: Realizar validaciones
+    if (!token) return res.status(400).json({ error: 'Faltan campos por llenar' });
+
+    // Buscar el representante por token
+    const representanteBDD = await representante.findOne({ token });
+    console.log('Representante encontrado:', representanteBDD); // Registro de depuración
     if (representanteBDD) {
-        representanteBDD.confirmEmail = true
-        representanteBDD.token = null
-        await representanteBDD.save()
-        return res.status(200).json({ mensaje: 'Cuenta confirmada' })
+        representanteBDD.confirmEmail = true;
+        representanteBDD.token = null;
+        await representanteBDD.save();
+        return res.status(200).json({ mensaje: 'Su cuenta se ha confirmado exitosamente, ya puede iniciar sesión' });
     }
-    const profesorBDD = await profesor.findOne({token});
+
+    // Buscar el profesor por token
+    const profesorBDD = await profesor.findOne({ token });
+    console.log('Profesor encontrado:', profesorBDD); // Registro de depuración
     if (profesorBDD) {
-        profesorBDD.confirmEmail = true
-        profesorBDD.token = null
-        await profesorBDD.save()
-        return res.status(200).json({ mensaje: 'Cuenta confirmada' })
+        profesorBDD.confirmEmail = true;
+        profesorBDD.token = null;
+        await profesorBDD.save();
+        return res.status(200).json({ mensaje: 'Su cuenta se ha confirmado exitosamente, ya puede iniciar sesión' });
     }
-    const adminBDD = await administradores.findOne({token})
+
+    // Buscar el administrador por token
+    const adminBDD = await administradores.findOne({ token });
+    console.log('Administrador encontrado:', adminBDD); // Registro de depuración
     if (adminBDD) {
-        adminBDD.confirmEmail = true
-        adminBDD.token = null
-        await adminBDD.save()
-        return res.status(200).json({ mensaje: 'Cuenta confirmada' })
+        adminBDD.confirmEmail = true;
+        adminBDD.token = null;
+        await adminBDD.save();
+        return res.status(200).json({ mensaje: 'Su cuenta se ha confirmado exitosamente, ya puede iniciar sesión' });
     }
-    return res.status(400).json({ error: 'Token no registrado' })
+
+    return res.status(400).json({ error: 'Token no registrado', token });
 }
 
 const recuperarPassword = async (req, res) => {

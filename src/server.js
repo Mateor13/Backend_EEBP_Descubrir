@@ -6,15 +6,17 @@ import adminRouter from './routers/admin_routes.js'
 import profesorRouter from './routers/profesor_routes.js'
 import representanteRouter from './routers/representante_routes.js'
 import publicRouter from './routers/common_routes.js'
+import multer from 'multer';
 
 //inicializadores
 const app = express()
 dotenv.config()
+const upload = multer()
 
 //Configuraciones
 app.set('port', process.env.PORT || 3000)
 app.use(cors())
-
+app.use(upload.none())
 //middleware
 app.use(express.json())
 
