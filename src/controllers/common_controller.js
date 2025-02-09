@@ -15,7 +15,7 @@ const login = async (req, res) => {
     //Paso 2: Realizar validaciones
     if (Object.keys(req.body).includes(' ')) return res.status(400).json({ error: 'No se permiten campos con espacios' })
     if (!email || !password) return res.status(400).json({ error: 'Faltan campos por llenar' })
-if (!validarEmail(email)) return res.status(400).json({error: 'Email inválido'})
+    if (!validarEmail(email)) return res.status(400).json({error: 'Email inválido'})
     const representanteBDD = await representante.findOne({email});
     if (representanteBDD) {
         if (!representanteBDD.confirmEmail) return res.status(400).json({ error: 'Por favor confirme su cuenta'})
