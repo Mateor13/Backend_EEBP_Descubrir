@@ -1,6 +1,7 @@
 import representante from "../models/representante.js";
 import profesor from "../models/profesor.js";
 import administradores from "../models/administradores.js";
+import anioLectivo from "../models/anioLectivo.js";
 import { generarJWT } from "../helpers/JWT.js";
 import { sendMailToChangeEmail, sendMailToRecoveryPassword, sendMailToRecoveryPasswordProfesor, sendMailToRecoveryPasswordRepresentante } from "../config/nodemailer.js";
 
@@ -11,42 +12,39 @@ const validarEmail = (email) => {
 
 const login = async (req, res) => {
     //Paso 1: Extraer los datos
-    const { email, password } = req.body
+    const { email, password, anioLectivo } = req.body
     //Paso 2: Realizar validaciones
     if (Object.keys(req.body).includes(' ')) return res.status(400).json({ error: 'No se permiten campos con espacios' })
     if (!email || !password) return res.status(400).json({ error: 'Faltan campos por llenar' })
-    if (!validarEmail(email)) return res.status(400).json({error: 'Email inválido'})
+    if (!validarEmail(email)) return res.status(400).json({error: 'El email no es válido'})
+    if (!anioLectivo) return res.status(400).json({ error: 'Debe seleccionar el periodo académico'})
+    const anioLectivoBDD = await anioLectivo.findOne({ periodo: anioLectivo })
+    if (!anioLectivoBDD) return res.status(400).json({ error: 'El periodo académico no es válido' })
     const representanteBDD = await representante.findOne({email});
     if (representanteBDD) {
         if (!representanteBDD.confirmEmail) return res.status(400).json({ error: 'Por favor confirme su cuenta'})
         const verificarPassword = await representanteBDD.compararPassword(password)
-        if (!verificarPassword) return res.status(400).json({ error: 'Contraseña incorrecta' })
-        const token = generarJWT(representanteBDD._id, 'representante')
+        if (!verificarPassword) return res.status(400).json({ error: 'Credenciales incorrectas' })
+        const token = generarJWT(representanteBDD._id, 'representante', anioLectivoBDD.estado)
         return res.status(200).json({ mensaje: `Bienvenido representante ${representanteBDD.nombre} ${representanteBDD.apellido}`, token })
     }
     const profesorBDD = await profesor.findOne({email});
     if (profesorBDD) {
         if (!profesorBDD.confirmEmail) return res.status(400).json({ error: 'Por favor confirme su cuenta'})
         const verificarPassword = await profesorBDD.compararPassword(password)
-        if (!verificarPassword) return res.status(400).json({ error: 'Contraseña incorrecta' })
-        const token = generarJWT(profesorBDD._id, 'profesor')
+        if (!verificarPassword) return res.status(400).json({ error: 'Credenciales incorrectas' })
+        const token = generarJWT(profesorBDD._id, 'profesor', anioLectivoBDD.estado)
         return res.status(200).json({ mensaje: `Bienvenido profesor/a ${profesorBDD.nombre} ${profesorBDD.apellido}`, token })
     }
     const adminBDD = await administradores.findOne({email})
     if (adminBDD) {
         if (!adminBDD.confirmEmail) return res.status(400).json({ error: 'Por favor confirme su cuenta'})
         const verificarPassword = await adminBDD.compararPassword(password)
-        if (!verificarPassword) return res.status(400).json({ error: 'Contraseña incorrecta' })
-        const token = generarJWT(adminBDD._id, 'administrador')
+        if (!verificarPassword) return res.status(400).json({ error: 'Credenciales incorrectas' })
+        const token = generarJWT(adminBDD._id, 'administrador', anioLectivoBDD.estado)
         return res.status(200).json({ mensaje: `Bienvenido administrador/a ${adminBDD.nombre} ${adminBDD.apellido}`, token })
     }
-    const emailAdmin = process.env.ADMIN_EMAIL
-    if (email === emailAdmin) {
-        if (password !== process.env.ADMIN_PASSWORD) return res.status(400).json({ error: 'Contraseña incorrecta' })
-        const token = generarJWT(process.env.ADMIN_ID, 'administrador')
-        return res.status(200).json({ mensaje: `Bienvenido administrador/a ${process.env.ADMIN_NAME} ${process.env.ADMIN_LASTNAME}`, token })
-    }
-    return res.status(400).json({ error: 'Email no registrado' })
+    return res.status(400).json({ error: 'Credenciales incorrectas' })
 }
 
 const confirmarCuenta = async (req, res) => {
@@ -82,7 +80,7 @@ const confirmarCuenta = async (req, res) => {
         await adminBDD.save();
         return res.status(200).json({ mensaje: 'Su cuenta se ha confirmado exitosamente, ya puede iniciar sesión' });
     }
-    return res.status(400).json({ error: 'El token no se encuetra registrado' });
+    return res.status(400).json({ error: 'El token no es válido' });
 }
 
 const recuperarPassword = async (req, res) => {
@@ -112,7 +110,7 @@ const recuperarPassword = async (req, res) => {
         await adminBDD.save()
         return res.status(200).json({ mensaje: 'Para recuperar su contraseña, se le ha enviado un correo' })
     }
-    return res.status(400).json({ error: 'Email no registrado' })
+    return res.status(400).json({ error: 'No se ha encontrado el email ingresado' })
 }
 
 const comprobarTokenPassword = async (req, res) => {
@@ -122,24 +120,22 @@ const comprobarTokenPassword = async (req, res) => {
     if (!token) return res.status(400).json({ error: 'Falta el token para recuperar contraseña' })
     const representanteBDD = await representante.findOne({token})
     if (representanteBDD) {
-        if (representanteBDD.token !== token) return res.status(400).json({ error: 'Este token no es válido' })
         return res.status(200).json({ mensaje: 'Este token es válido' })
     }
     const profesorBDD = await profesor.findOne({token})
     if (profesorBDD) {
-        if (profesorBDD.token !== token) return res.status(400).json({ error: 'Este token no es válido' })
         return res.status(200).json({ mensaje: 'Este token es válido' })
     }
     const adminBDD = await administradores.findOne({token})
     if (adminBDD) {
-        if (adminBDD.token !== token) return res.status(400).json({ error: 'Este token no es válido' })
         return res.status(200).json({ mensaje: 'Este token es válido' })
     }
-    return res.status(400).json({ error: 'Token no registrado' })
+    return res.status(400).json({ error: 'Este token no es válido' })
 }
 
 const perfil = async (req, res) => {
-    const {id} = req.userBDD
+    const {id, anioLectivo} = req.userBDD
+    console.log(anioLectivo)
     const representanteBDD = await representante.findById(id).select('-_id -password -token -estudiantes -confirmEmail -estado -__v -createdAt -updatedAt')
     if (representanteBDD) {
         console.log(representanteBDD)
@@ -153,7 +149,7 @@ const perfil = async (req, res) => {
     if (adminBDD) {
         return res.status(200).json(adminBDD)
     }
-    return res.status(400).json({ error: 'Usuario no registrado' })
+    return res.status(400).json({ error: 'Fallo en la carga de datos' })
 }
 
 const nuevaContrasena = async (req, res) => {
@@ -189,7 +185,7 @@ const nuevaContrasena = async (req, res) => {
         await adminBDD.save()
         return res.status(200).json({ mensaje: 'Contraseña actualizada' })
     }
-    return res.status(400).json({ error: 'Token no registrado' })
+    return res.status(400).json({ error: 'El token no es válido' })
 }
 
 const cambiarPassword = async (req, res) => {

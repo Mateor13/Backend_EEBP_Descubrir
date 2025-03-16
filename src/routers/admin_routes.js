@@ -1,5 +1,5 @@
 import Router from 'express'
-import { asignarRepresentante, justificacionesEstudiantes, listarCursos, listarEstudiantesXCurso, registrarAdmin, registrarCurso, registrarEstudiantes, registrarMaterias, registrarProfesor, registrarRepresentante, registroAsistenciaEstudiantes } from '../controllers/admin_controller.js'
+import { asignarRepresentante, comenzarAnioLectivo, justificacionesEstudiantes, listarCursos, listarEstudiantesXCurso, registrarAdmin, registrarCurso, registrarEstudiantes, registrarMaterias, registrarProfesor, registrarRepresentante, registroAsistenciaEstudiantes, terminarAnioLectivo } from '../controllers/admin_controller.js'
 import { verificarAutenticacion, verificarRolAdmin } from '../helpers/JWT.js'
 
 const router = Router()
@@ -16,5 +16,7 @@ router.post('/registro-asistencia', verificarAutenticacion, verificarRolAdmin, r
 router.patch('/justificar-inasistencia', verificarAutenticacion, verificarRolAdmin, justificacionesEstudiantes)
 router.get('/cursos', verificarAutenticacion, verificarRolAdmin, listarCursos)
 router.get('/cursos/:cursoId/estudiantes', verificarAutenticacion, verificarRolAdmin, listarEstudiantesXCurso)
+router.post('/terminar-periodo', verificarAutenticacion, verificarRolAdmin, terminarAnioLectivo)
+router.post('/iniciar-periodo', verificarAutenticacion, verificarRolAdmin, comenzarAnioLectivo)
 
 export default router

@@ -7,6 +7,7 @@ import estudiantes from '../models/estudiantes.js';
 import materias from '../models/materias.js';
 import asistencia from '../models/asistencia.js';
 import Observaciones from '../models/observaciones.js';
+import anioLectivo from '../models/anioLectivo.js';
 
 const validarEmail = (email) => {
     const regExp = new RegExp(/\S+@\S+\.\S+/)
@@ -117,7 +118,11 @@ const registrarCurso = async (req, res) => {
     if (cursoBDD) return res.status(400).json({error: 'El curso ya esta registrado'});
     //Paso 3: Manipular la BDD
     const nuevoCurso = new cursos({nombre});
+    const anioLectivoBDD = await anioLectivo.findOne({estado: true});
+    if (!anioLectivoBDD) return res.status(400).json({error: 'No hay un año lectivo activo'});
+    await anioLectivoBDD.agregarCurso(nuevoCurso._id);
     await nuevoCurso.save();
+    await anioLectivoBDD.save();
     res.status(201).json({msg: 'Curso registrado correctamente'});
 }
 
@@ -269,6 +274,33 @@ const justificacionesEstudiantes = async (req, res) => {
     res.status(200).json({msg: 'Justificación registrada correctamente'});
 }
 
+const terminarAnioLectivo = async (req, res) => {
+    // Paso 1: Obtener Datos
+    const anioLectivoBDD = await anioLectivo.findOne({ estado: true });
+    if (!anioLectivoBDD) return res.status(400).json({ error: 'No hay un año lectivo activo' });
+    // Paso 2: Manipular la BDD
+    await anioLectivoBDD.terminarPeriodo();
+    res.status(200).json({ msg: 'Año lectivo finalizado correctamente' });
+}
+
+const comenzarAnioLectivo = async (req, res) => {
+    await anioLectivo.iniciarPeriodo(res);
+}
+
+const registrarFechaFin = async (req, res) => {
+    const { fechaFin } = req.body;
+    const anioLectivoBDD = await anioLectivo.findOne({ estado: true });
+    if (!anioLectivoBDD) return res.status(400).json({ error: 'No hay un año lectivo activo' });
+    if (!validarFecha(fechaFin)) return res.status(400).json({ error: 'La fecha no es válida, el formato es aaaa/mm/dd' });
+    await anioLectivoBDD.establecerFechaFin(res, fechaFin);
+}
+
+const seleccionarAnioLectivo = async (req, res) => {
+    const anioLectivoBDD = await anioLectivo.find().select('-__v -createdAt -updatedAt -cursos');
+    if (!anioLectivoBDD || anioLectivoBDD.length === 0) return res.status(400).json({ error: 'No hay años lectivos registrados' });
+    return res.status(200).json(anioLectivoBDD);
+}
+
 export {
     registrarAdmin,
     registrarProfesor,
@@ -280,5 +312,9 @@ export {
     registroAsistenciaEstudiantes,
     justificacionesEstudiantes,
     listarCursos,
-    listarEstudiantesXCurso
+    listarEstudiantesXCurso,
+    terminarAnioLectivo,
+    comenzarAnioLectivo,
+    seleccionarAnioLectivo,
+    registrarFechaFin
 }

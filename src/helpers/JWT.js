@@ -3,16 +3,16 @@ import dotenv from 'dotenv'
 
 dotenv.config()
 
-const generarJWT = (id, rol) => {
-    return jwt.sign({id, rol}, process.env.JWT_SECRET, {expiresIn: '1h'})
+const generarJWT = (id, rol, anio) => {
+    return jwt.sign({id, rol, anio}, process.env.JWT_SECRET, {expiresIn: '1h'})
 }
 
 const verificarAutenticacion = async (req,res,next)=>{
 if(!req.headers.authorization) return res.status(404).json({error:"Lo sentimos, debes proprocionar un token"})    
     const {authorization} = req.headers
     try {
-        const {id,rol} = jwt.verify(authorization.split(' ')[1],process.env.JWT_SECRET)
-        req.userBDD = {id,rol}
+        const {id,rol, anio} = jwt.verify(authorization.split(' ')[1],process.env.JWT_SECRET)
+        req.userBDD = {id,rol, anio}
         next()
     } catch (error) {
         const e = new Error("Formato del token no válido")

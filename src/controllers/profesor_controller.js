@@ -97,6 +97,8 @@ const observacionesEstudiantes  = async (req, res) => {
     const estudianteBDD = await observaciones.findOne({ cedula });
     if (!estudianteBDD) return res.status(400).json({ error: 'El estudiante no está registrado' });
 
+    if (typeof observacion !== 'string' || observacion.trim() === '') return res.status(400).json({ error: 'La observación debe ser un texto no vacío' });
+
     // Paso 3: Manipular la BDD
     const profesorBDD = await Profesor.findById(id);
     if (!profesorBDD) return res.status(400).json({ error: 'Profesor no encontrado' });
