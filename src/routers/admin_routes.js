@@ -16,7 +16,7 @@ router.post('/registro-asistencia', verificarAutenticacion, verificarRolAdmin, r
 router.patch('/justificar-inasistencia', verificarAutenticacion, verificarRolAdmin, justificacionesEstudiantes)
 router.get('/cursos', verificarAutenticacion, verificarRolAdmin, listarCursos)
 router.get('/cursos/:cursoId/estudiantes', verificarAutenticacion, verificarRolAdmin, listarEstudiantesXCurso)
-router.post('/terminar-periodo', verificarAutenticacion, verificarRolAdmin, terminarAnioLectivo)
+router.patch('/terminar-periodo', verificarAutenticacion, verificarRolAdmin, terminarAnioLectivo)
 router.post('/iniciar-periodo', verificarAutenticacion, verificarRolAdmin, comenzarAnioLectivo)
 
 export default router

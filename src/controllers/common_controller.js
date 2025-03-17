@@ -1,7 +1,7 @@
 import representante from "../models/representante.js";
 import profesor from "../models/profesor.js";
 import administradores from "../models/administradores.js";
-import anioLectivo from "../models/anioLectivo.js";
+import aniosLectivo from "../models/anioLectivo.js";
 import { generarJWT } from "../helpers/JWT.js";
 import { sendMailToChangeEmail, sendMailToRecoveryPassword, sendMailToRecoveryPasswordProfesor, sendMailToRecoveryPasswordRepresentante } from "../config/nodemailer.js";
 
@@ -18,7 +18,7 @@ const login = async (req, res) => {
     if (!email || !password) return res.status(400).json({ error: 'Faltan campos por llenar' })
     if (!validarEmail(email)) return res.status(400).json({error: 'El email no es válido'})
     if (!anioLectivo) return res.status(400).json({ error: 'Debe seleccionar el periodo académico'})
-    const anioLectivoBDD = await anioLectivo.findOne({ periodo: anioLectivo })
+    const anioLectivoBDD = await aniosLectivo.findOne({ periodo: anioLectivo })
     if (!anioLectivoBDD) return res.status(400).json({ error: 'El periodo académico no es válido' })
     const representanteBDD = await representante.findOne({email});
     if (representanteBDD) {

@@ -74,7 +74,7 @@ anioLectivoSchema.statics.terminarFechaFin = async function(res){
     const anioLectivoActivo = await this.findOne({ estado: true });
     const verificarFechaFin = new Date()
     const fFin = `${verificarFechaFin.getFullYear()}/${verificarFechaFin.getMonth()+1}/${verificarFechaFin.getDate()}`
-    if (anioLectivoActivo.fechaFin === fFin) {
+    if (anioLectivoActivo?.fechaFin === fFin) {
         await anioLectivoActivo.terminarPeriodo();
         return res.status(200).json("Periodo terminado");
     }
