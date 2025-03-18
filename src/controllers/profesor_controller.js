@@ -1,6 +1,6 @@
 import Profesor from "../models/profesor.js"
 import {  sendMailToRecoveryPasswordProfesor } from '../config/nodemailer.js';
-import { generarJWT } from '../helpers/JWT.js';
+import { generarJWT } from '../middlewares/JWT.js';
 import materias from "../models/materias.js";
 import observaciones from "../models/observaciones.js";
 import cursos from "../models/cursos.js";

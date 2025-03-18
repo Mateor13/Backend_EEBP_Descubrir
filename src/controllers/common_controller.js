@@ -2,7 +2,7 @@ import representante from "../models/representante.js";
 import profesor from "../models/profesor.js";
 import administradores from "../models/administradores.js";
 import aniosLectivo from "../models/anioLectivo.js";
-import { generarJWT } from "../helpers/JWT.js";
+import { generarJWT } from "../middlewares/JWT.js";
 import { sendMailToChangeEmail, sendMailToRecoveryPassword, sendMailToRecoveryPasswordProfesor, sendMailToRecoveryPasswordRepresentante } from "../config/nodemailer.js";
 
 const validarEmail = (email) => {

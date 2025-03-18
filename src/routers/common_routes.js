@@ -1,6 +1,6 @@
 import Router from 'express';
 import { cambiarDatos, cambiarPassword, comprobarTokenPassword, confirmarCuenta, login, nuevaContrasena, perfil, recuperarPassword } from '../controllers/common_controller.js';
-import { verificarAutenticacion, verificarRolAdmin, verificarRolProfesor, verificarRolRepresentante } from '../helpers/JWT.js';
+import { verificarAutenticacion, verificarRolAdmin, verificarRolProfesor, verificarRolRepresentante } from '../middlewares/JWT.js';
 
 const router = Router();
 

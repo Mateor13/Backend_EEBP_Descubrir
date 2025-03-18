@@ -1,6 +1,6 @@
 import Router from 'express'
 import { verAsistenciaEstudiante, verEstudiantes, verNotasEstudiante, verObservacionesEstudiante } from '../controllers/representante_controller.js'
-import { verificarAutenticacion, verificarRolRepresentante } from '../helpers/JWT.js'
+import { verificarAutenticacion, verificarRolRepresentante } from '../middlewares/JWT.js'
 const router = Router()
 
 router.get('/estudiantes-registrados', verificarAutenticacion, verificarRolRepresentante, verEstudiantes)
