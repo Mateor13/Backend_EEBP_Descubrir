@@ -4,10 +4,6 @@ import Profesor from '../models/profesor.js';
 import representantes from '../models/representante.js';
 import cursos from '../models/cursos.js';
 import estudiantes from '../models/estudiantes.js';
-import materias from '../models/materias.js';
-import asistencia from '../models/asistencia.js';
-import Observaciones from '../models/observaciones.js';
-import anioLectivo from '../models/anioLectivo.js';
 
 const registroAdminValidator = [
     check('anio').custom((_, { req }) => {

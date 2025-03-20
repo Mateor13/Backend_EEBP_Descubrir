@@ -5,110 +5,58 @@ import aniosLectivo from "../models/anioLectivo.js";
 import { generarJWT } from "../middlewares/JWT.js";
 import { sendMailToChangeEmail, sendMailToRecoveryPassword, sendMailToRecoveryPasswordProfesor, sendMailToRecoveryPasswordRepresentante } from "../config/nodemailer.js";
 
-const validarEmail = (email) => {
-    const regExp = new RegExp(/\S+@\S+\.\S+/)
-    return regExp.test(email)
-}
+// Determinar los modelos, roles, select y funciones de correo
+const roles = [
+    { model: representante, rol: "representante",correo: sendMailToRecoveryPasswordRepresentante, selected: '-_id -password -token -estudiantes -confirmEmail -estado -__v -createdAt -updatedAt' },
+    { model: profesor, rol: "profesor", correo: sendMailToRecoveryPasswordProfesor, selected: '-_id -password -token -confirmEmail -admin -cursos -estado -__v -createdAt -updatedAt' },
+    { model: administradores, rol: "administrador", correo: sendMailToRecoveryPassword, selected: '-_id -password -token -confirmEmail -estado -__v -createdAt -updatedAt' }
+]
 
 const login = async (req, res) => {
     //Paso 1: Extraer los datos
     const { email, password, anioLectivo } = req.body
     //Paso 2: Realizar validaciones
-    if (Object.keys(req.body).includes(' ')) return res.status(400).json({ error: 'No se permiten campos con espacios' })
-    if (!email || !password) return res.status(400).json({ error: 'Faltan campos por llenar' })
-    if (!validarEmail(email)) return res.status(400).json({error: 'El email no es válido'})
-    if (!anioLectivo) return res.status(400).json({ error: 'Debe seleccionar el periodo académico'})
     const anioLectivoBDD = await aniosLectivo.findOne({ periodo: anioLectivo })
-    if (!anioLectivoBDD) return res.status(400).json({ error: 'El periodo académico no es válido' })
-    const representanteBDD = await representante.findOne({email});
-    if (representanteBDD) {
-        if (!representanteBDD.confirmEmail) return res.status(400).json({ error: 'Por favor confirme su cuenta'})
-        const verificarPassword = await representanteBDD.compararPassword(password)
-        if (!verificarPassword) return res.status(400).json({ error: 'Credenciales incorrectas' })
-        const token = generarJWT(representanteBDD._id, 'representante', anioLectivoBDD.estado)
-        return res.status(200).json({ mensaje: `Bienvenido representante ${representanteBDD.nombre} ${representanteBDD.apellido}`, token })
+    for (const { model, rol } of roles) {
+        const userBDD = await model.findOne({ email });
+        if (userBDD) {
+            const token = generarJWT(userBDD._id, rol, anioLectivoBDD.estado)
+            return res.status(200).json({ mensaje: `Bienvenido ${userBDD.nombre} ${userBDD.apellido}`, token })
+        }
     }
-    const profesorBDD = await profesor.findOne({email});
-    if (profesorBDD) {
-        if (!profesorBDD.confirmEmail) return res.status(400).json({ error: 'Por favor confirme su cuenta'})
-        const verificarPassword = await profesorBDD.compararPassword(password)
-        if (!verificarPassword) return res.status(400).json({ error: 'Credenciales incorrectas' })
-        const token = generarJWT(profesorBDD._id, 'profesor', anioLectivoBDD.estado)
-        return res.status(200).json({ mensaje: `Bienvenido profesor/a ${profesorBDD.nombre} ${profesorBDD.apellido}`, token })
-    }
-    const adminBDD = await administradores.findOne({email})
-    if (adminBDD) {
-        if (!adminBDD.confirmEmail) return res.status(400).json({ error: 'Por favor confirme su cuenta'})
-        const verificarPassword = await adminBDD.compararPassword(password)
-        if (!verificarPassword) return res.status(400).json({ error: 'Credenciales incorrectas' })
-        const token = generarJWT(adminBDD._id, 'administrador', anioLectivoBDD.estado)
-        return res.status(200).json({ mensaje: `Bienvenido administrador/a ${adminBDD.nombre} ${adminBDD.apellido}`, token })
-    }
-    return res.status(400).json({ error: 'Credenciales incorrectas' })
 }
 
 const confirmarCuenta = async (req, res) => {
-    // Paso 1: Extraer los datos
+    // Paso 1: Extraer los datos 
     const { token } = req.params;
-
-    // Paso 2: Realizar validaciones
-    if (!token) return res.status(400).json({ error: 'Faltan campos por llenar' });
-
-    // Buscar el representante por token
-    const representanteBDD = await representante.findOne({ token });
-    if (representanteBDD) {
-        representanteBDD.confirmEmail = true;
-        representanteBDD.token = null;
-        await representanteBDD.save();
-        return res.status(200).json({ mensaje: 'Su cuenta se ha confirmado exitosamente, ya puede iniciar sesión' });
+    // Paso 2: Buscar en la base de datos
+    for (const { model } of roles) {
+        const userBDD = await model.findOne({ token });
+        if (userBDD) {
+            // Paso 3: Manipular los datos
+            userBDD.confirmEmail = true;
+            userBDD.token = null;
+            await userBDD.save();
+            return res.status(200).json({ mensaje: 'Su cuenta se ha confirmado exitosamente, ya puede iniciar sesión' });
+        }
+        return res.status(400).json({ error: 'El token no es válido' });
     }
-
-    // Buscar el profesor por token
-    const profesorBDD = await profesor.findOne({ token });
-    if (profesorBDD) {
-        profesorBDD.confirmEmail = true;
-        profesorBDD.token = null;
-        await profesorBDD.save();
-        return res.status(200).json({ mensaje: 'Su cuenta se ha confirmado exitosamente, ya puede iniciar sesión' });
-    }
-
-    // Buscar el administrador por token
-    const adminBDD = await administradores.findOne({ token });
-    if (adminBDD) {
-        adminBDD.confirmEmail = true;
-        adminBDD.token = null;
-        await adminBDD.save();
-        return res.status(200).json({ mensaje: 'Su cuenta se ha confirmado exitosamente, ya puede iniciar sesión' });
-    }
-    return res.status(400).json({ error: 'El token no es válido' });
 }
 
 const recuperarPassword = async (req, res) => {
     //Paso 1: Extraer los datos
     const { email } = req.body
-    //Paso 2: Realizar validaciones
-    if (Object.keys(req.body).includes('')) return res.status(400).json({ error: 'No se permiten campos vacios' })
-    if (!email) return res.status(400).json({ error: 'Faltan campos por llenar' })
-    const representanteBDD = await representante.findOne({email})
-    if (representanteBDD) {
-        const token = await representanteBDD.generarToken()
-        await sendMailToRecoveryPasswordRepresentante(email, token)
-        await representanteBDD.save()
-        return res.status(200).json({ mensaje: 'Para recuperar su contraseña, se le ha enviado un correo' })
-    }
-    const profesorBDD = await profesor.findOne({email})
-    if (profesorBDD) {
-        const token = await profesorBDD.generarToken()
-        await sendMailToRecoveryPasswordProfesor(email, token)
-        await profesorBDD.save()
-        return res.status(200).json({ mensaje: 'Para recuperar su contraseña, se le ha enviado un correo' })
-    }
-    const adminBDD = await administradores.findOne({email})
-    if (adminBDD) {
-        const token = await adminBDD.generarToken()
-        await sendMailToRecoveryPassword(email, token)
-        await adminBDD.save()
-        return res.status(200).json({ mensaje: 'Para recuperar su contraseña, se le ha enviado un correo' })
+
+    //Paso 2: Buscar en la base de datos
+    for (const { model, correo } of roles) {
+        const userBDD = await model.findOne({ email });
+        if (userBDD) {
+            // Paso 3: Manipular los datos
+            const token = await userBDD.generarToken();
+            await correo(email, token);
+            await userBDD.save();
+            return res.status(200).json({ mensaje: 'Para recuperar su contraseña, se le ha enviado un correo' });
+        }
     }
     return res.status(400).json({ error: 'No se ha encontrado el email ingresado' })
 }
@@ -116,74 +64,43 @@ const recuperarPassword = async (req, res) => {
 const comprobarTokenPassword = async (req, res) => {
     //Paso 1: Extraer los datos
     const { token } = req.params
-    //Paso 2: Realizar validaciones
-    if (!token) return res.status(400).json({ error: 'Falta el token para recuperar contraseña' })
-    const representanteBDD = await representante.findOne({token})
-    if (representanteBDD) {
-        return res.status(200).json({ mensaje: 'Este token es válido' })
+    //Paso 2: Buscar en la base de datos
+    for (const { model } of roles) {
+        const userBDD = await model.findOne({ token });
+        if (userBDD) {
+            return res.status(200).json({ mensaje: 'Este token es válido' });
+        }
+        return res.status(400).json({ error: 'Este token no es válido' });
     }
-    const profesorBDD = await profesor.findOne({token})
-    if (profesorBDD) {
-        return res.status(200).json({ mensaje: 'Este token es válido' })
-    }
-    const adminBDD = await administradores.findOne({token})
-    if (adminBDD) {
-        return res.status(200).json({ mensaje: 'Este token es válido' })
-    }
-    return res.status(400).json({ error: 'Este token no es válido' })
 }
 
 const perfil = async (req, res) => {
-    const {id, anioLectivo} = req.userBDD
-    console.log(anioLectivo)
-    const representanteBDD = await representante.findById(id).select('-_id -password -token -estudiantes -confirmEmail -estado -__v -createdAt -updatedAt')
-    if (representanteBDD) {
-        console.log(representanteBDD)
-        return res.status(200).json(representanteBDD)
+    //Paso 1: Extraer los datos
+    const { id } = req.userBDD
+    //Paso 2: Buscar en la base de datos
+    for (const { model, selected } of roles) {
+        const userBDD = await model.findById(id).select(selected);
+        if (userBDD) {
+            return res.status(200).json(userBDD);
+        }
+        return res.status(400).json({ error: 'Fallo en la carga de datos' });
     }
-    const profesorBDD = await profesor.findById(id).select('-_id -password -token -confirmEmail -admin -cursos -estado -__v -createdAt -updatedAt')
-    if (profesorBDD) {
-        return res.status(200).json(profesorBDD)
-    }
-    const adminBDD = await administradores.findById(id).select('-_id -password -token -confirmEmail -estado -__v -createdAt -updatedAt')
-    if (adminBDD) {
-        return res.status(200).json(adminBDD)
-    }
-    return res.status(400).json({ error: 'Fallo en la carga de datos' })
 }
 
 const nuevaContrasena = async (req, res) => {
     //Paso 1: Extraer los datos
     const { password, confirmPassword } = req.body
     const { token } = req.params
-    //Paso 2: Realizar validaciones
-    if (Object.keys(req.body).includes('')) return res.status(400).json({ error: 'No se permiten campos con espacios' })    
-    if (!password || !confirmPassword) return res.status(400).json({ error: 'Faltan campos por llenar' })
-    if (password !== confirmPassword) return res.status(400).json({ error: 'Las contraseñas no coinciden' })
-    if (password.length < 8) return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres' }    )
-    const representanteBDD = await representante.findOne({token})
-    if (representanteBDD) {
-        if (representanteBDD.token !== token) return res.status(400).json({ error: 'Token no válido' })
-        representanteBDD.token = null
-        await representanteBDD.encriptarPassword(password)
-        await representanteBDD.save()
-        return res.status(200).json({ mensaje: 'Contraseña actualizada' })
-    }
-    const profesorBDD = await profesor.findOne({token})
-    if (profesorBDD) {
-        if (profesorBDD.token !== token) return res.status(400).json({ error: 'Token no válido' })
-        profesorBDD.token = null
-        await profesorBDD.encriptarPassword(password)
-        await profesorBDD.save()
-        return res.status(200).json({ mensaje: 'Contraseña actualizada' })
-    }
-    const adminBDD = await administradores.findOne({token})
-    if (adminBDD) {
-        if (adminBDD.token !== token) return res.status(400).json({ error: 'Token no válido' })
-        adminBDD.token = null
-        await adminBDD.encriptarPassword(password)
-        await adminBDD.save()
-        return res.status(200).json({ mensaje: 'Contraseña actualizada' })
+    //Paso 2: Buscar en la base de datos
+    for (const { model } of roles) {
+        const userBDD = await model.findOne({ token });
+        if (userBDD) {
+            // Paso 3: Manipular los datos
+            userBDD.token = null
+            await userBDD.encriptarPassword(password)
+            await userBDD.save()
+            return res.status(200).json({ mensaje: 'Contraseña actualizada' });
+        }
     }
     return res.status(400).json({ error: 'El token no es válido' })
 }
@@ -263,7 +180,7 @@ const cambiarDatos = async (req, res) => {
         return res.status(200).json({ mensaje: 'Los datos se han actualizado correctamente' })
     }
     const profesorBDD = await profesor.findById(id)
-    if (profesorBDD){
+    if (profesorBDD) {
         if (!telefono || !direccion) return res.status(400).json({ error: 'Faltan campos por llenar' })
         if (telefono.length !== 10) return res.status(400).json({ error: 'El teléfono debe tener 10 dígitos' })
         if (profesorBDD.email !== email) {
@@ -288,7 +205,7 @@ const cambiarDatos = async (req, res) => {
         return res.status(200).json({ mensaje: 'Los datos se han actualizado correctamente' })
     }
     const adminBDD = await administradores.findById(id)
-    if (adminBDD){
+    if (adminBDD) {
         if (adminBDD.email !== email) {
             const existeEmail = await administradores.findOne({ email })
             if (existeEmail) return res.status(400).json({ error: 'El email ya está registrado' })
