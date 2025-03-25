@@ -1,7 +1,5 @@
 import { check, validationResult } from 'express-validator';
-import representante from '../models/representante.js';
 import estudiantes from '../models/estudiantes.js';
-import notas from '../models/notas.js';
 
 const verNotasEstudianteValidator = [
     check('idEstudiante')
