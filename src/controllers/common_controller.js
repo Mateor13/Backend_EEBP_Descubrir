@@ -7,10 +7,15 @@ import { sendMailToChangeEmail, sendMailToRecoveryPassword, sendMailToRecoveryPa
 
 // Determinar los modelos, roles, select y funciones de correo
 const roles = [
-    { model: representante, rol: "representante",correo: sendMailToRecoveryPasswordRepresentante, selected: '-_id -password -token -estudiantes -confirmEmail -estado -__v -createdAt -updatedAt' },
+    { model: representante, rol: "representante", correo: sendMailToRecoveryPasswordRepresentante, selected: '-_id -password -token -estudiantes -confirmEmail -estado -__v -createdAt -updatedAt' },
     { model: profesor, rol: "profesor", correo: sendMailToRecoveryPasswordProfesor, selected: '-_id -password -token -confirmEmail -admin -cursos -estado -__v -createdAt -updatedAt' },
     { model: administradores, rol: "administrador", correo: sendMailToRecoveryPassword, selected: '-_id -password -token -confirmEmail -estado -__v -createdAt -updatedAt' }
 ]
+
+const rolActual = (rol) => {
+    const rolModelo = roles.find(r => r.rol === rol)
+    return rolModelo.model
+}
 
 const login = async (req, res) => {
     //Paso 1: Extraer los datos
@@ -89,7 +94,7 @@ const perfil = async (req, res) => {
 
 const nuevaContrasena = async (req, res) => {
     //Paso 1: Extraer los datos
-    const { password, confirmPassword } = req.body
+    const { password } = req.body
     const { token } = req.params
     //Paso 2: Buscar en la base de datos
     for (const { model } of roles) {
@@ -107,121 +112,53 @@ const nuevaContrasena = async (req, res) => {
 
 const cambiarPassword = async (req, res) => {
     //Paso 1: Extraer los datos
-    const { password, newpassword, confirmpassword } = req.body
+    const { password, newpassword } = req.body
     const { id } = req.userBDD
-    //Paso 2: Realizar validaciones
-    if (Object.keys(req.body).includes(' ')) return res.status(400).json({ error: 'No se permiten campos con espacios' })
-    if (!password || !newpassword || !confirmpassword) return res.status(400).json({ error: 'Faltan campos por llenar' })
-    if (newpassword !== confirmpassword) return res.status(400).json({ error: 'Las contraseñas no coinciden' })
-    if (newpassword.length < 8) return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres' })
-    if (password === newpassword) return res.status(400).json({ error: 'La nueva contraseña no puede ser igual a la actual' })
-    const representanteBDD = await representante.findById(id)
-    if (representanteBDD) {
-        const verificarPassword = await representanteBDD.compararPassword(password)
-        if (!verificarPassword) return res.status(400).json({ error: 'La Contraseña actual es incorrecta' })
-        await representanteBDD.encriptarPassword(newpassword)
-        await representanteBDD.save()
-        return res.status(200).json({ mensaje: 'Contraseña actualizada' })
+    //Paso 2: Buscar en la base de datos
+    for (const { model } of roles) {
+        const userBDD = await model.findById(id);
+        if (userBDD) {
+            const verificarPassword = await userBDD.compararPassword(password);
+            if (!verificarPassword) return res.status(400).json({ error: 'La Contraseña actual es incorrecta' });
+            await userBDD.encriptarPassword(newpassword);
+            await userBDD.save();
+            return res.status(200).json({ mensaje: 'Contraseña actualizada' });
+        }
     }
-    const profesorBDD = await profesor.findById(id)
-    if (profesorBDD) {
-        const verificarPassword = await profesorBDD.compararPassword(password)
-        if (!verificarPassword) return res.status(400).json({ error: 'La Contraseña actual es incorrecta' })
-        await profesorBDD.encriptarPassword(newpassword)
-        await profesorBDD.save()
-        return res.status(200).json({ mensaje: 'Contraseña actualizada' })
-    }
-    const adminBDD = await administradores.findById(id)
-    if (adminBDD) {
-        const verificarPassword = await adminBDD.compararPassword(password)
-        if (!verificarPassword) return res.status(400).json({ error: 'La Contraseña actual es incorrecta' })
-        await adminBDD.encriptarPassword(newpassword)
-        await adminBDD.save()
-        return res.status(200).json({ mensaje: 'Contraseña actualizada' })
-    }
-    return res.status(400).json({ error: 'Usuario no registrado' })
+    return res.status(400).json({ error: 'Error al actualizar el usuario' });
 }
 
 const cambiarDatos = async (req, res) => {
     //Paso 1: Extraer los datos
     const { nombre, apellido, email, telefono, direccion } = req.body
-    const { id } = req.userBDD
-    //Paso 2: Realizar validaciones
-    if (Object.keys(req.body).includes(' ')) return res.status(400).json({ error: 'No se permiten campos con espacios' })
-    if (!nombre || !apellido || !email) return res.status(400).json({ error: 'Faltan campos por llenar' })
-    if (!validarEmail(email)) return res.status(400).json({ error: 'El email no es válido' })
-    const representanteBDD = await representante.findById(id)
-    if (representanteBDD) {
-        if (!telefono || !direccion) return res.status(400).json({ error: 'Faltan campos por llenar' })
-        if (telefono.length !== 10) return res.status(400).json({ error: 'El teléfono debe tener 10 dígitos' })
-        if (representanteBDD.email !== email) {
-            const existeEmail = await representante.findOne({ email })
-            if (existeEmail) return res.status(400).json({ error: 'El email ya está registrado' })
-            await sendMailToChangeEmail(representanteBDD.email, email)
+    const { id, rol } = req.userBDD
+    //Paso 2: Buscar y cambiar en la base de datos
+    const model = rolActual(rol)
+    const userBDD = await model.findById(id)
+    if (userBDD) {
+        if (userBDD.email !== email) {
+            for (const { model } of roles) {
+                const existeEmail = await model.findOne({ email })
+                if (existeEmail) return res.status(400).json({ error: 'El email ya está registrado' })
+            }
+            await sendMailToChangeEmail(userBDD.email, email)
         }
-        if (representanteBDD.telefono !== telefono) {
-            const existeTelefono = await representante.findOne({ telefono })
-            if (existeTelefono) return res.status(400).json({ error: 'El teléfono ya está registrado' })
+        if (rol === 'representante' || rol === 'profesor') {
+            if (userBDD.telefono !== telefono) {
+                for (const { model } of roles) {
+                    const existeTelefono = await model.findOne({ telefono })
+                    if (existeTelefono) return res.status(400).json({ error: 'El teléfono ya está registrado' })
+                }
+                userBDD.telefono = telefono
+            }
+            userBDD.direccion = direccion
         }
-        const adminBDD = await administradores.findOne({ email })
-        if (adminBDD) return res.status(400).json({ error: 'El email ya está registrado' })
-        const profesorBDD = await profesor.findOne({ email })
-        if (profesorBDD) return res.status(400).json({ error: 'El email ya está registrado' })
-        if (representanteBDD.telefono !== telefono) {
-            const existeTelefono = await representante.findOne({ telefono })
-            if (existeTelefono) return res.status(400).json({ error: 'El teléfono ya está registrado' })
-        }
-        representanteBDD.nombre = nombre
-        representanteBDD.apellido = apellido
-        representanteBDD.email = email
-        representanteBDD.telefono = telefono
-        representanteBDD.direccion = direccion
-        await representanteBDD.save()
+        userBDD.nombre = nombre
+        userBDD.apellido = apellido
+        userBDD.email = email
+        await userBDD.save()
         return res.status(200).json({ mensaje: 'Los datos se han actualizado correctamente' })
     }
-    const profesorBDD = await profesor.findById(id)
-    if (profesorBDD) {
-        if (!telefono || !direccion) return res.status(400).json({ error: 'Faltan campos por llenar' })
-        if (telefono.length !== 10) return res.status(400).json({ error: 'El teléfono debe tener 10 dígitos' })
-        if (profesorBDD.email !== email) {
-            const existeEmail = await profesor.findOne({ email })
-            if (existeEmail) return res.status(400).json({ error: 'El email ya está registrado' })
-            await sendMailToChangeEmail(email, profesorBDD.email)
-        }
-        const adminBDD = await administradores.findOne({ email })
-        if (adminBDD) return res.status(400).json({ error: 'El email ya está registrado' })
-        const representanteBDD = await representante.findOne({ email })
-        if (representanteBDD) return res.status(400).json({ error: 'El email ya está registrado' })
-        if (profesorBDD.telefono !== telefono) {
-            const existeTelefono = await profesor.findOne({ telefono })
-            if (existeTelefono) return res.status(400).json({ error: 'El teléfono ya está registrado' })
-        }
-        profesorBDD.nombre = nombre
-        profesorBDD.apellido = apellido
-        profesorBDD.email = email
-        profesorBDD.telefono = telefono
-        profesorBDD.direccion = direccion
-        await profesorBDD.save()
-        return res.status(200).json({ mensaje: 'Los datos se han actualizado correctamente' })
-    }
-    const adminBDD = await administradores.findById(id)
-    if (adminBDD) {
-        if (adminBDD.email !== email) {
-            const existeEmail = await administradores.findOne({ email })
-            if (existeEmail) return res.status(400).json({ error: 'El email ya está registrado' })
-            await sendMailToChangeEmail(email, adminBDD.email)
-        }
-        const profesorBDD = await profesor.findOne({ email })
-        if (profesorBDD) return res.status(400).json({ error: 'El email ya está registrado' })
-        const representanteBDD = await representante.findOne({ email })
-        if (representanteBDD) return res.status(400).json({ error: 'El email ya está registrado' })
-        adminBDD.nombre = nombre
-        adminBDD.apellido = apellido
-        adminBDD.email = email
-        await adminBDD.save()
-        return res.status(200).json({ mensaje: 'Los datos se han actualizado correctamente' })
-    }
-    return res.status(400).json({ error: 'Usuario no registrado' })
 }
 
 export {

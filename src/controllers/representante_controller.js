@@ -1,20 +1,6 @@
 import Representante from "../models/representante.js";
 import mongoose from 'mongoose'
 
-const validarEmail = (email) => {
-    const regExp = new RegExp(/\S+@\S+\.\S+/)
-    return regExp.test(email)
-}
-
-const validarCurso = (curso) => {
-    const regExp = new RegExp(/^[0-7][A-E]$/)
-    return regExp.test(curso)
-}
-const validarFecha = (fecha) => {
-    const regExp = new RegExp(/^\d{4}\/\d\/\d{2}$/);
-    return regExp.test(fecha);
-};
-
 const verEstudiantes = async (req, res) => {
     //Paso 1: Obtener el id del representante
     const {id} = req.userBDD
@@ -115,7 +101,6 @@ const verObservacionesEstudiante = async (req, res) => {
     //Paso 1: Obtener el id del representante
     const {id} = req.userBDD
     const {idEstudiante} = req.params
-    console.log('ID ESTUDIANTE: ', idEstudiante, '- ID REPRESENTANTE: ', id)
     //Paso 2: Buscar al representante en la base de datos
     const representante = await Representante.aggregate([
         {
