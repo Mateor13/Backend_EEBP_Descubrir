@@ -185,6 +185,34 @@ const visualizarEstudiantesPorMateria = async (req, res) => {
     }
 };
 
+const eliminarProfesor = async (req, res) => {
+    // Paso 1: Obtener los datos
+    const { id } = req.params;
+    // Paso 2: Realizar validaciones
+    const profesorBDD = await Profesor.findById(id);
+    profesorBDD.estado = false;
+    profesorBDD.save();
+    res.status(200).json({ msg: 'Profesor eliminado correctamente' });
+}
+
+asignarProfesor = async (req, res) => {
+    // Paso 1: Obtener los datos
+    const { idProfesor, idNuevoProfesor } = req.body;
+    // Paso 2: Realizar validaciones
+    const profesorBDD = await Profesor.findById(idProfesor);
+    const nuevoProfesorBDD = await Profesor.findById(idNuevoProfesor);
+    const materiasBDD = await materias.find({ profesor: idProfesor });
+    const idCursos = profesorBDD.cursos;
+    for (const materia of materiasBDD) {
+        materia.profesor = idNuevoProfesor;
+        await materia.save();
+    }
+    nuevoProfesorBDD.cursos.push(...idCursos);
+    profesorBDD.cursos = [];
+    await profesorBDD.save();
+    await nuevoProfesorBDD.save();
+}
+
 export {
     subirNotasEstudiantes,
     modificarNotasEstudiantes,
@@ -192,5 +220,7 @@ export {
     observacionesEstudiantes,
     visualizarEstudiantesCurso,
     visualizarMateriasAsignadas,
-    visualizarEstudiantesPorMateria
+    visualizarEstudiantesPorMateria,
+    eliminarProfesor,
+
 }

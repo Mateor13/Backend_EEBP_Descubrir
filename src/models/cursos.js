@@ -96,4 +96,9 @@ cursoSchema.methods.buscarEstudiantesPorMateriaYProfesor = async function(profes
     return estudiantes;
 };
 
+cursoSchema.methods.eliminarEstudiante = async function(estudianteId) {
+    this.estudiantes = this.estudiantes.filter(estudiante => estudiante._id.toString() !== estudianteId.toString());
+    await this.save();
+}
+
 export default model('Curso', cursoSchema)

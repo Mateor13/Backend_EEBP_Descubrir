@@ -4,6 +4,8 @@ import Profesor from '../models/profesor.js';
 import representantes from '../models/representante.js';
 import cursos from '../models/cursos.js';
 import estudiantes from '../models/estudiantes.js';
+import anioLectivo from '../models/anioLectivo.js';
+import materias from '../models/materias.js';
 
 const registroAdminValidator = [
     check('anio').custom((_, { req }) => {
@@ -312,7 +314,7 @@ const asignarRepresentanteValidator = [
 ]
 
 const registroAsistenciaEstudiantesValidator = [
-    check('anio').custom((_ , { req }) => {
+    check('anio').custom((_, { req }) => {
         if (!req.userBDD.anio) {
             throw new Error('Este año lectivo ya ha finalizado');
         }
@@ -346,7 +348,7 @@ const registroAsistenciaEstudiantesValidator = [
 ]
 
 const justificarInasistenciaValidator = [
-    check('anio').custom((_ , { req }) => {
+    check('anio').custom((_, { req }) => {
         if (!req.userBDD.anio) {
             throw new Error('Este año lectivo ya ha finalizado');
         }
@@ -402,14 +404,188 @@ const justificarInasistenciaValidator = [
     }
 ]
 
-export { 
-    registroAdminValidator, 
-    registroProfesorValidator, 
-    registroRepresentanteValidator, 
-    registroCursoValidator, 
-    registroMateriaValidator, 
+const terminarAnioLectivoValidator = [
+    check('anio').custom(async () => {
+        const anioLectivoBDD = await anioLectivo.findOne({ estado: true });
+        if (!anioLectivoBDD) {
+            throw new Error('No hay un año lectivo activo');
+        }
+    }),
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: errors.array()[0].msg });
+        }
+        next();
+    }
+]
+
+const registrarFechaFinValidator = [
+    check('fechaFin')
+        .notEmpty()
+        .withMessage('La fecha de fin es obligatoria')
+        .custom((fechaFin) => {
+            const regExp = new RegExp(/^\d{4}\/\d{1,2}\/\d{1,2}$/);
+            if (!regExp.test(fechaFin)) {
+                throw new Error('La fecha no es válida');
+            }
+            const [year, month, day] = fechaFin.split('/').map(Number);
+            const date = new Date(`${year}-${month}-${day}`);
+            if (month < 1 || month > 12) {
+                throw new Error('El mes no es válido');
+            }
+            if (day < 1 || day > 31) {
+                throw new Error('El día no es válido');
+            }
+            if (month === 4 || month === 6 || month === 9 || month === 11) {
+                if (day > 30) {
+                    throw new Error('Este mes no tiene más de 30 días');
+                }
+            }
+            if (month === 2 && day > 29) {
+                throw new Error('Febrero no tiene más de 29 días');
+            }
+        }),
+    check('anioLectivo')
+        .custom(async () => {
+            const anioLectivoBDD = await anioLectivo.findOne({ estado: true });
+            if (!anioLectivoBDD) {
+                throw new Error('No hay un año lectivo activo');
+            }
+        }
+        ),
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: errors.array()[0].msg });
+        }
+        next();
+    }
+]
+
+const seleccionarAnioLectivoValidator = [
+    check('anioLectivo')
+        .custom(async () => {
+            const anioLectivoBDD = await anioLectivo.find()
+            if (!anioLectivoBDD || anioLectivoBDD.length === 0) {
+                throw new Error('No hay años lectivos registrados');
+            }
+        }),
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: errors.array()[0].msg });
+        }
+        next();
+    }
+]
+
+const eliminarProfesorValidator = [
+    check('anio').custom((_, { req }) => {
+        if (!req.userBDD.anio) {
+            throw new Error('Este año lectivo ya ha finalizado');
+        }
+    }),
+    check('id')
+        .notEmpty()
+        .withMessage('El id del profesor es obligatorio')
+        .custom(async (id) => {
+            const profesorBDD = await Profesor.findById(id);
+            if (!profesorBDD) {
+                throw new Error('El profesor no está registrado');
+            }
+            const materiasBDD = await materias.find({ profesor: id });
+            if (materiasBDD.length > 0) {
+                throw new Error('No se puede eliminar el profesor porque está asociado a un curso, asigne otro profesor primero');
+            }
+        }),
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: errors.array()[0].msg });
+        }
+        next();
+    }
+
+]
+
+const reemplazarProfesorValidator = [
+    check('anio').custom((_, { req }) => {
+        if (!req.userBDD.anio) {
+            throw new Error('Este año lectivo ya ha finalizado');
+        }
+    }),
+    check(['idProfesor', 'idProfesorNuevo'])
+        .notEmpty()
+        .withMessage('El id del profesor es obligatorio'),
+    check('idProfesorNuevo')
+        .custom(async (idProfesorNuevo) => {
+            const profesorBDD = await Profesor.findById(idProfesorNuevo);
+            if (!profesorBDD) {
+                throw new Error('El nuevo profesor no está registrado');
+            }
+            const { idProfesor } = req.body;
+            if (idProfesorNuevo === idProfesor) {
+                throw new Error('No se puede asignar el mismo profesor');
+            }
+        }),
+    check('idProfesor')
+        .custom(async (idProfesor) => {
+            const profesorBDD = await Profesor.findById(idProfesor);
+            if (!profesorBDD) {
+                throw new Error('El profesor no está registrado');
+            }
+        }),
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: errors.array()[0].msg });
+        }
+        next();
+    }
+]
+
+const eliminarEstudianteValidator = [
+    check('anio').custom((_, { req }) => {
+        if (!req.userBDD.anio) {
+            throw new Error('Este año lectivo ya ha finalizado');
+        }
+    }),
+    check('id')
+        .notEmpty()
+        .withMessage('El id del estudiante es obligatorio')
+        .custom(async (id) => {
+            const estudianteBDD = await estudiantes.findById(id);
+            if (!estudianteBDD) {
+                throw new Error('El estudiante no está registrado');
+            }
+        }),
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: errors.array()[0].msg });
+        }
+        next();
+    }
+]
+
+export {
+    //Administrador
+    //Registros
+    registroAdminValidator,
+    registroProfesorValidator,
+    registroRepresentanteValidator,
+    registroCursoValidator,
+    registroMateriaValidator,
     registroEstudianteValidator,
     asignarRepresentanteValidator,
     registroAsistenciaEstudiantesValidator,
-    justificarInasistenciaValidator
+    justificarInasistenciaValidator,
+    eliminarProfesorValidator,
+    reemplazarProfesorValidator,
+    //Anio Lectivo
+    terminarAnioLectivoValidator,
+    registrarFechaFinValidator,
+    seleccionarAnioLectivoValidator,
+
 };
