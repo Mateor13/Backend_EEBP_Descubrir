@@ -23,6 +23,11 @@ const representanteSchema = new Schema({
         required: true,
         trim: true
     },
+    direccion:{
+        type: String,
+        required: true,
+        trim: true
+    },
     password:{
         type: String,
         required: true,

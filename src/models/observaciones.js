@@ -24,15 +24,6 @@ const observacionSchema = new Schema({
         type: Number,
         default: 0
     },
-    cedula: {
-        type: String,
-        required: true,
-        trim: true
-    },
-    nombreEstudiante: {
-        type: String,
-        required: true
-    },
     estudiante: {
         type: Schema.Types.ObjectId,
         ref: 'Estudiante',

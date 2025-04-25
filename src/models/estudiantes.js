@@ -20,6 +20,10 @@ const estudianteSchema = new Schema({
     estado: {
         type: Boolean,
         default: true
+    },
+    cursoAsignado: {
+        type: Schema.Types.ObjectId,
+        ref: 'CursoAsignado'
     }
 }, {
     timestamps: true,

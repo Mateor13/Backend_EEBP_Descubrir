@@ -19,16 +19,17 @@ const rolActual = (rol) => {
 
 const login = async (req, res) => {
     //Paso 1: Extraer los datos
-    const { email, password, anioLectivo } = req.body
-    //Paso 2: Realizar validaciones
-    const anioLectivoBDD = await aniosLectivo.findOne({ periodo: anioLectivo })
-    for (const { model, rol } of roles) {
-        const userBDD = await model.findOne({ email });
-        if (userBDD) {
-            const token = generarJWT(userBDD._id, rol, anioLectivoBDD.estado)
-            return res.status(200).json({ mensaje: `Bienvenido ${userBDD.nombre} ${userBDD.apellido}`, token })
-        }
-    }
+    const { usuarioBDD, rol } = req;
+    //Paso 2: Generar el token
+    const token = generarJWT(usuarioBDD._id, rol, null)
+    return res.status(200).json({ mensaje: `Bienvenido ${usuarioBDD.nombre} ${usuarioBDD.apellido}`, token })
+}
+
+const seleccionarAnioLectivo = async (req, res) => {
+    const { id, rol } = req.userBDD
+    const { anioLectivoBDD } = req;
+    const token = generarJWT(id, rol, anioLectivoBDD.estado)
+    return res.status(200).json(token);
 }
 
 const confirmarCuenta = async (req, res) => {
@@ -44,8 +45,8 @@ const confirmarCuenta = async (req, res) => {
             await userBDD.save();
             return res.status(200).json({ mensaje: 'Su cuenta se ha confirmado exitosamente, ya puede iniciar sesión' });
         }
-        return res.status(400).json({ error: 'El token no es válido' });
     }
+    return res.status(400).json({ error: 'El token no es válido' });
 }
 
 const recuperarPassword = async (req, res) => {
@@ -71,12 +72,13 @@ const comprobarTokenPassword = async (req, res) => {
     const { token } = req.params
     //Paso 2: Buscar en la base de datos
     for (const { model } of roles) {
-        const userBDD = await model.findOne({ token });
+        console.log(model)
+        const userBDD = await model.findOne({ token: token });
         if (userBDD) {
             return res.status(200).json({ mensaje: 'Este token es válido' });
         }
-        return res.status(400).json({ error: 'Este token no es válido' });
     }
+    return res.status(400).json({ error: 'Este token no es válido' });
 }
 
 const perfil = async (req, res) => {
@@ -88,8 +90,8 @@ const perfil = async (req, res) => {
         if (userBDD) {
             return res.status(200).json(userBDD);
         }
-        return res.status(400).json({ error: 'Fallo en la carga de datos' });
     }
+    return res.status(400).json({ error: 'Fallo en la carga de datos' });
 }
 
 const nuevaContrasena = async (req, res) => {
@@ -113,17 +115,16 @@ const nuevaContrasena = async (req, res) => {
 const cambiarPassword = async (req, res) => {
     //Paso 1: Extraer los datos
     const { password, newpassword } = req.body
-    const { id } = req.userBDD
+    const { id, rol } = req.userBDD
+    const model = rolActual(rol)
     //Paso 2: Buscar en la base de datos
-    for (const { model } of roles) {
-        const userBDD = await model.findById(id);
-        if (userBDD) {
-            const verificarPassword = await userBDD.compararPassword(password);
-            if (!verificarPassword) return res.status(400).json({ error: 'La Contraseña actual es incorrecta' });
-            await userBDD.encriptarPassword(newpassword);
-            await userBDD.save();
-            return res.status(200).json({ mensaje: 'Contraseña actualizada' });
-        }
+    const userBDD = await model.findById(id);
+    if (userBDD) {
+        const verificarPassword = await userBDD.compararPassword(password);
+        if (!verificarPassword) return res.status(400).json({ error: 'La Contraseña actual es incorrecta' });
+        await userBDD.encriptarPassword(newpassword);
+        await userBDD.save();
+        return res.status(200).json({ mensaje: 'Contraseña actualizada' });
     }
     return res.status(400).json({ error: 'Error al actualizar el usuario' });
 }
@@ -163,6 +164,7 @@ const cambiarDatos = async (req, res) => {
 
 export {
     login,
+    seleccionarAnioLectivo,
     confirmarCuenta,
     recuperarPassword,
     comprobarTokenPassword,

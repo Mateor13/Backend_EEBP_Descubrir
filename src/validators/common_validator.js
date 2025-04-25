@@ -11,60 +11,62 @@ const loginValidator = [
     check('email')
         .isEmail()
         .withMessage('El email no es válido'),
-    check('anioLectivo')
-        .notEmpty()
-        .withMessage('Debe seleccionar el periodo académico')
-        .bail()
-        .custom(async (anioLectivo) => {
-            const anioLectivoBDD = await aniosLectivo.findOne({ periodo: anioLectivo });
-            if (!anioLectivoBDD) {
-                throw new Error('El periodo académico no es válido');
-            }
-        }),
     check('password')
         .custom(async (value, { req }) => {
             const { email } = req.body;
             const roles = [
-                { model: representante },
-                { model: profesor },
-                { model: administradores }
+                { model: representante, rol: 'representante' },
+                { model: profesor, rol: 'profesor' },
+                { model: administradores, rol: 'administrador' }
             ];
-            for (const { model } of roles) {
+            for (const { model, rol } of roles) {
                 const userBDD = await model.findOne({ email });
                 if (userBDD) {
-                    if (!userBDD.confirmEmail) {
-                        throw new Error('Por favor confirme su cuenta');
-                    }
+                    if (!userBDD.confirmEmail) throw new Error('Por favor confirme su cuenta');
+                    if (!userBDD.estado) throw new Error('Su cuenta ha sido desactivada, por favor contacte al administrador');
                     const verificarPassword = await userBDD.compararPassword(value);
-                    if (!verificarPassword) {
-                        throw new Error('Credenciales incorrectas');
-                    }
+                    if (!verificarPassword) throw new Error('Credenciales incorrectas');
+                    req.usuarioBDD = userBDD;
+                    req.rol = rol;
                     return true;
                 }
             }
             throw new Error('Credenciales incorrectas');
-            }),
-        (req, res, next) => {
-            const errors = validationResult(req);
-            if (!errors.isEmpty()) {
-                return res.status(400).json({ error: errors.array()[0].msg });
-            }
-            next();
-        }
+        }),
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
+        next();
+    }
 ]
 
-const confirmarCuentaValidator = [
-    check('token').custom(async (_,{ req }) => {
-        const { token } = req.params;
-        if (!token) {
-            throw new Error('El token es obligatorio');
-        }
-    }),
+
+const seleccionarAnioLectivoValidator = [
+    check('anioLectivo')
+        .custom(async (_, { req }) => {
+            const anioLectivoBDD = await aniosLectivo.find().select('-__v -createdAt -updatedAt -cursos');
+            if (!anioLectivoBDD || anioLectivoBDD.length === 0) throw new Error('No hay años lectivos registrados');
+            req.anioLectivoBDD = anioLectivoBDD;
+            return true;
+        }),
     (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ error: errors.array()[0].msg });
         }
+        next();
+    }
+]
+
+const confirmarCuentaValidator = [
+    check('token')
+        .custom((_, { req }) => {
+            if (!req.params.token) throw new Error('El token es obligatorio');
+            return true;
+        }),
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
         next();
     }
 ]
@@ -77,68 +79,57 @@ const recuperarPasswordValidator = [
         .withMessage('El email no es válido'),
     (req, res, next) => {
         const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
+        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
         next();
     }
 ]
 
 const comprobarTokenPasswordValidator = [
-    check('token').custom(async (_,{ req }) => {
-        const { token } = req.params;
-        if (!token) {
-            throw new Error('El token es obligatorio');
-        }
-    }),
+    check('token')
+        .custom((_, { req }) => {
+            if (!req.params.token) throw new Error('El token es obligatorio');
+            return true;
+        }),
     (req, res, next) => {
         const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
+        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
         next();
     }
 ]
 
 const perfilValidator = [
-    check('userBDD').custom(async (_,{ req }) => {
-        if (!req.userBDD) {
-            throw new Error('Falló al procesar los datos');
-        }
+    check('userBDD').custom(async (_, { req }) => {
+        if (!req.userBDD) throw new Error('Falló al procesar los datos');
     }),
     (req, res, next) => {
         const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
+        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
         next();
     }
 ]
 
 const nuevaContrasenaValidator = [
     check('token')
-    .custom(async (_, { req }) => {
-        const { token } = req.params;
-        if (!token) {
-            throw new Error('El token es obligatorio');
-        }
-    }),
+        .custom((_, { req }) => {
+            if (!req.params.token) throw new Error('El token es obligatorio');
+            return true;
+        }),
     check(['password', 'confirmPassword'])
         .notEmpty()
-        .withMessage('Todos los campos son obligatorios')
+        .withMessage('Todos los campos son obligatorios'),
+    check('password')
+        .isLength({ min: 6 })
+        .withMessage('La contraseña debe tener al menos 6 caracteres'),
+    check('confirmPassword')
         .isLength({ min: 6 })
         .withMessage('La contraseña debe tener al menos 6 caracteres')
-        .custom((password, confirmPassword) => {
-            if (password !== confirmPassword) {
-                throw new Error('Las contraseñas no coinciden');
-            }
+        .custom((value, { req }) => {
+            if (value !== req.body.password) throw new Error('Las contraseñas no coinciden');
             return true;
         }),
     (req, res, next) => {
         const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
+        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
         next();
     }
 ]
@@ -146,23 +137,24 @@ const nuevaContrasenaValidator = [
 const cambiarPasswordValidator = [
     check(['password', 'newPassword', 'confirmPassword'])
         .notEmpty()
-        .withMessage('Todos los campos son obligatorios')
+        .withMessage('Todos los campos son obligatorios'),
+    check('password')
+        .isLength({ min: 6 })
+        .withMessage('La contraseña debe tener al menos 6 caracteres'),
+    check('confirmPassword')
+        .isLength({ min: 6 })
+        .withMessage('La contraseña debe tener al menos 6 caracteres'),
+    check('newPassword')
         .isLength({ min: 6 })
         .withMessage('La contraseña debe tener al menos 6 caracteres')
         .custom((newPassword, { req }) => {
-            if (newPassword === req.body.password) {
-                throw new Error('La nueva contraseña debe ser diferente a la actual');
-            }
-            if (newPassword !== req.body.confirmPassword) {
-                throw new Error('Las contraseñas no coinciden');
-            }
+            if (newPassword === req.body.password) throw new Error('La nueva contraseña debe ser diferente a la actual');
+            if (req.body.password !== req.body.confirmPassword) throw new Error('Las contraseñas no coinciden');
             return true;
         }),
     (req, res, next) => {
         const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
+        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
         next();
     }
 ]
@@ -176,12 +168,8 @@ const cambiarDatosValidator = [
         .custom((value, { req }) => {
             const { rol } = req.userBDD;
             if (rol === 'representante' || rol === 'profesor') {
-                if (!value) {
-                    throw new Error('Todos los campos son obligatorios');
-                }
-                if (!/^\d{10}$/.test(value)) {
-                    throw new Error('El teléfono debe tener exactamente 10 dígitos y solo contener números');
-                }
+                if (!value) throw new Error('Todos los campos son obligatorios');
+                if (!/^\d{10}$/.test(value)) throw new Error('El teléfono debe tener exactamente 10 dígitos y solo contener números');
             }
             return true;
         }),
@@ -190,12 +178,8 @@ const cambiarDatosValidator = [
         .custom((value, { req }) => {
             const { rol } = req.userBDD;
             if (rol === 'representante' || rol === 'profesor') {
-                if (!value) {
-                    throw new Error('Todos los campos son obligatorios');
-                }
-                if (value.length < 5 || value.length > 100) {
-                    throw new Error('La dirección debe tener entre 5 y 100 caracteres');
-                }
+                if (!value) throw new Error('Todos los campos son obligatorios');
+                if (value.length < 5 || value.length > 100) throw new Error('La dirección debe tener entre 5 y 100 caracteres');
             }
             return true;
         }),
@@ -207,15 +191,14 @@ const cambiarDatosValidator = [
         .withMessage('El nombre y apellido solo pueden contener letras'),
     (req, res, next) => {
         const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
+        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
         next();
     }
 ];
 
 export {
     loginValidator,
+    seleccionarAnioLectivoValidator,
     confirmarCuentaValidator,
     recuperarPasswordValidator,
     comprobarTokenPasswordValidator,

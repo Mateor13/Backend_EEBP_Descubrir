@@ -58,7 +58,12 @@ const profesorSchema = new Schema({
     cursos:[{
         type: Schema.Types.ObjectId,
         ref: 'curso'
-    }]
+    }],
+    cursoAsignado:[{
+        type: Schema.Types.ObjectId,
+        ref: 'cursoAsignado'
+    }],
+
 },{
     timestamps: true,
     collection: 'profesores'

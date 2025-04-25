@@ -4,14 +4,18 @@ import Materias from './materias.js'
 const cursoSchema = new Schema({
     nombre:{
         type: String,
-        required: true,
-        trim: true,
         unique: true
-    }, 
-    estudiantes:[{
-        type: Schema.Types.ObjectId,
-        ref: 'Estudiante'
-    }],
+    },
+    nivel:{
+        type:Number,
+        enum:[1,2,3,4,5,6,7],
+        required:true
+    },
+    paralelo:{
+        type:String,
+        required:true,
+        enum:['A','B','C','D','E']
+    },
     materias:[{
         type: Schema.Types.ObjectId,
         ref: 'Materia'
@@ -21,12 +25,11 @@ const cursoSchema = new Schema({
     collection: 'cursos'
 })
 
-cursoSchema.methods.agregarEstudiante = async function(estudiante){
-    const existeEstudiante = this.estudiantes.includes(estudiante)
-    if(existeEstudiante)return {error: 'El estudiante ya está registrado en este curso'}
-    this.estudiantes.push(estudiante)
-    await this.save()
-}
+cursoSchema.methods.asignarNombre ( async function() {
+const cursos = ['Primero', 'Segundo', 'Tercero', 'Cuarto', 'Quinto', 'Sexto', 'Séptimo']
+this.nombre = `${cursos[this.nivel - 1]} ${this.paralelo}`
+await this.save()
+})
 
 cursoSchema.methods.agregarMaterias = async function(materia){
     const existeMateria = this.materias.includes(materia)
@@ -35,10 +38,6 @@ cursoSchema.methods.agregarMaterias = async function(materia){
     await this.save()
 }
 
-cursoSchema.methods.eliminarEstudiante = async function(estudianteId){
-    this.estudiantes = this.estudiantes.filter(estudiante => estudiante._id !== estudianteId)
-    await this.save()
-}
 
 cursoSchema.methods.buscarMateriasRegistradas = async function(nombre) {
     const materias = await Materias.find({ _id: { $in: this.materias }, nombre: nombre });

@@ -1,68 +1,61 @@
-import Profesor from "../models/profesor.js"
-import materias from "../models/materias.js";
+
 import cursos from "../models/cursos.js";
-import estudiante from "../models/estudiantes.js";
 import notas from "../models/notas.js";
 import mongoose from "mongoose";
 
 const subirNotasEstudiantes = async (req, res) => {
     // Paso 1: Obtener los datos
-    const { cedula, nota, materia, motivo } = req.body;
-    const { id } = req.userBDD;
-    // Paso 2: Realizar validaciones
-    const estudianteBDD = await estudiante.findOne({ cedula });
-    const materiaBDD = await materias.findOne({ _id: materia, profesor: id });
-    const Curso = await cursos.findOne({ materias: materia, estudiantes: estudianteBDD._id });
-    if (!Curso) return res.status(400).json({ error: 'El estudiante no está registrado en este curso' });
-    // Paso 3: Manipular la BDD
+    const { nota, motivo } = req.body;
+    const { estudianteBDD, materiaBDD } = req;
+    // Paso 2: Manipular la BDD
     const notasEstudiante = await notas.findOne({ estudiante: estudianteBDD._id, materia: materiaBDD._id });
     if (!notasEstudiante) {
         const nuevaNota = new notas({ estudiante: estudianteBDD._id, materia: materiaBDD._id });
         const subirNota = await nuevaNota.agregarNota(nota, motivo);
         if (subirNota?.error) return res.status(400).json({ error: subirNota.error });
-        await nuevaNota.save();
     } else {
         const subirNota = await notasEstudiante.agregarNota(nota, motivo);
         if (subirNota?.error) return res.status(400).json({ error: subirNota.error });
-        await notasEstudiante.save();
     }
+    req.estudianteBDD = null;
+    req.materiaBDD = null;
     res.status(200).json({ msg: 'Nota registrada correctamente' });
 };
 
 const modificarNotasEstudiantes = async (req, res) => {
     // Paso 1: Obtener los datos
-    const { cedula, nota, materia, motivo } = req.body;
+    const { nota, motivo } = req.body;
+    const { notasEstudiante } = req;
     // Paso 2: Manipular la BDD
-    const estudianteBDD = await estudiante.findOne({ cedula });
-    const materiaBDD = await materias.findById({ materia });
-    const notasEstudiante = await notas.findOne({ estudiante: estudianteBDD._id, materia: materiaBDD._id });
     const actualizarNota = await notasEstudiante.actualizarNota(nota, motivo);
     if (actualizarNota?.error) return res.status(400).json({ error: actualizarNota.error });
-    estudianteBDD.save();
+    req.estudianteBDD = null;
+    req.materiaBDD = null;
+    req.notasEstudiante = null;
     res.status(200).json({ msg: 'Nota actualizada correctamente' });
 }
 
 const observacionesEstudiantes = async (req, res) => {
     // Paso 1: Obtener los datos
-    const { cedula, observacion } = req.body;
-    const { id } = req.userBDD;
+    const { observacion } = req.body;
+    const { estudianteBDD, profesorBDD } = req;
     // Paso 2: Manipular la BDD
-    const profesorBDD = await Profesor.findById(id);
-    const estudianteBDD = await estudiante.findOne({ cedula });
     const date = new Date();
     const fecha = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
     const nuevaObservacion = { fecha, observacion, profesor: profesorBDD._id };
     await estudianteBDD.registrarObservacion(nuevaObservacion);
+    req.estudianteBDD = null;
+    req.profesorBDD = null;
     res.status(200).json({ msg: 'Observación registrada correctamente' });
 }
 
 const visualizarEstudiantesCurso = async (req, res) => {
     //Paso 1: Obtener los datos
-    const { curso, materia } = req.body;
+    const { materiaBDD } = req;
     const { id } = req.userBDD;
     //Paso 2: Manipular la BDD
-    const estudiantes = await cursoBDD.buscarEstudiantesPorMateriaYProfesor(id, materia);
-    if (estudiantes.error) return res.status(400).json({ error: estudiantes.error });
+    const estudiantes = await cursoBDD.buscarEstudiantesPorMateriaYProfesor(id, materiaBDD._id);
+    if (estudiantes?.error) return res.status(400).json({ error: estudiantes.error });
     res.status(200).json({ estudiantes });
 }
 
@@ -185,34 +178,6 @@ const visualizarEstudiantesPorMateria = async (req, res) => {
     }
 };
 
-const eliminarProfesor = async (req, res) => {
-    // Paso 1: Obtener los datos
-    const { id } = req.params;
-    // Paso 2: Realizar validaciones
-    const profesorBDD = await Profesor.findById(id);
-    profesorBDD.estado = false;
-    profesorBDD.save();
-    res.status(200).json({ msg: 'Profesor eliminado correctamente' });
-}
-
-asignarProfesor = async (req, res) => {
-    // Paso 1: Obtener los datos
-    const { idProfesor, idNuevoProfesor } = req.body;
-    // Paso 2: Realizar validaciones
-    const profesorBDD = await Profesor.findById(idProfesor);
-    const nuevoProfesorBDD = await Profesor.findById(idNuevoProfesor);
-    const materiasBDD = await materias.find({ profesor: idProfesor });
-    const idCursos = profesorBDD.cursos;
-    for (const materia of materiasBDD) {
-        materia.profesor = idNuevoProfesor;
-        await materia.save();
-    }
-    nuevoProfesorBDD.cursos.push(...idCursos);
-    profesorBDD.cursos = [];
-    await profesorBDD.save();
-    await nuevoProfesorBDD.save();
-}
-
 export {
     subirNotasEstudiantes,
     modificarNotasEstudiantes,
@@ -220,7 +185,5 @@ export {
     observacionesEstudiantes,
     visualizarEstudiantesCurso,
     visualizarMateriasAsignadas,
-    visualizarEstudiantesPorMateria,
-    eliminarProfesor,
-
+    visualizarEstudiantesPorMateria
 }

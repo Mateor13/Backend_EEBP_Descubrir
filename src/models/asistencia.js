@@ -24,18 +24,9 @@ const asistenciaSchema = new Schema({
         type: Number,
         default: 0
     },
-    cedula:{
-        type: String,
-        required: true,
-        trim: true        
-    },
     estudiante:{
         type: Schema.Types.ObjectId,
         ref: 'Estudiante',
-        required: true
-    },
-    nombreEstudiante:{
-        type: String,
         required: true
     }
 },{

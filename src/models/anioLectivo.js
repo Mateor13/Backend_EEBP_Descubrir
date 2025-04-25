@@ -29,7 +29,7 @@ const anioLectivoSchema = new Schema({
     },
     cursos: [{
         type: Schema.Types.ObjectId,
-        ref: 'Curso'
+        ref: 'CursoAsignado'
     }]
 },{
     timestamps: true,
