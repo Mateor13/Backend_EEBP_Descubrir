@@ -32,6 +32,11 @@ const seleccionarAnioLectivo = async (req, res) => {
     return res.status(200).json(token);
 }
 
+const listarAniosLectivos = async (req, res) => {
+    const anios = await aniosLectivo.find({}).select('-__v -createdAt -updatedAt')
+    return res.status(200).json(anios)
+}
+
 const confirmarCuenta = async (req, res) => {
     // Paso 1: Extraer los datos 
     const { token } = req.params;
@@ -165,6 +170,7 @@ const cambiarDatos = async (req, res) => {
 export {
     login,
     seleccionarAnioLectivo,
+    listarAniosLectivos,
     confirmarCuenta,
     recuperarPassword,
     comprobarTokenPassword,
