@@ -15,14 +15,29 @@ import Observacion from '../models/observaciones.js';
 import AnioLectivo from '../models/anioLectivo.js';
 import CursoAsignado from '../models/cursoAsignado.js';
 
-const registrarAdmin = async (req, res) => {
-    const { nombre, apellido, email, password } = req.body;
+const asignarPonderaciones = async (req, res) => {
+    // Paso 1: Obtener los datos
+    const { deberes, talleres, examenes, pruebas } = req.body;
+    const { anioLectivoBDD } = req;
+    // Paso 2: Interactuar con la BDD
     try {
-        const nuevoAdmin = new Administrador({ nombre, apellido, email, password });
-        await nuevoAdmin.encriptarPassword(password);
+        const ponderaciones = { deberes, talleres, examenes, pruebas };
+        anioLectivoBDD.ponderaciones.push(ponderaciones);
+        await anioLectivoBDD.save();
+        res.status(200).json({ msg: 'Ponderaciones registradas correctamente' });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al registrar ponderaciones' });
+    }
+}
+
+const registrarAdmin = async (req, res) => {
+    const { nombre, apellido, email, direccion, telefono, cedula } = req.body;
+    try {
+        const nuevoAdmin = new Administrador({ nombre, apellido, email, direccion, telefono, cedula });
+        const password = await nuevoAdmin.generarPassword();
         const token = await nuevoAdmin.generarToken();
         nuevoAdmin.token = token;
-        await sendMailToUser(email, token);
+        await sendMailToUser(email, token, password);
         await nuevoAdmin.save();
         res.status(201).json({ msg: 'Administrador registrado, verifique el email para confirmar su cuenta' });
     } catch (error) {
@@ -301,6 +316,7 @@ export {
     terminarAnioLectivo,
     comenzarAnioLectivo,
     registrarFechaFin,
+    asignarPonderaciones,
     //Eliminar
     eliminarProfesor,
     eliminarEstudiante,

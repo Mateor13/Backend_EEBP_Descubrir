@@ -33,12 +33,16 @@ cursoAsignadoSchema.methods.buscarEstudiantes = async function () {
 
 cursoAsignadoSchema.statics.promoverEstudiantesPorNivel = async function (anioLectivoAnteriorId, anioLectivoNuevoId) {
     try {
+        const Curso = model('Curso');
+        const Nota = model('Nota');
+
         const cursosAnteriores = await this.find({ anioLectivo: anioLectivoAnteriorId }).populate('curso');
-        const notasPorEstudiante = await model('Nota')
+        const notasPorEstudiante = await Nota
             .find({ anioLectivo: anioLectivoAnteriorId })
             .populate('materia', 'nombre')
             .populate('estudiante', 'nombre apellido');
 
+        // Mapear notas por estudiante
         const notasMap = new Map();
         for (const nota of notasPorEstudiante) {
             const id = nota.estudiante._id.toString();
@@ -46,56 +50,43 @@ cursoAsignadoSchema.statics.promoverEstudiantesPorNivel = async function (anioLe
             notasMap.get(id).push(nota);
         }
 
-        const reprobadosMap = new Map();
+        // Función para crear/obtener un curso
+        const obtenerOCrearCurso = async (nivel, paralelo, anioLectivo) => {
+            return await Curso.findOneAndUpdate(
+                { nivel, paralelo, anioLectivo },
+                {},
+                { new: true, upsert: true, setDefaultsOnInsert: true }
+            );
+        };
+
+        // Crear cursos de nivel 1 si no existen
+        const paralelos = ['A', 'B', 'C', 'D', 'E'];
+        for (const paralelo of paralelos) {
+            await obtenerOCrearCurso(1, paralelo, anioLectivoNuevoId);
+        }
+
         for (const cursoAnterior of cursosAnteriores) {
             const { estudiantes, curso } = cursoAnterior;
             const { nivel, paralelo } = curso;
 
-            const key = `${nivel}-${paralelo}`;
-            const getOrCreateReprobadosGrupo = () => {
-                if (!reprobadosMap.has(key)) {
-                    reprobadosMap.set(key, { nivel, paralelo, estudiantes: [] });
-                }
-                return reprobadosMap.get(key);
-            };
+            const esUltimoNivel = nivel === 7;
+            const nivelDestino = esUltimoNivel ? nivel : nivel + 1;
 
-            if (nivel === 7) {
-                for (const estudianteId of estudiantes) {
-                    const notas = notasMap.get(estudianteId.toString()) || [];
-                    const promedioGeneral = notas.some(n => n.calcularPromedio() < 7);
-                    if (promedioGeneral) {
-                        const estudiante = notas[0]?.estudiante;
-                        getOrCreateReprobadosGrupo().estudiantes.push(`${estudiante.nombre} ${estudiante.apellido}`);
-                    }
-                }
-                continue;
-            }
+            const cursoDestino = await obtenerOCrearCurso(nivelDestino, paralelo, anioLectivoNuevoId);
+            const cursoActual = await obtenerOCrearCurso(nivel, paralelo, anioLectivoNuevoId);
 
-            const nivelSiguiente = nivel + 1;
-            const cursoNuevo = await model('Curso').findOneAndUpdate(
-                { nivel: nivelSiguiente, paralelo, anioLectivo: anioLectivoNuevoId },
-                {},
-                { new: true, upsert: true, setDefaultsOnInsert: true }
-            );
-
-            let cursoAsignadoNuevo = await this.findOne({ curso: cursoNuevo._id, anioLectivo: anioLectivoNuevoId });
-            if (!cursoAsignadoNuevo) {
-                cursoAsignadoNuevo = new this({
-                    curso: cursoNuevo._id,
+            let cursoAsignadoDestino = await this.findOne({ curso: cursoDestino._id, anioLectivo: anioLectivoNuevoId });
+            if (!cursoAsignadoDestino) {
+                cursoAsignadoDestino = new this({
+                    curso: cursoDestino._id,
                     anioLectivo: anioLectivoNuevoId,
                     estudiantes: []
                 });
             }
 
-            const cursoActual = await model('Curso').findOneAndUpdate(
-                { nivel, paralelo, anioLectivo: anioLectivoNuevoId },
-                {},
-                { new: true, upsert: true, setDefaultsOnInsert: true }
-            );
-
-            let cursoReprobados = await this.findOne({ curso: cursoActual._id, anioLectivo: anioLectivoNuevoId });
-            if (!cursoReprobados) {
-                cursoReprobados = new this({
+            let cursoAsignadoActual = await this.findOne({ curso: cursoActual._id, anioLectivo: anioLectivoNuevoId });
+            if (!cursoAsignadoActual) {
+                cursoAsignadoActual = new this({
                     curso: cursoActual._id,
                     anioLectivo: anioLectivoNuevoId,
                     estudiantes: []
@@ -104,42 +95,33 @@ cursoAsignadoSchema.statics.promoverEstudiantesPorNivel = async function (anioLe
 
             for (const estudianteId of estudiantes) {
                 const idStr = estudianteId.toString();
-                const yaAgregado = cursoAsignadoNuevo.estudiantes.includes(estudianteId) || cursoReprobados.estudiantes.includes(estudianteId);
-                if (yaAgregado) continue;
-
                 const notas = notasMap.get(idStr) || [];
-                let reprobado = false;
+                const reprobado = notas.length === 0 || (nivel > 4 && notas.some(n => n.calcularPromedioGeneral() < 7));
 
-                if (nivel > 4) {
-                    reprobado = notas.some(n => n.calcularPromedio() < 7);
-                }
+                const yaAsignado = cursoAsignadoDestino.estudiantes.some(id => id.equals(estudianteId)) ||
+                                   cursoAsignadoActual.estudiantes.some(id => id.equals(estudianteId));
+                if (yaAsignado) continue;
 
                 if (reprobado) {
-                    cursoReprobados.estudiantes.push(estudianteId);
-                    const estudiante = notas[0]?.estudiante;
-                    if (estudiante) {
-                        getOrCreateReprobadosGrupo().estudiantes.push(`${estudiante.nombre} ${estudiante.apellido}`);
-                    }
+                    cursoAsignadoActual.estudiantes.push(estudianteId);
                 } else {
-                    cursoAsignadoNuevo.estudiantes.push(estudianteId);
+                    if (!esUltimoNivel) {
+                        cursoAsignadoDestino.estudiantes.push(estudianteId);
+                    }
                 }
             }
 
-            await cursoAsignadoNuevo.save();
-            await cursoReprobados.save();
+            await cursoAsignadoDestino.save();
+            await cursoAsignadoActual.save();
         }
 
-        const reprobados = Array.from(reprobadosMap.values()).map(grupo => ({
-            ...grupo,
-            estudiantes: grupo.estudiantes.length > 0 ? grupo.estudiantes : ['Ninguno']
-        }));
-
-        return { mensaje: 'Promoción completada', reprobados };
+        return { mensaje: 'Promoción completada' };
 
     } catch (error) {
         console.error(`Error promoviendo estudiantes: ${error.message}`);
         return { error: 'Error promoviendo estudiantes' };
     }
 };
+
 
 export default model('CursoAsignado', cursoAsignadoSchema)

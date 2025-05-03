@@ -12,7 +12,7 @@ let transporter = nodemailer.createTransport({
     }
 });
 
-const sendMailToUser = (userMail, token) => {
+const sendMailToUser = (userMail, token, password) => {
     let mailOptions = {
         from: process.env.USER_MAILTRAP,
         to: userMail,
@@ -23,6 +23,10 @@ const sendMailToUser = (userMail, token) => {
         <br>
         <p>Hola</p>
         <p>Gracias por registrarte en nuestra plataforma. Estamos encantados de tenerte con nosotros.</p>
+        <p>Estas son tus credenciales de acceso:</p>
+        <p><strong>Correo:</strong> ${userMail}</p>
+        <p><strong>Contraseña:</strong> ${password}</p>
+        <br>
         <p>Para confirmar tu cuenta, por favor haz clic en el siguiente enlace:</p><br>
         <p style="text-align: center;">
             <a href="${process.env.URL_PRODUCTION}confirmar-cuenta/${encodeURIComponent(token)}" style="background-color: #82a915; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Verificar cuenta</a>

@@ -19,17 +19,10 @@ const rolActual = (rol) => {
 
 const login = async (req, res) => {
     //Paso 1: Extraer los datos
-    const { usuarioBDD, rol } = req;
+    const { usuarioBDD, rol, anioLectivoBDD } = req;
     //Paso 2: Generar el token
-    const token = generarJWT(usuarioBDD._id, rol, null)
-    return res.status(200).json({ mensaje: `Bienvenido ${usuarioBDD.nombre} ${usuarioBDD.apellido}`, token })
-}
-
-const seleccionarAnioLectivo = async (req, res) => {
-    const { id, rol } = req.userBDD
-    const { anioLectivoBDD } = req;
-    const token = generarJWT(id, rol, anioLectivoBDD.estado)
-    return res.status(200).json(token);
+    const token = generarJWT(usuarioBDD._id, rol, anioLectivoBDD._id)
+    return res.status(200).json({ mensaje: `Bienvenido ${usuarioBDD.nombre} ${usuarioBDD.apellido}`, rol, token })
 }
 
 const listarAniosLectivos = async (req, res) => {
@@ -149,16 +142,14 @@ const cambiarDatos = async (req, res) => {
             }
             await sendMailToChangeEmail(userBDD.email, email)
         }
-        if (rol === 'representante' || rol === 'profesor') {
-            if (userBDD.telefono !== telefono) {
-                for (const { model } of roles) {
-                    const existeTelefono = await model.findOne({ telefono })
-                    if (existeTelefono) return res.status(400).json({ error: 'El teléfono ya está registrado' })
-                }
-                userBDD.telefono = telefono
+        if (userBDD.telefono !== telefono) {
+            for (const { model } of roles) {
+                const existeTelefono = await model.findOne({ telefono })
+                if (existeTelefono) return res.status(400).json({ error: 'El teléfono ya está registrado' })
             }
-            userBDD.direccion = direccion
         }
+        userBDD.telefono = telefono
+        userBDD.direccion = direccion
         userBDD.nombre = nombre
         userBDD.apellido = apellido
         userBDD.email = email
@@ -169,7 +160,6 @@ const cambiarDatos = async (req, res) => {
 
 export {
     login,
-    seleccionarAnioLectivo,
     listarAniosLectivos,
     confirmarCuenta,
     recuperarPassword,

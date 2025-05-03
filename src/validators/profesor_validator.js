@@ -10,7 +10,7 @@ const subirNotasEstudiantesValidator = [
             if (!req.userBDD.anio) throw new Error('Este año lectivo ya ha finalizado');
             return true;
         }),
-    check(['cedula', 'nota', 'materia', 'motivo'])
+    check(['cedula', 'nota', 'materia', 'descripcion', 'curso'])
         .notEmpty()
         .withMessage('Todos los campos son obligatorios'),
     check('cedula')

@@ -1,38 +1,51 @@
-import {Schema, model} from 'mongoose'
+import { Schema, model } from 'mongoose'
 import bcrypt from 'bcryptjs'
 import profesor from './profesor.js'
 import representante from './representante.js'
 
 const administradorSchema = new Schema({
-    nombre:{
+    nombre: {
         required: true,
         type: String
     },
-    apellido:{
+    apellido: {
         required: true,
         type: String
     },
-    email:{
+    email: {
         required: true,
         type: String,
         unique: true
     },
-    password:{
+    cedula: {
+        required: true,
+        type: String,
+        unique: true
+    },
+    telefono: {
         required: true,
         type: String
     },
-    confirmEmail:{
+    password: {
+        required: true,
+        type: String
+    },
+    direccion: {
+        required: true,
+        type: String
+    },
+    confirmEmail: {
         default: false,
         type: Boolean
     },
-    token:{
+    token: {
         default: null,
         type: String
     },
-    estado:{
+    estado: {
         default: true,
         type: Boolean
-   }
+    }
 },
     {
         timestamps: true,
@@ -40,26 +53,33 @@ const administradorSchema = new Schema({
     }
 )
 
-administradorSchema.methods.encriptarPassword = async function(password) {
+administradorSchema.methods.encriptarPassword = async function (password) {
     const salt = await bcrypt.genSalt(10)
     this.password = await bcrypt.hash(password, salt)
 }
 
-administradorSchema.methods.compararPassword = async function(password){
+administradorSchema.methods.compararPassword = async function (password) {
     return await bcrypt.compare(password, this.password)
 }
 
-administradorSchema.methods.generarToken = async function(){
+administradorSchema.methods.generarToken = async function () {
     const token = Math.random().toString(36).slice(2)
     this.token = token
     return token
 }
 
-administradorSchema.statics.inicializarAdmin = async function(){
+administradorSchema.methods.generarPassword = async function () {
+    const password = Math.random().toString(36).slice(2, 7)
+    const salt = await bcrypt.genSalt(10)
+    this.password = await bcrypt.hash('admin-' + password, salt)
+    return 'admin-' + password
+}
+
+administradorSchema.statics.inicializarAdmin = async function () {
     const adminExistente = await this.countDocuments({})
-    const emailProfesor = await profesor.findOne({email: process.env.ADMIN_EMAIL})
-    const emailRepresentante = await representante.findOne({email: process.env.ADMIN_EMAIL})
-    
+    const emailProfesor = await profesor.findOne({ email: process.env.ADMIN_EMAIL })
+    const emailRepresentante = await representante.findOne({ email: process.env.ADMIN_EMAIL })
+
     if (adminExistente === 0 && !emailProfesor && !emailRepresentante) {
         const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
         await this.create({

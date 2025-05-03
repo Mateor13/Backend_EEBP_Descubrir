@@ -26,7 +26,7 @@ const todosRolesSinAdminSinEstudiante = [
 ]
 
 const registroAdminValidator = [
-    check(['nombre', 'apellido', 'email', 'password'])
+    check(['nombre', 'apellido', 'email', 'telefono', 'cedula', 'direccion'])
         .notEmpty()
         .withMessage('Todos los campos son obligatorios'),
     check('email')
@@ -39,15 +39,41 @@ const registroAdminValidator = [
             }
             return true;
         }),
-    check('password')
-        .isLength({ min: 6 })
-        .withMessage('La contraseña debe tener al menos 6 caracteres'),
     check('nombre')
         .isAlpha('es-ES', { ignore: ' ' })
         .withMessage('El nombre y apellido solo pueden contener letras'),
     check('apellido')
         .isAlpha('es-ES', { ignore: ' ' })
         .withMessage('El nombre y apellido solo pueden contener letras'),
+    check('telefono')
+        .matches(/^\d{10}$/)
+        .withMessage('El teléfono debe tener exactamente 10 dígitos y solo números')
+        .custom(async (telefono) => {
+            for (const { model } of todosRolesSinAdminSinEstudiante) {
+                const usuarioBDD = await model.findOne({ telefono });
+                if (usuarioBDD) throw new Error('El teléfono ya está registrado');
+            }
+            return true;
+        }),
+    check('cedula')
+        .matches(/^\d{10}$/)
+        .withMessage('La cédula debe tener exactamente 10 dígitos y solo números')
+        .custom(async (cedula) => {
+            for (const { model } of todosRolesSinAdmin) {
+                const usuarioBDD = await model.findOne({ cedula });
+                if (usuarioBDD) throw new Error('La cédula ya está registrada');
+            }
+            return true;
+        }),
+    check('direccion')
+        .isLength({ min: 5, max: 100 })
+        .withMessage('La dirección debe tener entre 5 y 100 caracteres')
+        .custom((value) => {
+            if (/^(\d)\1{4,}$/.test(value)) throw new Error('La dirección no puede ser solo números repetidos');
+            if (/^([a-zA-Z])\1{4,}$/.test(value)) throw new Error('La dirección no puede ser un solo carácter repetido');
+            if (/^\d+$/.test(value)) throw new Error('La dirección no puede ser solo números');
+            return true;
+        }),
     (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -95,6 +121,15 @@ const registroProfesorValidator = [
                 const usuarioBDD = await model.findOne({ cedula });
                 if (usuarioBDD) throw new Error('La cédula ya está registrada');
             }
+            return true;
+        }),
+    check('direccion')
+        .isLength({ min: 5, max: 100 })
+        .withMessage('La dirección debe tener entre 5 y 100 caracteres')
+        .custom((value) => {
+            if (/^(\d)\1{4,}$/.test(value)) throw new Error('La dirección no puede ser solo números repetidos');
+            if (/^([a-zA-Z])\1{4,}$/.test(value)) throw new Error('La dirección no puede ser un solo carácter repetido');
+            if (/^\d+$/.test(value)) throw new Error('La dirección no puede ser solo números');
             return true;
         }),
     (req, res, next) => {
@@ -174,7 +209,7 @@ const registroCursoValidator = [
     check('paralelo')
         .isAlpha('es-ES', { ignore: ' ' })
         .withMessage('El paralelo solo puede contener letras')
-        .includes(['A', 'B', 'C', 'D', 'E'])
+        .isIn(['A', 'B', 'C', 'D', 'E'])
         .withMessage('El paralelo debe ser una letra entre A y E')
         .custom(async (value, { req }) => {
             const cursoBDD = await Curso.findOne({ nivel: req.body.nivel, paralelo: value });
@@ -202,9 +237,7 @@ const registroMateriaValidator = [
         .withMessage('El nombre de la materia solo puede contener letras'),
     check('curso')
         .custom(async (curso, { req }) => {
-            const regExp = new RegExp(/^[0-7][A-E]$/)
-            if (!regExp.test(curso)) throw new Error('El curso no es válido, debe ser un número del 1 al 7 y una letra de la A a la E');
-            const cursoBDD = await Curso.findOne({ nombre: curso });
+            const cursoBDD = await Curso.findById(curso);
             if (!cursoBDD) throw new Error('El curso no está registrado');
             req.cursoBDD = cursoBDD;
             const materiasRegistradas = await cursoBDD.buscarMateriasRegistradas(req.body.nombre);
@@ -330,6 +363,33 @@ const asignarEstudianteACursoValidator = [
                 estudiantes: req.estudianteBDD._id
             });
             if (yaAsignado) throw new Error('El estudiante ya ha sido asignado a un curso en este año lectivo');
+            return true;
+        }),
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: errors.array()[0].msg });
+        }
+        next();
+    }
+]
+
+const asignarPonderacionesValidator = [
+    check(['deberes', 'talleres', 'examenes', 'pruebas'])
+        .notEmpty()
+        .withMessage('Todos los campos son obligatorios'),
+    check('ponderaciones')
+        .custom(async (ponderaciones, { req }) => {
+            const regExp = new RegExp(/^\d+(\.\d+)?$/)
+            if (!regExp.test(ponderaciones)) throw new Error('Las ponderaciones deben ser números decimales o enteros');
+            const total = parseFloat(req.body.deberes) + parseFloat(req.body.talleres) + parseFloat(req.body.examenes) + parseFloat(req.body.pruebas);
+            if (total !== 100) throw new Error('La suma de las ponderaciones debe ser igual a 100');
+            req.ponderaciones = {
+                deberes: parseFloat(req.body.deberes),
+                talleres: parseFloat(req.body.talleres),
+                examenes: parseFloat(req.body.examenes),
+                pruebas: parseFloat(req.body.pruebas)
+            };
             return true;
         }),
     (req, res, next) => {
@@ -574,16 +634,17 @@ const reasignarMateriaProfesorValidator = [
 
 export {
     //Administrador
-    //Registros
+    // Registro de usuarios y entidades
     registroAdminValidator,
     registroProfesorValidator,
     registroRepresentanteValidator,
     registroCursoValidator,
     registroMateriaValidator,
     registroEstudianteValidator,
-    //Asignaciones
+    // Asignaciones y modificaciones
     asignarRepresentanteValidator,
     asignarEstudianteACursoValidator,
+    asignarPonderacionesValidator,
     //Modificaciones
     registroAsistenciaEstudiantesValidator,
     justificarInasistenciaValidator,
@@ -593,5 +654,5 @@ export {
     reasignarMateriaProfesorValidator,
     //Anio Lectivo
     terminarAnioLectivoValidator,
-    registrarFechaFinValidator
+    registrarFechaFinValidator,
 };

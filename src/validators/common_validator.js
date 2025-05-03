@@ -33,27 +33,18 @@ const loginValidator = [
             }
             throw new Error('Credenciales incorrectas');
         }),
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
-        next();
-    }
-]
-
-
-const seleccionarAnioLectivoValidator = [
     check('anioLectivo')
-        .custom(async (_, { req }) => {
-            const anioLectivoBDD = await aniosLectivo.find().select('-__v -createdAt -updatedAt -cursos');
-            if (!anioLectivoBDD || anioLectivoBDD.length === 0) throw new Error('No hay años lectivos registrados');
+        .notEmpty()
+        .withMessage('El año lectivo es obligatorio')
+        .custom(async (value, { req }) => {
+            const anioLectivoBDD = await aniosLectivo.findOne({ _id: value });
+            if (!anioLectivoBDD) throw new Error('El año lectivo no existe');
             req.anioLectivoBDD = anioLectivoBDD;
             return true;
         }),
     (req, res, next) => {
         const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
+        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
         next();
     }
 ]
@@ -160,27 +151,17 @@ const cambiarPasswordValidator = [
 ]
 
 const cambiarDatosValidator = [
-    check(['nombre', 'apellido', 'email'])
+    check(['email', 'telefono', 'direccion'])
         .notEmpty()
         .withMessage('Todos los campos son obligatorios'),
     check('telefono')
-        .optional()
-        .custom((value, { req }) => {
-            const { rol } = req.userBDD;
-            if (rol === 'representante' || rol === 'profesor') {
-                if (!value) throw new Error('Todos los campos son obligatorios');
-                if (!/^\d{10}$/.test(value)) throw new Error('El teléfono debe tener exactamente 10 dígitos y solo contener números');
-            }
+        .custom((value) => {
+            if (!/^\d{10}$/.test(value)) throw new Error('El teléfono debe tener exactamente 10 dígitos y solo contener números');
             return true;
         }),
     check('direccion')
-        .optional()
         .custom((value, { req }) => {
-            const { rol } = req.userBDD;
-            if (rol === 'representante' || rol === 'profesor') {
-                if (!value) throw new Error('Todos los campos son obligatorios');
-                if (value.length < 5 || value.length > 100) throw new Error('La dirección debe tener entre 5 y 100 caracteres');
-            }
+            if (value.length < 5 || value.length > 100) throw new Error('La dirección debe tener entre 5 y 100 caracteres');
             return true;
         }),
     check('email')
@@ -198,7 +179,6 @@ const cambiarDatosValidator = [
 
 export {
     loginValidator,
-    seleccionarAnioLectivoValidator,
     confirmarCuentaValidator,
     recuperarPasswordValidator,
     comprobarTokenPasswordValidator,
