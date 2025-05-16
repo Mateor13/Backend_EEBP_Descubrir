@@ -5,39 +5,38 @@ import aniosLectivo from "../models/anioLectivo.js";
 import { generarJWT } from "../middlewares/JWT.js";
 import { sendMailToChangeEmail, sendMailToRecoveryPassword, sendMailToRecoveryPasswordProfesor, sendMailToRecoveryPasswordRepresentante } from "../config/nodemailer.js";
 
-// Determinar los modelos, roles, select y funciones de correo
+// Lista de roles con su modelo, nombre, función de correo y campos a excluir en consultas
 const roles = [
     { model: representante, rol: "representante", correo: sendMailToRecoveryPasswordRepresentante, selected: '-_id -password -token -estudiantes -confirmEmail -estado -__v -createdAt -updatedAt' },
     { model: profesor, rol: "profesor", correo: sendMailToRecoveryPasswordProfesor, selected: '-_id -password -token -confirmEmail -admin -cursos -estado -__v -createdAt -updatedAt' },
     { model: administradores, rol: "administrador", correo: sendMailToRecoveryPassword, selected: '-_id -password -token -confirmEmail -estado -__v -createdAt -updatedAt' }
 ]
 
+// Devuelve el modelo correspondiente al rol recibido
 const rolActual = (rol) => {
     const rolModelo = roles.find(r => r.rol === rol)
     return rolModelo.model
 }
 
+// Controlador para login: genera token y responde con datos básicos
 const login = async (req, res) => {
-    //Paso 1: Extraer los datos
     const { usuarioBDD, rol, anioLectivoBDD } = req;
-    //Paso 2: Generar el token
     const token = generarJWT(usuarioBDD._id, rol, anioLectivoBDD._id)
     return res.status(200).json({ mensaje: `Bienvenido ${usuarioBDD.nombre} ${usuarioBDD.apellido}`, rol, token })
 }
 
+// Lista todos los años lectivos registrados
 const listarAniosLectivos = async (req, res) => {
     const anios = await aniosLectivo.find({}).select('-__v -createdAt -updatedAt')
     return res.status(200).json(anios)
 }
 
+// Confirma la cuenta de usuario a partir del token recibido
 const confirmarCuenta = async (req, res) => {
-    // Paso 1: Extraer los datos 
     const { token } = req.params;
-    // Paso 2: Buscar en la base de datos
     for (const { model } of roles) {
         const userBDD = await model.findOne({ token });
         if (userBDD) {
-            // Paso 3: Manipular los datos
             userBDD.confirmEmail = true;
             userBDD.token = null;
             await userBDD.save();
@@ -47,15 +46,12 @@ const confirmarCuenta = async (req, res) => {
     return res.status(400).json({ error: 'El token no es válido' });
 }
 
+// Envía correo de recuperación de contraseña según el rol
 const recuperarPassword = async (req, res) => {
-    //Paso 1: Extraer los datos
     const { email } = req.body
-
-    //Paso 2: Buscar en la base de datos
     for (const { model, correo } of roles) {
         const userBDD = await model.findOne({ email });
         if (userBDD) {
-            // Paso 3: Manipular los datos
             const token = await userBDD.generarToken();
             await correo(email, token);
             await userBDD.save();
@@ -65,10 +61,9 @@ const recuperarPassword = async (req, res) => {
     return res.status(400).json({ error: 'No se ha encontrado el email ingresado' })
 }
 
+// Verifica si el token de recuperación de contraseña es válido
 const comprobarTokenPassword = async (req, res) => {
-    //Paso 1: Extraer los datos
     const { token } = req.params
-    //Paso 2: Buscar en la base de datos
     for (const { model } of roles) {
         console.log(model)
         const userBDD = await model.findOne({ token: token });
@@ -79,10 +74,9 @@ const comprobarTokenPassword = async (req, res) => {
     return res.status(400).json({ error: 'Este token no es válido' });
 }
 
+// Devuelve el perfil del usuario autenticado (sin datos sensibles)
 const perfil = async (req, res) => {
-    //Paso 1: Extraer los datos
     const { id } = req.userBDD
-    //Paso 2: Buscar en la base de datos
     for (const { model, selected } of roles) {
         const userBDD = await model.findById(id).select(selected);
         if (userBDD) {
@@ -92,15 +86,13 @@ const perfil = async (req, res) => {
     return res.status(400).json({ error: 'Fallo en la carga de datos' });
 }
 
+// Permite establecer una nueva contraseña usando un token válido
 const nuevaContrasena = async (req, res) => {
-    //Paso 1: Extraer los datos
     const { password } = req.body
     const { token } = req.params
-    //Paso 2: Buscar en la base de datos
     for (const { model } of roles) {
         const userBDD = await model.findOne({ token });
         if (userBDD) {
-            // Paso 3: Manipular los datos
             userBDD.token = null
             await userBDD.encriptarPassword(password)
             await userBDD.save()
@@ -110,28 +102,26 @@ const nuevaContrasena = async (req, res) => {
     return res.status(400).json({ error: 'El token no es válido' })
 }
 
+// Permite cambiar la contraseña desde el perfil autenticado
 const cambiarPassword = async (req, res) => {
-    //Paso 1: Extraer los datos
-    const { password, newpassword } = req.body
+    const { password, newPassword } = req.body
     const { id, rol } = req.userBDD
     const model = rolActual(rol)
-    //Paso 2: Buscar en la base de datos
     const userBDD = await model.findById(id);
     if (userBDD) {
         const verificarPassword = await userBDD.compararPassword(password);
         if (!verificarPassword) return res.status(400).json({ error: 'La Contraseña actual es incorrecta' });
-        await userBDD.encriptarPassword(newpassword);
+        await userBDD.encriptarPassword(newPassword);
         await userBDD.save();
         return res.status(200).json({ mensaje: 'Contraseña actualizada' });
     }
     return res.status(400).json({ error: 'Error al actualizar el usuario' });
 }
 
+// Permite cambiar los datos personales del usuario autenticado
 const cambiarDatos = async (req, res) => {
-    //Paso 1: Extraer los datos
     const { nombre, apellido, email, telefono, direccion } = req.body
     const { id, rol } = req.userBDD
-    //Paso 2: Buscar y cambiar en la base de datos
     const model = rolActual(rol)
     const userBDD = await model.findById(id)
     if (userBDD) {

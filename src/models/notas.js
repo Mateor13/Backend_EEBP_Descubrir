@@ -1,21 +1,26 @@
 import { Schema, model } from 'mongoose';
 
+// Esquema para almacenar las notas de un estudiante en una materia y año lectivo
 const notaSchema = new Schema({
+    // Referencia al estudiante
     estudiante: {
         type: Schema.Types.ObjectId,
         ref: 'Estudiante',
         required: true
     },
+    // Referencia a la materia
     materia: {
         type: Schema.Types.ObjectId,
         ref: 'Materia',
         required: true
     },
+    // Referencia al año lectivo
     anioLectivo: {
         type: Schema.Types.ObjectId,
         ref: 'AnioLectivo',
         required: true
     },
+    // Evaluaciones agrupadas por tipo: deberes, talleres, exámenes, pruebas
     evaluaciones: {
         deberes: [{
             nota: {
@@ -28,6 +33,7 @@ const notaSchema = new Schema({
                 type: String,
                 required: true
             },
+            // Fecha de la evaluación (por defecto, fecha actual)
             fecha: {
                 type: String,
                 default: function () {
@@ -99,49 +105,60 @@ const notaSchema = new Schema({
     collection: 'notas'
 });
 
+// Calcula el promedio ponderado de un tipo de evaluación (deberes, talleres, etc.)
 notaSchema.methods.calcularPromedioPorTipo = async function (tipo) {
     const tiposValidos = ['deberes', 'talleres', 'examenes', 'pruebas'];
     if (!tiposValidos.includes(tipo)) throw new Error('Tipo de evaluación no válido');
 
-    if (!this.evaluaciones[tipo] || this.evaluaciones[tipo].length === 0) return 0;
+    const evaluaciones = this.evaluaciones[tipo];
+    if (!evaluaciones || evaluaciones.length === 0) return 0;
 
-    const suma = this.evaluaciones[tipo].reduce((acc, evaluation) => acc + evaluation.nota, 0);
-    const promedio = suma / this.evaluaciones[tipo].length;
+    const suma = evaluaciones.reduce((acc, evalObj) => acc + evalObj.nota, 0);
+    const promedio = suma / evaluaciones.length;
 
-    // Obtener ponderaciones del año lectivo
     const anioLectivo = await model('AnioLectivo').findById(this.anioLectivo);
-    if (!anioLectivo || !anioLectivo.ponderaciones || !anioLectivo.ponderaciones[tipo]) {
-        throw new Error(`No se encontraron ponderaciones para el tipo ${tipo}`);
-    }
-    return promedio * (anioLectivo.ponderaciones[tipo] / 100);
+    const ponderacion = anioLectivo?.ponderaciones?.[tipo];
+    if (ponderacion == null) throw new Error(`No hay ponderación para tipo ${tipo}`);
+
+    return promedio * (ponderacion / 100);
 };
 
+// Determina si la materia está reprobada (promedio general < 7)
+notaSchema.methods.esMateriaReprobada = async function () {
+    const promedio = await this.calcularPromedioGeneral();
+    return promedio < 7;
+};
+
+// Calcula el promedio general ponderado de todas las evaluaciones
 notaSchema.methods.calcularPromedioGeneral = async function () {
     const tipos = ['deberes', 'talleres', 'examenes', 'pruebas'];
     let sumaTotal = 0;
 
+    const anioLectivo = await model('AnioLectivo').findById(this.anioLectivo);
     for (const tipo of tipos) {
-        if (this.evaluaciones[tipo] && this.evaluaciones[tipo].length > 0) {
-            const promedioPorTipo = await this.calcularPromedioPorTipo(tipo);
-            sumaTotal += promedioPorTipo;
+        const evaluaciones = this.evaluaciones[tipo];
+        const ponderacion = anioLectivo.ponderaciones[tipo];
+
+        if (evaluaciones && evaluaciones.length > 0 && ponderacion != null) {
+            const suma = evaluaciones.reduce((acc, evalObj) => acc + evalObj.nota, 0);
+            const promedio = suma / evaluaciones.length;
+            sumaTotal += promedio * (ponderacion / 100);
         }
     }
 
     return sumaTotal;
 };
 
+// Agrega una nueva nota a un tipo de evaluación, evitando duplicados por descripción
 notaSchema.methods.agregarNota = async function (tipo, nota, descripcion) {
-    const tiposValidos = ['deberes', 'talleres', 'examenes', 'pruebas'];
-    if (!tiposValidos.includes(tipo)) throw new Error('Tipo de evaluación no válido');
-    if (nota < 0 || nota > 10) throw new Error('La nota debe estar entre 0 y 10');
-
     const existeNota = this.evaluaciones[tipo].find(e => e.descripcion === descripcion);
-    if (existeNota) throw new Error('La nota ya existe');
+    if (existeNota) return ({ error: 'La nota ya existe' });
 
     this.evaluaciones[tipo].push({ nota, descripcion });
     await this.save();
 };
 
+// Actualiza la nota de una evaluación existente por descripción
 notaSchema.methods.actualizarNota = async function (tipo, nota, descripcion) {
     const tiposValidos = ['deberes', 'talleres', 'examenes', 'pruebas'];
     if (!tiposValidos.includes(tipo)) throw new Error('Tipo de evaluación no válido');
@@ -154,4 +171,4 @@ notaSchema.methods.actualizarNota = async function (tipo, nota, descripcion) {
     await this.save();
 };
 
-export default model('Nota', notaSchema)
+export default model('Nota', notaSchema);

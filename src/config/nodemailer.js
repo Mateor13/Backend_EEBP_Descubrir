@@ -2,6 +2,7 @@ import nodemailer from "nodemailer"
 import dotenv from 'dotenv'
 dotenv.config()
 
+// Configuración del transporter de nodemailer para envío de correos
 let transporter = nodemailer.createTransport({
     service: 'gmail',
     host: process.env.HOST_MAILTRAP,
@@ -12,6 +13,7 @@ let transporter = nodemailer.createTransport({
     }
 });
 
+// Envía correo de verificación de cuenta a un usuario (admin)
 const sendMailToUser = (userMail, token, password) => {
     let mailOptions = {
         from: process.env.USER_MAILTRAP,
@@ -54,6 +56,7 @@ const sendMailToUser = (userMail, token, password) => {
     });
 };
 
+// Envía correo para recuperación de contraseña (admin)
 const sendMailToRecoveryPassword = async(userMail,token)=>{
     let info = await transporter.sendMail({
     from: 'admin@vet.com',
@@ -83,6 +86,7 @@ const sendMailToRecoveryPassword = async(userMail,token)=>{
     console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
 }
 
+// Envía correo de verificación de cuenta a un profesor
 const sendMailToProfesor = async (userMail, token, password) => {
     let info = await transporter.sendMail({
         from: 'admin@ued.com',
@@ -116,6 +120,7 @@ const sendMailToProfesor = async (userMail, token, password) => {
     console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
 }
 
+// Envía correo para recuperación de contraseña (profesor)
 const sendMailToRecoveryPasswordProfesor = async(userMail,token)=>{
     let info = await transporter.sendMail({
     from: 'admin@ued.com',
@@ -145,6 +150,7 @@ const sendMailToRecoveryPasswordProfesor = async(userMail,token)=>{
     console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
 }
 
+// Envía credenciales y enlace de verificación a un representante
 const envioCredenciales = async (nombre, apellido, userMail, password, token) => {
     let info = await transporter.sendMail({
         from: 'info@eebpd.gob.ec',
@@ -185,6 +191,7 @@ const envioCredenciales = async (nombre, apellido, userMail, password, token) =>
     console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
 }
 
+// Notifica a un representante que un estudiante ha sido registrado y asignado a su cuenta
 const estudianteRegistrado = async (userMail, cedula, nombre, apellido) => {
     let info = await transporter.sendMail({
         from: 'info@eebpd.gob.ec',
@@ -215,6 +222,7 @@ const estudianteRegistrado = async (userMail, cedula, nombre, apellido) => {
 console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
 }
 
+// Envía correo para recuperación de contraseña (representante)
 const sendMailToRecoveryPasswordRepresentante = async (userMail, token) => {
   let info = await transporter.sendMail({
     from:"info@eebpd.edu",
@@ -243,6 +251,7 @@ const sendMailToRecoveryPasswordRepresentante = async (userMail, token) => {
   console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
 }
 
+// Envía correo notificando el cambio de email
 const sendMailToChangeEmail = async (userMail, newEmail) => {
     let info = await transporter.sendMail({
         from: 'info@eebpd.edu',

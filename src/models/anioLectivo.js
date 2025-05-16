@@ -1,6 +1,8 @@
 import { Schema, model } from 'mongoose'
 
+// Esquema para el modelo de Año Lectivo
 const anioLectivoSchema = new Schema({
+    // Periodo académico (ej: "2024-2025")
     periodo: {
         type: String,
         required: true,
@@ -10,6 +12,7 @@ const anioLectivoSchema = new Schema({
             return año;
         }
     },
+    // Fecha de inicio del periodo
     fechaInicio: {
         type: String,
         required: true,
@@ -19,14 +22,17 @@ const anioLectivoSchema = new Schema({
             return año;
         }
     },
+    // Fecha de fin del periodo
     fechaFin: {
         type: String
     },
+    // Estado del periodo (activo/inactivo)
     estado: {
         type: Boolean,
         required: true,
         default: true
     },
+    // Ponderaciones para cada tipo de evaluación
     ponderaciones: {
         deberes: {
             type: Number,
@@ -48,21 +54,13 @@ const anioLectivoSchema = new Schema({
             required: true,
             default: 0
         }
-    },
-    cursos: [{
-        type: Schema.Types.ObjectId,
-        ref: 'CursoAsignado'
-    }]
+    }
 }, {
     timestamps: true,
     collection: 'anioLectivo'
 })
 
-anioLectivoSchema.methods.agregarCurso = async function (cursoId) {
-    this.cursos.push(cursoId)
-    await this.save()
-}
-
+// Método para terminar el periodo actual (cambia estado y asigna fecha de fin)
 anioLectivoSchema.methods.terminarPeriodo = async function () {
     this.estado = false
     const fechaFin = new Date()
@@ -70,6 +68,7 @@ anioLectivoSchema.methods.terminarPeriodo = async function () {
     await this.save()
 }
 
+// Método estático para iniciar un nuevo periodo académico
 anioLectivoSchema.statics.iniciarPeriodo = async function (res) {
     const anioLectivoActivo = await this.findOne({ estado: true });
     const fecha = new Date()
@@ -87,6 +86,7 @@ anioLectivoSchema.statics.iniciarPeriodo = async function (res) {
     return res.status(201).json({ msg: "Año Lectivo iniciado correctamente", anio });
 }
 
+// Método para establecer la fecha de fin del periodo
 anioLectivoSchema.methods.establecerFechaFin = async function (res, fechaFin) {
     if (this.fechaFin) return res.status(400).json({ error: 'El periodo ya tiene una fecha para terminar' });
     this.fechaFin = fechaFin;
@@ -94,6 +94,7 @@ anioLectivoSchema.methods.establecerFechaFin = async function (res, fechaFin) {
     return res.status(200).json("Fecha de fin de periodo agregada");
 };
 
+// Método estático para terminar el periodo si la fecha de fin coincide con la actual
 anioLectivoSchema.statics.terminarFechaFin = async function (res) {
     const anioLectivoActivo = await this.findOne({ estado: true });
     const verificarFechaFin = new Date()
@@ -104,6 +105,7 @@ anioLectivoSchema.statics.terminarFechaFin = async function (res) {
     }
 }
 
+// Método para comprobar si el periodo está activo antes de realizar cambios
 anioLectivoSchema.methods.comprobarAnio = async function (res) {
     if (!this.estado) {
         return res.status(400).json({ error: 'El periodo ya ha terminado, no se puede hacer ningún cambio' });

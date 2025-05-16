@@ -4,6 +4,7 @@ import representante from "../models/representante.js";
 import profesor from "../models/profesor.js";
 import administradores from "../models/administradores.js";
 
+// Validador para login de cualquier usuario (admin, profesor, representante)
 const loginValidator = [
     check(['email', 'password'])
         .notEmpty()
@@ -49,6 +50,7 @@ const loginValidator = [
     }
 ]
 
+// Validador para confirmar cuenta mediante token
 const confirmarCuentaValidator = [
     check('token')
         .custom((_, { req }) => {
@@ -62,6 +64,7 @@ const confirmarCuentaValidator = [
     }
 ]
 
+// Validador para solicitar recuperación de contraseña
 const recuperarPasswordValidator = [
     check('email')
         .notEmpty()
@@ -75,6 +78,7 @@ const recuperarPasswordValidator = [
     }
 ]
 
+// Validador para comprobar token de recuperación de contraseña
 const comprobarTokenPasswordValidator = [
     check('token')
         .custom((_, { req }) => {
@@ -88,6 +92,7 @@ const comprobarTokenPasswordValidator = [
     }
 ]
 
+// Validador para verificar que el usuario está autenticado y cargado en req.userBDD
 const perfilValidator = [
     check('userBDD').custom(async (_, { req }) => {
         if (!req.userBDD) throw new Error('Falló al procesar los datos');
@@ -99,6 +104,7 @@ const perfilValidator = [
     }
 ]
 
+// Validador para establecer una nueva contraseña usando token
 const nuevaContrasenaValidator = [
     check('token')
         .custom((_, { req }) => {
@@ -125,6 +131,7 @@ const nuevaContrasenaValidator = [
     }
 ]
 
+// Validador para cambiar la contraseña desde el perfil autenticado
 const cambiarPasswordValidator = [
     check(['password', 'newPassword', 'confirmPassword'])
         .notEmpty()
@@ -139,8 +146,9 @@ const cambiarPasswordValidator = [
         .isLength({ min: 6 })
         .withMessage('La contraseña debe tener al menos 6 caracteres')
         .custom((newPassword, { req }) => {
+            console.log(req.body)
             if (newPassword === req.body.password) throw new Error('La nueva contraseña debe ser diferente a la actual');
-            if (req.body.password !== req.body.confirmPassword) throw new Error('Las contraseñas no coinciden');
+            if (newPassword !== req.body.confirmPassword) throw new Error('Las contraseñas no coinciden');
             return true;
         }),
     (req, res, next) => {
@@ -150,6 +158,7 @@ const cambiarPasswordValidator = [
     }
 ]
 
+// Validador para cambiar datos personales (email, teléfono, dirección, nombre, apellido)
 const cambiarDatosValidator = [
     check(['email', 'telefono', 'direccion'])
         .notEmpty()

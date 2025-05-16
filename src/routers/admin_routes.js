@@ -1,25 +1,43 @@
 // Importaciones necesarias
 import Router from 'express' // Importa el enrutador de Express
 import { 
-    asignarPonderaciones, 
-    asignarRepresentante, 
-    comenzarAnioLectivo, 
-    eliminarEstudiante, 
-    eliminarProfesor, 
-    justificacionesEstudiantes, 
-    listarCursos, 
-    listarEstudiantesXCurso, 
-    reasignarMateriaProfesor, 
-    reemplazarProfesor, 
-    registrarAdmin, 
-    registrarCurso, 
-    registrarEstudiantes, 
-    registrarFechaFin, 
-    registrarMaterias, 
-    registrarProfesor, 
-    registrarRepresentante, 
-    registroAsistenciaEstudiantes, 
-    terminarAnioLectivo 
+    //Registrar
+    registrarAdmin,
+    registrarProfesor,
+    registrarRepresentante,
+    registrarCurso,
+    registrarMaterias,
+    registrarEstudiantes,
+    //Asignar
+    asignarRepresentante,
+    //Asistencia
+    registroAsistenciaEstudiantes,
+    justificacionesEstudiantes,
+    //Listar
+    listarCursos,
+    listarEstudiantesXCurso,
+    listarAdministradores,
+    listarProfesores,
+    listarRepresentantes,
+    listarMaterias,
+    //Año lectivo
+    terminarAnioLectivo,
+    comenzarAnioLectivo,
+    registrarFechaFin,
+    asignarPonderaciones,
+    //Eliminar
+    eliminarProfesor,
+    eliminarEstudiante,
+    eliminarAdministrador,
+    eliminarRepresentante,
+    //Modificar
+    modificarAdministrador,
+    modificarProfesor,
+    modificarRepresentante,
+    modificarEstudiante,
+    //Reemplazar
+    reemplazarProfesor,
+    reasignarMateriaProfesor
 } from '../controllers/admin_controller.js' // Importa los controladores
 
 import { 
@@ -30,8 +48,7 @@ import {
 
 import { 
     asignarPonderacionesValidator, 
-    asignarRepresentanteValidator, 
-    eliminarEstudianteValidator, 
+    asignarRepresentanteValidator,
     eliminarProfesorValidator, 
     justificarInasistenciaValidator, 
     reasignarMateriaProfesorValidator, 
@@ -43,7 +60,11 @@ import {
     registroMateriaValidator, 
     registroProfesorValidator, 
     registroRepresentanteValidator, 
-    terminarAnioLectivoValidator 
+    terminarAnioLectivoValidator,
+    modificarUsuarioValidator, 
+    modificarEstudianteValidator,
+    eliminarEstAdminValidator,
+    eliminarRepresentanteValidator
 } from '../validators/admin_validator.js' // Importa los validadores
 
 const router = Router()
@@ -63,14 +84,24 @@ router.post('/asignar-representante', verificarAutenticacion, verificarAnioLecti
 router.post('/registro-asistencia', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, registroAsistenciaEstudiantesValidator, registroAsistenciaEstudiantes) // Registrar asistencia de estudiantes
 router.post('/asignar-ponderaciones', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, asignarPonderacionesValidator, asignarPonderaciones) // Asignar ponderaciones a materias
 
+// Modificaciones de entidades
+router.patch('/modificar-administrador/:id', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, modificarUsuarioValidator, modificarAdministrador) // Modificar un administrador
+router.patch('/modificar-profesor/:id', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, modificarUsuarioValidator, modificarProfesor) // Modificar un profesor
+router.patch('/modificar-representante/:id', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, modificarUsuarioValidator, modificarRepresentante) // Modificar un representante
+router.patch('/modificar-estudiante/:id', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, modificarEstudianteValidator, modificarEstudiante) // Modificar un estudiante 
+
 // Justificaciones y reasignaciones
 router.patch('/justificar-inasistencia', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, justificarInasistenciaValidator, justificacionesEstudiantes) // Justificar inasistencias de estudiantes
 router.patch('/reemplazar-profesor/:idProfesor/:idProfesorNuevo', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, reemplazarProfesorValidator, reemplazarProfesor) // Reemplazar un profesor
 router.patch('/reasignar-materia/:idProfesor/:idProfesorNuevo', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, reasignarMateriaProfesorValidator, reasignarMateriaProfesor) // Reasignar materias de un profesor a otro
 
-// Gestión de cursos y estudiantes
+// Listado de usuarios por rol y entidades
 router.get('/cursos', verificarAutenticacion, verificarRolAdmin, listarCursos) // Listar todos los cursos
 router.get('/cursos/:cursoId/estudiantes', verificarAutenticacion, verificarRolAdmin, listarEstudiantesXCurso) // Listar estudiantes de un curso específico
+router.get('/administradores', verificarAutenticacion, verificarRolAdmin, listarAdministradores) // Listar administradores
+router.get('/representantes', verificarAutenticacion, verificarRolAdmin, listarRepresentantes) // Listar representantes
+router.get('/profesores', verificarAutenticacion, verificarRolAdmin, listarProfesores) // Listar profesores
+router.get('/materias/:cursoId', verificarAutenticacion, verificarRolAdmin, listarMaterias) // Listar materias de un curso específico
 
 // Gestión del año lectivo
 router.patch('/terminar-periodo', verificarAutenticacion, verificarRolAdmin, terminarAnioLectivoValidator, terminarAnioLectivo) // Terminar el año lectivo
@@ -79,7 +110,8 @@ router.patch('/fecha-fin-periodo', verificarAutenticacion, verificarAnioLectivo,
 
 // Eliminación de entidades
 router.delete('/eliminar-profesor/:id', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, eliminarProfesorValidator, eliminarProfesor) // Eliminar un profesor
-router.delete('/eliminar-estudiante/:id', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, eliminarEstudianteValidator, eliminarEstudiante) // Eliminar un estudiante
-
+router.delete('/eliminar-estudiante/:id', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, eliminarEstAdminValidator, eliminarEstudiante) // Eliminar un estudiante
+router.delete('/eliminar-administrador/:id', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, eliminarEstAdminValidator, eliminarAdministrador) // Eliminar un administrador
+router.delete('/eliminar-representante/:id', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, eliminarRepresentanteValidator, eliminarRepresentante) // Eliminar un representante
 
 export default router

@@ -1,68 +1,59 @@
-
+import cursoAsignado from "../models/cursoAsignado.js";
 import cursos from "../models/cursos.js";
 import notas from "../models/notas.js";
 import mongoose from "mongoose";
 
+// Registra una nota para un estudiante en una materia y año lectivo
 const subirNotasEstudiantes = async (req, res) => {
-    // Paso 1: Obtener los datos
-    const { nota, motivo } = req.body;
+    const { nota, descripcion, tipo } = req.body;
     const { estudianteBDD, materiaBDD } = req;
-    // Paso 2: Manipular la BDD
-    const notasEstudiante = await notas.findOne({ estudiante: estudianteBDD._id, materia: materiaBDD._id });
+    const notasEstudiante = await notas.findOne({ estudiante: estudianteBDD._id, materia: materiaBDD._id, anioLectivo: req.userBDD.anio._id });
     if (!notasEstudiante) {
         const nuevaNota = new notas({ estudiante: estudianteBDD._id, materia: materiaBDD._id });
-        const subirNota = await nuevaNota.agregarNota(nota, motivo);
+        const subirNota = await nuevaNota.agregarNota(tipo, nota, descripcion);
         if (subirNota?.error) return res.status(400).json({ error: subirNota.error });
     } else {
-        const subirNota = await notasEstudiante.agregarNota(nota, motivo);
+        const subirNota = await notasEstudiante.agregarNota(tipo, nota, descripcion);
         if (subirNota?.error) return res.status(400).json({ error: subirNota.error });
     }
-    req.estudianteBDD = null;
-    req.materiaBDD = null;
     res.status(200).json({ msg: 'Nota registrada correctamente' });
 };
 
+// Modifica una nota existente de un estudiante
 const modificarNotasEstudiantes = async (req, res) => {
-    // Paso 1: Obtener los datos
-    const { nota, motivo } = req.body;
+    const { nota, tipo, descripcion } = req.body;
     const { notasEstudiante } = req;
-    // Paso 2: Manipular la BDD
-    const actualizarNota = await notasEstudiante.actualizarNota(nota, motivo);
+    const actualizarNota = await notasEstudiante.actualizarNota(tipo, nota, descripcion);
     if (actualizarNota?.error) return res.status(400).json({ error: actualizarNota.error });
-    req.estudianteBDD = null;
-    req.materiaBDD = null;
-    req.notasEstudiante = null;
     res.status(200).json({ msg: 'Nota actualizada correctamente' });
 }
 
+// Registra una observación para un estudiante por parte del profesor
 const observacionesEstudiantes = async (req, res) => {
-    // Paso 1: Obtener los datos
     const { observacion } = req.body;
     const { estudianteBDD, profesorBDD } = req;
-    // Paso 2: Manipular la BDD
     const date = new Date();
     const fecha = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
     const nuevaObservacion = { fecha, observacion, profesor: profesorBDD._id };
     await estudianteBDD.registrarObservacion(nuevaObservacion);
-    req.estudianteBDD = null;
-    req.profesorBDD = null;
     res.status(200).json({ msg: 'Observación registrada correctamente' });
 }
 
+// Visualiza los estudiantes de un curso para una materia y profesor
 const visualizarEstudiantesCurso = async (req, res) => {
-    //Paso 1: Obtener los datos
     const { materiaBDD } = req;
-    const { id } = req.userBDD;
-    //Paso 2: Manipular la BDD
-    const estudiantes = await cursoBDD.buscarEstudiantesPorMateriaYProfesor(id, materiaBDD._id);
-    if (estudiantes?.error) return res.status(400).json({ error: estudiantes.error });
+    const curso = await cursoBDD.findOne( materiaBDD._id);
+    if (!curso) return res.status(404).json({ error: 'Curso no encontrado' });
+    const listado = await cursoAsignado.findOne({ curso: curso._id }).populate('estudiantes', 'nombre apellido cedula estado');
+    if (listado?.estudiantes.length === 0) return res.status(404).json({ error: 'No hay estudiantes en este curso' });
+    const estudiantes = listado.estudiantes.filter(estudiante => estudiante.estado === true);
+    if (estudiantes.length === 0) return res.status(404).json({ error: 'No hay estudiantes activos en este curso' });
     res.status(200).json({ estudiantes });
 }
 
+// Visualiza los cursos asociados a un profesor
 const visualizarCursosAsociados = async (req, res) => {
-    //Paso 1: Obtener los datos
     const { id } = req.userBDD;
-    //Paso 2: Manipular la BDD
     const cursosAsociados = await cursos.aggregate([
         {
             $lookup: {
@@ -83,11 +74,11 @@ const visualizarCursosAsociados = async (req, res) => {
     res.status(200).json({ cursosAsociados });
 }
 
+// Visualiza las materias asignadas a un curso específico
 const visualizarMateriasAsignadas = async (req, res) => {
-    //Paso 1: Obtener los datos
-    const { id } = req.userBDD;
+    // Obtiene el id del usuario y el id del curso desde los parámetros
     const { cursoId } = req.params;
-    //Paso 2: Manipular la BDD
+    // Realiza un aggregate para obtener las materias asignadas al curso
     const materiasAsignadas = await cursos.aggregate([
         { $match: { _id: new mongoose.Types.ObjectId(cursoId) } },
         {
@@ -100,83 +91,17 @@ const visualizarMateriasAsignadas = async (req, res) => {
         },
         {
             $project: {
-                _id: 0,
+                _id: 1,
                 'materiasDetalle.nombre': 1,
                 'materiasDetalle._id': 1
             }
         }
     ]);
+    // Si no hay materias asignadas, retorna error
     if (!materiasAsignadas || materiasAsignadas.length === 0) return res.status(404).json({ error: 'No hay materias asignadas' });
+    // Devuelve las materias asignadas encontradas
     res.status(200).json({ materiasAsignadas })
 }
-
-const visualizarEstudiantesPorMateria = async (req, res) => {
-    // Paso 1: Obtener los datos
-    const { materiaId } = req.params;
-
-    // Paso 2: Realizar validaciones
-    try {
-        const estudiantesPorMateria = await cursos.aggregate([
-            {
-                $lookup: {
-                    from: 'estudiantes',
-                    localField: 'estudiantes',
-                    foreignField: '_id',
-                    as: 'estudiantesDetalle'
-                }
-            },
-            {
-                $lookup: {
-                    from: 'materias',
-                    localField: 'materias',
-                    foreignField: '_id',
-                    as: 'materiasDetalle'
-                }
-            },
-            {
-                $unwind: '$estudiantesDetalle'
-            },
-            {
-                $unwind: '$materiasDetalle'
-            },
-            {
-                $match: {
-                    'materiasDetalle._id': new mongoose.Types.ObjectId(materiaId)
-                }
-            },
-            {
-                $lookup: {
-                    from: 'notas',
-                    let: { estudianteId: '$estudiantesDetalle._id', materiaID: '$materiasDetalle._id' },
-                    pipeline: [
-                        { $match: { $expr: { $and: [{ $eq: ['$estudiante', '$$estudianteId'] }, { $eq: ['$materia', '$$materiaID'] }] } } },
-                        { $unwind: '$notas' },
-                        { $project: { 'notas.nota': 1, 'notas.motivo': 1, 'notas.fecha': 1, _id: 0 } }
-                    ],
-                    as: 'notasDetalle'
-                }
-            },
-            {
-                $project: {
-                    _id: 0,
-                    'materiasDetalle.nombre': 1,
-                    'estudiantesDetalle.nombre': 1,
-                    'estudiantesDetalle.apellido': 1,
-                    'notasDetalle': 1
-                }
-            }
-        ]);
-
-        if (!estudiantesPorMateria || estudiantesPorMateria.length === 0) {
-            return res.status(404).json({ error: 'No se encontraron estudiantes para la materia especificada' });
-        }
-
-        // Paso 3: Manipular la BDD
-        res.status(200).json({ estudiantesPorMateria });
-    } catch (error) {
-        res.status(500).json({ msg: 'Error al obtener los estudiantes de la materia' });
-    }
-};
 
 export {
     subirNotasEstudiantes,
@@ -184,6 +109,5 @@ export {
     visualizarCursosAsociados,
     observacionesEstudiantes,
     visualizarEstudiantesCurso,
-    visualizarMateriasAsignadas,
-    visualizarEstudiantesPorMateria
+    visualizarMateriasAsignadas
 }

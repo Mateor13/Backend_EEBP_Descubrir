@@ -1,4 +1,3 @@
-//Requerir los modulos
 import express from 'express'
 import dotenv from 'dotenv'
 import cors from 'cors'
@@ -8,19 +7,18 @@ import representanteRouter from './routers/representante_routes.js'
 import publicRouter from './routers/common_routes.js'
 import multer from 'multer';
 
-//inicializadores
+// Inicializadores de la aplicación
 const app = express()
 dotenv.config()
 const upload = multer()
 
-//Configuraciones
+// Configuración del puerto y middlewares globales
 app.set('port', process.env.PORT || 3000)
 app.use(cors())
-app.use(upload.none())
-//middleware
-app.use(express.json())
+app.use(upload.none()) // Para manejo de formularios multipart
+app.use(express.json()) // Para parsear JSON en las peticiones
 
-//Rutas
+// Ruta principal para comprobar que el servidor está en línea
 app.get('/', (req, res) => {
     res.send(`
         <!DOCTYPE html>
@@ -37,14 +35,13 @@ app.get('/', (req, res) => {
     `);
 });
 
+// Rutas públicas y privadas (admin, profesor, representante)
 app.use('/api/', publicRouter)
-
 app.use('/api/', adminRouter)
-
 app.use('/api/', profesorRouter)
-
 app.use('/api/', representanteRouter)
 
+// Middleware para manejar rutas no encontradas
 app.use((req, res) => {
     res.status(404).json({error: 'Ruta no encontrada'})
 })

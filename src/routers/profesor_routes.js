@@ -6,7 +6,6 @@ import {
     subirNotasEstudiantes, 
     visualizarCursosAsociados, 
     visualizarEstudiantesCurso, 
-    visualizarEstudiantesPorMateria, 
     visualizarMateriasAsignadas 
 } from '../controllers/profesor_controller.js'; // Importa los controladores
 
@@ -20,7 +19,6 @@ import {
     observacionesEstudiantesValidator, 
     subirNotasEstudiantesValidator, 
     visualizarEstudiantesCursoValidator, 
-    visualizarEstudiantesPorMateriaValidator 
 } from '../validators/profesor_validator.js'; // Importa los validadores
 
 const router = Router();
@@ -39,6 +37,5 @@ router.post('/observacion-estudiante', verificarAutenticacion, verificarRolProfe
 router.get('/estudiantes/curso', verificarAutenticacion, verificarRolProfesor, visualizarEstudiantesCursoValidator, visualizarEstudiantesCurso); // Ver estudiantes de un curso
 router.get('/profesor/cursos', verificarAutenticacion, verificarRolProfesor, visualizarCursosAsociados); // Ver cursos asociados al profesor
 router.get('/profesor/:cursoId/materias', verificarAutenticacion, verificarRolProfesor, visualizarEstudiantesCursoValidator, visualizarMateriasAsignadas); // Ver materias asignadas a un curso
-router.get('/profesor/:materiaId/estudiantes', verificarAutenticacion, verificarRolProfesor, visualizarEstudiantesPorMateriaValidator, visualizarEstudiantesPorMateria); // Ver estudiantes de una materia específica
 
 export default router;

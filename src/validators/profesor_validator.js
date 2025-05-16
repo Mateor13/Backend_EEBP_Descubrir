@@ -4,13 +4,14 @@ import cursos from '../models/cursos.js';
 import materias from '../models/materias.js';
 import estudiantes from '../models/estudiantes.js';
 
+// Validador para subir notas de estudiantes por parte del profesor
 const subirNotasEstudiantesValidator = [
     check('anio')
         .custom((_, { req }) => {
             if (!req.userBDD.anio) throw new Error('Este año lectivo ya ha finalizado');
             return true;
         }),
-    check(['cedula', 'nota', 'materia', 'descripcion', 'curso'])
+    check(['cedula', 'nota', 'materia', 'descripcion', 'tipo', 'curso'])
         .notEmpty()
         .withMessage('Todos los campos son obligatorios'),
     check('cedula')
@@ -40,6 +41,12 @@ const subirNotasEstudiantesValidator = [
             if (!Curso) throw new Error ('El estudiante no está registrado en este curso' )
             return true;
         }),
+    check('tipo')
+        .isIn(['deberes', 'talleres', 'examenes', 'pruebas'])
+        .withMessage('El tipo de evaluación no es válido'),
+    check('descripcion')
+        .isString()
+        .withMessage('La descripción debe ser un texto'),
     (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg })
@@ -47,13 +54,14 @@ const subirNotasEstudiantesValidator = [
     }
 ]
 
+// Validador para modificar notas de estudiantes por parte del profesor
 const modificarNotasEstudiantesValidator = [
     check('anio')
         .custom((_, { req }) => {
             if (!req.userBDD.anio) throw new Error('Este año lectivo ya ha finalizado');
             return true;
         }),
-    check(['cedula', 'nota', 'materia', 'motivo'])
+    check(['cedula', 'nota', 'materia', 'descripcion', 'tipo', 'curso'])
         .notEmpty()
         .withMessage('Todos los campos son obligatorios'),
     check('cedula')
@@ -62,27 +70,20 @@ const modificarNotasEstudiantesValidator = [
         .custom(async (cedula, { req }) => {
             const estudiante = await estudiantes.findOne({ cedula });
             if (!estudiante) throw new Error('El estudiante no existe');
-            req.estudianteBDD = estudiante;
-            return true;
-        }),
-    check('nota')
-        .isNumeric()
-        .withMessage('La nota debe ser un número')
-        .isInt({ min: 0, max: 10 }),
-    check('materia')
-        .custom(async (materia, { req }) => {
-            const materiaBDD = await materias.findOne({ _id: materia });
-            if (!materiaBDD) throw new Error('La materia no existe');
-            req.materiaBDD = materiaBDD;
-            return true;
-        }),
-    check('notasEstudiante')
-        .custom(async (_, {req}) => {
-            const notasEstudiante = await notas.findOne({ estudiante: req.estudianteBDD._id, materia: req.materiaBDD._id });
+            const materias = await materias.findById(req.body.materia)
+            if (!materias) throw new Error('La materia no existe');
+            const notasEstudiante = await notas.findOne({ estudiante: estudiante._id, materia: materias._id });
             if (!notasEstudiante) throw new Error('El estudiante no tiene notas registradas');
             req.notasEstudiante = notasEstudiante;
             return true;
         }),
+    check('tipo')
+        .isIn(['deberes', 'talleres', 'examenes', 'pruebas'])
+        .withMessage('El tipo de evaluación no es válido'),
+    check('nota')
+        .isNumeric()
+        .withMessage('La nota debe ser un número')
+        .isInt({ min: 0, max: 10 }),
     (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
@@ -90,6 +91,7 @@ const modificarNotasEstudiantesValidator = [
     }
 ]
 
+// Validador para registrar observaciones sobre estudiantes
 const observacionesEstudiantesValidator = [
     check('anio')
         .custom((_, { req }) => {
@@ -126,6 +128,7 @@ const observacionesEstudiantesValidator = [
     }
 ]
 
+// Validador para visualizar estudiantes de un curso y materia
 const visualizarEstudiantesCursoValidator = [
     check(['curso', 'materia'])
         .notEmpty()
@@ -152,6 +155,7 @@ const visualizarEstudiantesCursoValidator = [
     }
 ]
 
+// Validador para visualizar materias asignadas a un curso
 const visualizarMateriasAsignadasValidator = [
     check('cursoId')
         .notEmpty()
@@ -168,6 +172,7 @@ const visualizarMateriasAsignadasValidator = [
     }
 ]
 
+// Validador para visualizar estudiantes por materia
 const visualizarEstudiantesPorMateriaValidator = [
     check('materiaId')
         .notEmpty()
