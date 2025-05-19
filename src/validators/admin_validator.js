@@ -508,11 +508,30 @@ const modificarUsuarioValidator = [
     check(['nombre', 'apellido', 'email', 'telefono', 'cedula', 'direccion', 'id'])
         .notEmpty()
         .withMessage('Todos los campos son obligatorios'),
+    // Validación de id y obtención del usuario
+    check('id')
+        .custom(async (id, { req }) => {
+            // Buscar el usuario en todos los roles sin estudiantes
+            let usuarioBDD = null;
+            for (const { model } of todosRolesSinEstudiantes) {
+                usuarioBDD = await model.findById(id);
+                if (usuarioBDD) {
+                    req.usuarioBDD = usuarioBDD;
+                    req.usuarioModel = model;
+                    break;
+                }
+            }
+            if (!usuarioBDD) throw new Error('El usuario no está registrado');
+            return true;
+        }),
     // Validación de email
     check('email')
         .isEmail()
         .withMessage('El email no es válido')
         .custom(async (email, { req }) => {
+            // Si el email no cambió, permitir
+            if (req.usuarioBDD.email === email) return true;
+            // Verificar si el email ya está registrado en otros usuarios
             for (const { model } of todosRolesSinEstudiantes) {
                 const usuarioBDD = await model.findOne({ email });
                 if (usuarioBDD) throw new Error('El email ya está registrado');
@@ -531,6 +550,7 @@ const modificarUsuarioValidator = [
         .matches(/^\d{10}$/)
         .withMessage('El teléfono debe tener exactamente 10 dígitos y solo números')
         .custom(async (telefono, { req }) => {
+            if (req.usuarioBDD.telefono === telefono) return true;
             for (const { model } of todosRolesSinEstudiantes) {
                 const usuarioBDD = await model.findOne({ telefono });
                 if (usuarioBDD) throw new Error('El teléfono ya está registrado');
@@ -542,6 +562,8 @@ const modificarUsuarioValidator = [
         .matches(/^\d{10}$/)
         .withMessage('La cédula debe tener exactamente 10 dígitos y solo números')
         .custom(async (cedula, { req }) => {
+            // Buscar en todos los roles (incluye estudiantes)
+            if (req.usuarioBDD.cedula === cedula) return true;
             for (const { model } of todosRoles) {
                 const usuarioBDD = await model.findOne({ cedula });
                 if (usuarioBDD) throw new Error('La cédula ya está registrada');
@@ -558,14 +580,7 @@ const modificarUsuarioValidator = [
             if (/^\d+$/.test(value)) throw new Error('La dirección no puede ser solo números');
             return true;
         }),
-    // Validación de id
-    check('id')
-        .custom(async (id, { req }) => {
-            const usuarioBDD = await Representante.findById(id);
-            if (!usuarioBDD) throw new Error('El usuario no está registrado');
-            req.usuarioBDD = usuarioBDD;
-            return true;
-        }),
+    // Manejo de errores
     (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -573,8 +588,7 @@ const modificarUsuarioValidator = [
         }
         next();
     }
-]
-
+];
 
 // Validador para modificar estudiantes
 const modificarEstudianteValidator = [
@@ -605,6 +619,7 @@ const modificarEstudianteValidator = [
             req.estudianteBDD = usuarioBDD;
             return true;
         }),
+    // Manejo de errores
     (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -763,6 +778,14 @@ const eliminarRepresentanteValidator = [
             req.representanteBDD = representanteBDD;
             return true;
         }),
+    // Manejo de errores
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: errors.array()[0].msg });
+        }
+        next();
+    }
 ]
 
 // Validador para reemplazar profesor
@@ -810,10 +833,12 @@ const eliminarEstAdminValidator = [
         .custom(async (id, { req }) => {
             for (const { model } of rolesEstudianteAdministrador) {
                 const usuarioBDD = await model.findById(id);
-                if (!usuarioBDD) throw new Error('El usuario no está registrado');
+                if (usuarioBDD) {
+                    req.usuarioBDD = usuarioBDD;
+                    return true;
+                }
             }
-            req.usuarioBDD = usuarioBDD;
-            return true;
+            throw new Error('El usuario no está registrado');
         }),
     // Manejo de errores
     (req, res, next) => {
@@ -859,6 +884,14 @@ const reasignarMateriaProfesorValidator = [
             req.cursoBDD = cursoBDD;
             return true;
         }),
+    // Manejo de errores
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: errors.array()[0].msg });
+        }
+        next();
+    }
 ]
 
 export {

@@ -54,9 +54,9 @@ const modificarAdministrador = async (req, res) => {
         usuarioBDD.telefono = telefono;
         usuarioBDD.cedula = cedula;
         await usuarioBDD.save();
-        res.status(200).json({ msg: 'Representante modificado correctamente' });
+        res.status(200).json({ msg: 'Administrador modificado correctamente' });
     } catch (error) {
-        res.status(500).json({ error: 'Error al modificar representante' });
+        res.status(500).json({ error: 'Error al modificar administrador' });
     }
 }
 
@@ -110,9 +110,9 @@ const modificarProfesor = async (req, res) => {
         usuarioBDD.telefono = telefono;
         usuarioBDD.cedula = cedula;
         await usuarioBDD.save();
-        res.status(200).json({ msg: 'Representante modificado correctamente' });
+        res.status(200).json({ msg: 'Profesor modificado correctamente' });
     } catch (error) {
-        res.status(500).json({ error: 'Error al modificar representante' });
+        res.status(500).json({ error: 'Error al modificar profesor' });
     }
 }
 
@@ -180,6 +180,7 @@ const eliminarRepresentante = async (req, res) => {
         await representanteBDD.save();
         res.status(200).json({ msg: 'Representante eliminado correctamente' });
     } catch (error) {
+        console.log(error);
         res.status(500).json({ error: 'Error al eliminar representante' });
     }
 }
@@ -286,7 +287,7 @@ const listarEstudiantesXCurso = async (req, res) => {
     const { cursoId } = req.params;
     const cursoAsignadoBDD = await CursoAsignado.findOne({ curso: cursoId, anioLectivo: req.userBDD.anio }).populate({
         path: 'estudiantes',
-        select: 'nombre apellido _id'
+        select: 'nombre apellido cedula _id'
     });
     if (!cursoAsignadoBDD) return res.status(400).json({ error: 'El curso no esta registrado' });
     res.status(200).json(cursoAsignadoBDD.estudiantes);
