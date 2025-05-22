@@ -39,8 +39,6 @@ cursoSchema.methods.asignarNombre = async function() {
 
 // Método para agregar una materia al curso (evita duplicados)
 cursoSchema.methods.agregarMaterias = async function(materia){
-    const existeMateria = this.materias.includes(materia)
-    if(existeMateria)return {error: 'La materia ya está registrada en este curso'}
     this.materias.push(materia)
     await this.save()
 }

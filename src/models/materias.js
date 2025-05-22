@@ -25,13 +25,9 @@ const materiaSchema = new Schema({
 });
 
 // Método para reemplazar el profesor de la materia
-materiaSchema.methods.reemplazar_profesor = async function (profesorActual, nuevoProfesorId) {
-    const { _id } = this;
-    // Busca la materia por id y profesor actual, y actualiza el profesor asignado
-    await this.model('Materia').findOneAndUpdate(
-        { _id, profesor: profesorActual },
-        { profesor: nuevoProfesorId }
-    );
+materiaSchema.methods.reemplazar_profesor = async function (nuevoProfesorId) {
+    this.profesor = nuevoProfesorId;
+    await this.save();
 }
 
 export default model('Materia', materiaSchema)

@@ -24,8 +24,8 @@ const todosRolesSinEstudiantes = [
 ]
 
 const rolesEstudianteAdministrador = [
-    { model: Estudiante },
-    { model: Administrador }
+    { model: Estudiante, rol: 'estudiante' },
+    { model: Administrador, rol: 'administrador' }
 ]
 
 // Validador para registro de administradores
@@ -241,12 +241,10 @@ const registroCursoValidator = [
         .isIn(['A', 'B', 'C', 'D', 'E'])
         .withMessage('El paralelo debe ser una letra entre A y E')
         .custom(async (value, { req }) => {
-            console.log(req.body.nivel, value)
             const cursoBDD = await Curso.findOne({ nivel: req.body.nivel, paralelo: value });
             if (cursoBDD) throw new Error('El curso ya está registrado');
             const anioLectivoBDD = await AnioLectivo.findOne({ estado: true });
             if (!anioLectivoBDD) throw new Error('No hay un año lectivo activo');
-            console.log(anioLectivoBDD)
             req.anioLectivoBDD = anioLectivoBDD;
             return true;
         }),
@@ -273,11 +271,15 @@ const registroMateriaValidator = [
     // Validación de curso
     check('curso')
         .custom(async (curso, { req }) => {
-            const cursoBDD = await Curso.findById(curso);
+            // Buscar el curso y poblar las materias con su nombre
+            const cursoBDD = await Curso.findById(curso).populate('materias', 'nombre');
             if (!cursoBDD) throw new Error('El curso no está registrado');
+            // Verificar si ya existe una materia con el mismo nombre en el curso
+            const existeMateria = cursoBDD.materias.some(
+                materia => materia.nombre.trim().toLowerCase() === req.body.nombre.trim().toLowerCase()
+            );
+            if (existeMateria) throw new Error('Ya existe una materia registrada en este curso');
             req.cursoBDD = cursoBDD;
-            const materiasRegistradas = await cursoBDD.buscarMateriasRegistradas(req.body.nombre);
-            if (materiasRegistradas.length > 0) throw new Error('Ya existe una materia registrada en este curso');
             return true;
         }),
     // Validación de cédula del profesor
@@ -301,7 +303,7 @@ const registroMateriaValidator = [
 // Validador para registro de estudiantes
 const registroEstudianteValidator = [
     // Validación de campos obligatorios
-    check(['nombre', 'apellido', 'cedula', 'paralelo', 'nivel', 'cedulaRepresentante'])
+    check(['nombre', 'apellido', 'cedula', 'curso', 'cedulaRepresentante'])
         .notEmpty()
         .withMessage('Todos los campos son obligatorios'),
     // Validación de nombre y apellido
@@ -319,21 +321,12 @@ const registroEstudianteValidator = [
             }
             return true;
         }),
-    // Validación de paralelo
-    check('paralelo')
-        .isIn(['A', 'B', 'C', 'D', 'E'])
-        .withMessage('El paralelo debe ser una letra entre A y E'),
-    // Validación de nivel
-    check('nivel')
-        .isInt({ min: 1, max: 7 })
-        .withMessage('El nivel debe ser un número entre 1 y 7'),
     // Validación de curso
     check('curso')
-        .custom(async (_, { req }) => {
-            const cursoBDD = await Curso.findOne({ nivel: req.body.nivel, paralelo: req.body.paralelo });
+        .custom(async (curso, { req }) => {
+            const cursoBDD = await Curso.findById(curso);
             if (!cursoBDD) throw new Error('El curso no está registrado');
             const cursoAsignadoBDD = await CursoAsignado.findOne({ curso: cursoBDD._id, anioLectivo: req.userBDD.anio });
-            console.log(cursoBDD._id, req.userBDD.anio)
             if (!cursoAsignadoBDD) throw new Error('No se puede registrar el estudiante porque el curso no está asignado a un año lectivo');
             req.cursoAsignadoBDD = cursoAsignadoBDD;
             return true;
@@ -441,16 +434,29 @@ const asignarEstudianteACursoValidator = [
 
 // Validador para asignar ponderaciones
 const asignarPonderacionesValidator = [
-    // Validación de campos obligatorios
+    check('deberes')
+        .notEmpty().withMessage('El campo deberes es obligatorio')
+        .isNumeric().withMessage('La ponderación de deberes debe ser un número'),
+    check('talleres')
+        .notEmpty().withMessage('El campo talleres es obligatorio')
+        .isNumeric().withMessage('La ponderación de talleres debe ser un número'),
+    check('examenes')
+        .notEmpty().withMessage('El campo examenes es obligatorio')
+        .isNumeric().withMessage('La ponderación de examenes debe ser un número'),
+    check('pruebas')
+        .notEmpty().withMessage('El campo pruebas es obligatorio')
+        .isNumeric().withMessage('La ponderación de pruebas debe ser un número'),
+    // Validación de suma de ponderaciones
     check(['deberes', 'talleres', 'examenes', 'pruebas'])
-        .notEmpty()
-        .withMessage('Todos los campos son obligatorios')
-        .isNumeric()
-        .withMessage('Las ponderaciones deben ser números decimales o enteros'),
-    // Validación de ponderaciones
-    check('ponderaciones')
         .custom(async (_, { req }) => {
-            const total = parseFloat(req.body.deberes) + parseFloat(req.body.talleres) + parseFloat(req.body.examenes) + parseFloat(req.body.pruebas);
+            const anioLectivoBDD = await AnioLectivo.findOne({ estado: true });
+            if (!anioLectivoBDD) throw new Error('No hay un año lectivo activo');
+            req.anioLectivoBDD = anioLectivoBDD;
+            const total =
+                parseFloat(req.body.deberes) +
+                parseFloat(req.body.talleres) +
+                parseFloat(req.body.examenes) +
+                parseFloat(req.body.pruebas);
             if (total !== 100) throw new Error('La suma de las ponderaciones debe ser igual a 100');
             req.ponderaciones = {
                 deberes: parseFloat(req.body.deberes),
@@ -460,7 +466,6 @@ const asignarPonderacionesValidator = [
             };
             return true;
         }),
-    // Manejo de errores
     (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -468,7 +473,7 @@ const asignarPonderacionesValidator = [
         }
         next();
     }
-]
+];
 
 // Validador para registro de asistencia de estudiantes
 const registroAsistenciaEstudiantesValidator = [
@@ -604,18 +609,15 @@ const modificarEstudianteValidator = [
     check('cedula')
         .matches(/^\d{10}$/)
         .withMessage('La cédula debe tener exactamente 10 dígitos y solo números')
-        .custom(async (cedula) => {
-            for (const { model } of todosRoles) {
-                const usuarioBDD = await model.findOne({ cedula });
-                if (usuarioBDD) throw new Error('La cédula ya está registrada');
+        .custom(async (cedula, { req }) => {
+            const usuarioBDD = await Estudiante.findById(req.params.id);
+            if (!usuarioBDD) throw new Error('El estudiante no está registrado');
+            if (usuarioBDD.cedula !== cedula) {
+                for (const { model } of todosRoles) {
+                    const usuarioBDD = await model.findOne({ cedula });
+                    if (usuarioBDD) throw new Error('La cédula ya está registrada');
+                }
             }
-            return true;
-        }),
-    // Validación de id
-    check('id')
-        .custom(async (id, { req }) => {
-            const usuarioBDD = await Estudiante.findById(id);
-            if (!usuarioBDD) throw new Error('El usuario no está registrado');
             req.estudianteBDD = usuarioBDD;
             return true;
         }),
@@ -719,14 +721,17 @@ const registrarFechaFinValidator = [
             }
             if (month === 2 && day > 29) throw new Error('Febrero no tiene más de 29 días');
             const actualDate = new Date();
-            if (date > actualDate) throw new Error('La fecha no puede ser mayor a la actual');
+            if (date <= actualDate) throw new Error('La fecha no puede ser menor o igual a la actual');
             return true;
         }),
     // Validación de año lectivo activo
     check('anioLectivo')
         .custom(async (_, { req }) => {
-            const anioLectivoBDD = await AnioLectivo.findOne({ estado: true });
-            if (!anioLectivoBDD) throw new Error('No hay un año lectivo activo');
+            const { anio } = req.userBDD 
+            console.log(anio)
+            const anioLectivoBDD = await AnioLectivo.findOne({ anio });
+            if (!anioLectivoBDD || anioLectivoBDD.estado === false) throw new Error('El año lectivo no está activo');
+            console.log(anioLectivoBDD)
             req.anioLectivoBDD = anioLectivoBDD;
             return true;
         }
@@ -750,9 +755,10 @@ const eliminarProfesorValidator = [
         .custom(async (id, { req }) => {
             const profesorBDD = await Profesor.findById(id);
             if (!profesorBDD) throw new Error('El profesor no está registrado');
-            req.profesorBDD = profesorBDD;
+            if (profesorBDD.estado === false) throw new Error('El profesor ya está eliminado');
             const materiasBDD = await Materia.find({ profesor: id });
             if (materiasBDD.length > 0) throw new Error('No se puede eliminar el profesor porque está asociado a un curso, asigne otro profesor primero');
+            req.profesorBDD = profesorBDD;
             return true;
         }),
     // Manejo de errores
@@ -774,6 +780,7 @@ const eliminarRepresentanteValidator = [
         .custom(async (id, { req }) => {
             const representanteBDD = await Representante.findById(id);
             if (!representanteBDD) throw new Error('El representante no está registrado');
+            if (representanteBDD.estado === false) throw new Error('El representante ya está eliminado');
             if (representanteBDD.estudiantes.length > 0) throw new Error('No se puede eliminar el representante porque está asociado a un estudiante');
             req.representanteBDD = representanteBDD;
             return true;
@@ -793,7 +800,9 @@ const reemplazarProfesorValidator = [
     // Validación de ids de profesores
     check(['idProfesor', 'idProfesorNuevo'])
         .notEmpty()
-        .withMessage('El id del profesor es obligatorio'),
+        .withMessage('El id del profesor es obligatorio')
+        .isMongoId()
+        .withMessage('Los ids de los profesores deben ser válidos'),
     // Validación de id del nuevo profesor
     check('idProfesorNuevo')
         .custom(async (idProfesorNuevo, { req }) => {
@@ -808,8 +817,7 @@ const reemplazarProfesorValidator = [
         .custom(async (idProfesor, { req }) => {
             const profesorBDD = await Profesor.findById(idProfesor);
             if (!profesorBDD) throw new Error('El profesor no está registrado');
-            req.profesorBDD = profesorBDD;
-            const materiasBDD = await Materia.find({ profesor: idProfesor });
+            const materiasBDD = await Materia.find({ profesor: profesorBDD._id });
             if (materiasBDD.length === 0) throw new Error('El profesor no está asociado a ningún curso');
             req.materiasBDD = materiasBDD;
             return true;
@@ -831,9 +839,10 @@ const eliminarEstAdminValidator = [
         .notEmpty()
         .withMessage('El id del estudiante es obligatorio')
         .custom(async (id, { req }) => {
-            for (const { model } of rolesEstudianteAdministrador) {
+            for (const { model, rol } of rolesEstudianteAdministrador) {
                 const usuarioBDD = await model.findById(id);
                 if (usuarioBDD) {
+                    if (usuarioBDD.estado === false) throw new Error(`El ${rol} ya está eliminado`);
                     req.usuarioBDD = usuarioBDD;
                     return true;
                 }
@@ -852,36 +861,49 @@ const eliminarEstAdminValidator = [
 
 // Validador para reasignar materia a otro profesor
 const reasignarMateriaProfesorValidator = [
-    // Validación de ids de profesores y materia
-    check(['idProfesor', 'idMateria', 'idNuevoProfesor'])
+    // Validación de campos obligatorios
+    check('idMateria')
         .notEmpty()
-        .withMessage('El id de los profesores y la materia son obligatorios'),
-    // Validación de id del profesor actual
-    check('idProfesor')
-        .custom(async (idProfesor, { req }) => {
-            const profesorBDD = await Profesor.findById(idProfesor);
-            if (!profesorBDD) throw new Error('El profesor no está registrado');
-            req.profesorBDD = profesorBDD;
+        .withMessage('El id de la materia es obligatorio'),
+    check('idProfesorNuevo')
+        .notEmpty()
+        .withMessage('El id del nuevo profesor es obligatorio'),
+    check('nombre')
+        .notEmpty()
+        .withMessage('El nombre es obligatorio')
+        .isAlpha('es-ES', { ignore: ' ' })
+        .withMessage('El nombre de la materia solo puede contener letras'),
+    // Validación de id de la materia y lógica de nombre/profesor
+    check('idMateria')
+        .custom(async (idMateria, { req }) => {
+            const materiaBDD = await Materia.findById(idMateria).populate('profesor', 'nombre _id');
+            if (!materiaBDD) throw new Error('La materia no está registrada');
+            req.materiaBDD = materiaBDD;
+
+            // Validar nombre solo si cambia
+            if (req.body.nombre.trim().toLowerCase() !== materiaBDD.nombre.trim().toLowerCase()) {
+                // Buscar el curso al que pertenece la materia
+                const cursoBDD = await Curso.findOne({ materias: materiaBDD._id }).populate('materias', 'nombre');
+                if (!cursoBDD) throw new Error('La materia no está asociada a ningún curso');
+                const existe = cursoBDD.materias.some(
+                    m => m.nombre.trim().toLowerCase() === req.body.nombre.trim().toLowerCase()
+                );
+                if (existe) throw new Error('Ya existe una materia registrada con ese nombre');
+                req.cursoBDD = cursoBDD;
+            } else {
+                // Si el nombre no cambia, igual obtenemos el curso
+                const cursoBDD = await Curso.findOne({ materias: materiaBDD._id });
+                if (!cursoBDD) throw new Error('La materia no está asociada a ningún curso');
+                req.cursoBDD = cursoBDD;
+            }
             return true;
         }),
     // Validación de id del nuevo profesor
-    check('idNuevoProfesor')
-        .custom(async (idNuevoProfesor, { req }) => {
-            const nuevoProfesorBDD = await Profesor.findById(idNuevoProfesor);
+    check('idProfesorNuevo')
+        .custom(async (idProfesorNuevo, { req }) => {
+            const nuevoProfesorBDD = await Profesor.findById(idProfesorNuevo);
             if (!nuevoProfesorBDD) throw new Error('El nuevo profesor no está registrado');
             req.nuevoProfesorBDD = nuevoProfesorBDD;
-            return true;
-        }),
-    // Validación de id de la materia
-    check('idMateria')
-        .custom(async (idMateria, { req }) => {
-            const materiaBDD = await Materia.findById(idMateria);
-            if (!materiaBDD) throw new Error('La materia no está registrada');
-            req.materiasBDD = materiaBDD;
-            if (req.body.idProfesor === req.body.idNuevoProfesor) throw new Error('No se puede asignar el mismo profesor');
-            const cursoBDD = await Curso.findOne({ materias: materiaBDD._id });
-            if (!cursoBDD) throw new Error('La materia no está asociada a ningún curso');
-            req.cursoBDD = cursoBDD;
             return true;
         }),
     // Manejo de errores
@@ -892,7 +914,7 @@ const reasignarMateriaProfesorValidator = [
         }
         next();
     }
-]
+];
 
 export {
     //Administrador

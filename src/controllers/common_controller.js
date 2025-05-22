@@ -22,12 +22,12 @@ const rolActual = (rol) => {
 const login = async (req, res) => {
     const { usuarioBDD, rol, anioLectivoBDD } = req;
     const token = generarJWT(usuarioBDD._id, rol, anioLectivoBDD._id)
-    return res.status(200).json({ mensaje: `Bienvenido ${usuarioBDD.nombre} ${usuarioBDD.apellido}`, rol, token })
+    return res.status(200).json({ rol, token })
 }
 
 // Lista todos los años lectivos registrados
 const listarAniosLectivos = async (req, res) => {
-    const anios = await aniosLectivo.find({}).select('-__v -createdAt -updatedAt')
+    const anios = await aniosLectivo.find({}).select('-__v -createdAt -updatedAt -ponderaciones -fechaInicio')
     return res.status(200).json(anios)
 }
 

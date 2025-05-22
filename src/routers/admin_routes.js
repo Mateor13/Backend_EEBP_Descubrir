@@ -64,7 +64,8 @@ import {
     modificarUsuarioValidator, 
     modificarEstudianteValidator,
     eliminarEstAdminValidator,
-    eliminarRepresentanteValidator
+    eliminarRepresentanteValidator,
+    registrarFechaFinValidator
 } from '../validators/admin_validator.js' // Importa los validadores
 
 const router = Router()
@@ -82,7 +83,6 @@ router.post('/registro-estudiante', verificarAutenticacion, verificarAnioLectivo
 // Asignaciones y modificaciones
 router.post('/asignar-representante', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, asignarRepresentanteValidator, asignarRepresentante) // Asignar un representante a un estudiante
 router.post('/registro-asistencia', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, registroAsistenciaEstudiantesValidator, registroAsistenciaEstudiantes) // Registrar asistencia de estudiantes
-router.post('/asignar-ponderaciones', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, asignarPonderacionesValidator, asignarPonderaciones) // Asignar ponderaciones a materias
 
 // Modificaciones de entidades
 router.patch('/modificar-administrador/:id', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, modificarUsuarioValidator, modificarAdministrador) // Modificar un administrador
@@ -93,7 +93,7 @@ router.patch('/modificar-estudiante/:id', verificarAutenticacion, verificarAnioL
 // Justificaciones y reasignaciones
 router.patch('/justificar-inasistencia', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, justificarInasistenciaValidator, justificacionesEstudiantes) // Justificar inasistencias de estudiantes
 router.patch('/reemplazar-profesor/:idProfesor/:idProfesorNuevo', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, reemplazarProfesorValidator, reemplazarProfesor) // Reemplazar un profesor
-router.patch('/reasignar-materia/:idProfesor/:idProfesorNuevo', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, reasignarMateriaProfesorValidator, reasignarMateriaProfesor) // Reasignar materias de un profesor a otro
+router.patch('/reasignar-materia/:idMateria/:idProfesorNuevo', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, reasignarMateriaProfesorValidator, reasignarMateriaProfesor) // Reasignar materias de un profesor a otro
 
 // Listado de usuarios por rol y entidades
 router.get('/cursos', verificarAutenticacion, verificarRolAdmin, listarCursos) // Listar todos los cursos
@@ -106,7 +106,8 @@ router.get('/materias/:cursoId', verificarAutenticacion, verificarRolAdmin, list
 // Gestión del año lectivo
 router.patch('/terminar-periodo', verificarAutenticacion, verificarRolAdmin, terminarAnioLectivoValidator, terminarAnioLectivo) // Terminar el año lectivo
 router.post('/iniciar-periodo', verificarAutenticacion, verificarRolAdmin, comenzarAnioLectivo) // Iniciar un nuevo año lectivo
-router.patch('/fecha-fin-periodo', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, registrarFechaFin) // Registrar la fecha de fin del año lectivo
+router.patch('/fecha-fin-periodo', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, registrarFechaFinValidator, registrarFechaFin) // Registrar la fecha de fin del año lectivo
+router.post('/asignar-ponderaciones', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, asignarPonderacionesValidator, asignarPonderaciones) // Asignar ponderaciones a materias
 
 // Eliminación de entidades
 router.delete('/eliminar-profesor/:id', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, eliminarProfesorValidator, eliminarProfesor) // Eliminar un profesor

@@ -106,4 +106,4 @@ profesorSchema.methods.encriptarPassword = async function (password) {
     this.password = await bcrypt.hash(password, salt)
 }
 
-export default model('profesor', profesorSchema)
+export default model('Profesor', profesorSchema)
