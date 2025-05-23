@@ -795,6 +795,53 @@ const eliminarRepresentanteValidator = [
     }
 ]
 
+const eliminarCursoValidator = [
+    // Validación de id del curso
+    check('id')
+        .notEmpty()
+        .withMessage('El id del curso es obligatorio')
+        .custom(async (id, { req }) => {
+            const cursoBDD = await Curso.findById(id);
+            if (!cursoBDD) throw new Error('El curso no está registrado');
+            if (cursoBDD.estado === false) throw new Error('El curso ya está eliminado');
+            const cursoAsignadoBDD = await CursoAsignado.findOne({ curso: id, anioLectivo: req.userBDD.anio });
+            if (cursoAsignadoBDD?.estudiantes.length > 0) throw new Error('No se puede eliminar el curso porque tiene estudiantes asignados');
+            req.cursoBDD = cursoBDD;
+            return true;
+        }),
+    // Manejo de errores
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: errors.array()[0].msg });
+        }
+        next();
+    }
+]
+
+// Validador para eliminar materia
+const eliminarMateriaValidator = [
+    // Validación de id de la materia
+    check('id')
+        .notEmpty()
+        .withMessage('El id de la materia es obligatorio')
+        .custom(async (id, { req }) => {
+            const materiaBDD = await Materia.findById(id);
+            if (!materiaBDD) throw new Error('La materia no está registrada');
+            if (materiaBDD.estado === false) throw new Error('La materia ya está eliminada');
+            req.materiaBDD = materiaBDD;
+            return true;
+        }),
+    // Manejo de errores
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: errors.array()[0].msg });
+        }
+        next();
+    }
+]
+
 // Validador para reemplazar profesor
 const reemplazarProfesorValidator = [
     // Validación de ids de profesores
@@ -916,6 +963,48 @@ const reasignarMateriaProfesorValidator = [
     }
 ];
 
+// Reasignar curso a estudiante
+const reasignarCursoEstudianteValidator = [
+    // Validación de campos obligatorios
+    check('idEstudiante')
+        .notEmpty()
+        .withMessage('El id del estudiante es obligatorio'),
+    check('idCurso')
+        .notEmpty()
+        .withMessage('El id del nuevo curso es obligatorio'),
+    // Validación de id del estudiante
+    check('idEstudiante')
+        .custom(async (idEstudiante, { req }) => {
+            const estudianteBDD = await Estudiante.findById(idEstudiante);
+            if (!estudianteBDD) throw new Error('El estudiante no está registrado');
+            if (estudianteBDD.estado === false) throw new Error('El estudiante ya está eliminado');
+            const cursoAsignadoBDD = await CursoAsignado.findOne({ estudiantes: idEstudiante, anioLectivo: req.userBDD.anio });
+            if (!cursoAsignadoBDD) throw new Error('El estudiante no está asignado a un curso');
+            req.cursoAnterior = cursoAsignadoBDD;
+            req.estudianteBDD = estudianteBDD;
+            return true;
+        }),
+    // Validación de id del nuevo curso
+    check('idCurso')
+        .custom(async (idCurso, { req }) => {
+            const cursoBDD = await Curso.findById(idCurso);
+            if (!cursoBDD) throw new Error('El nuevo curso no está registrado');
+            if (cursoBDD.estado === false) throw new Error('El nuevo curso ya está eliminado');
+            const cursoAsignadoBDD = await CursoAsignado.findOne({ curso: idCurso, anioLectivo: req.userBDD.anio });
+            if (!cursoAsignadoBDD) throw new Error('El nuevo curso no está asignado a un año lectivo');
+            req.cursoBDD = cursoAsignadoBDD;
+            return true;
+        }),
+    // Manejo de errores
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: errors.array()[0].msg });
+        }
+        next();
+    }
+]
+
 export {
     //Administrador
     // Registro de usuarios y entidades
@@ -929,6 +1018,7 @@ export {
     asignarRepresentanteValidator,
     asignarEstudianteACursoValidator,
     asignarPonderacionesValidator,
+    reasignarCursoEstudianteValidator,
     //Modificaciones
     registroAsistenciaEstudiantesValidator,
     justificarInasistenciaValidator,
@@ -936,6 +1026,8 @@ export {
     reemplazarProfesorValidator,
     eliminarEstAdminValidator,
     eliminarRepresentanteValidator,
+    eliminarCursoValidator,
+    eliminarMateriaValidator,
     reasignarMateriaProfesorValidator,
     modificarUsuarioValidator,
     modificarEstudianteValidator,

@@ -14,6 +14,8 @@ import Asistencia from '../models/asistencia.js';
 import Observacion from '../models/observaciones.js';
 import AnioLectivo from '../models/anioLectivo.js';
 import CursoAsignado from '../models/cursoAsignado.js';
+import anioLectivo from '../models/anioLectivo.js';
+import cursoAsignado from '../models/cursoAsignado.js';
 
 // ==================== ADMINISTRADOR ====================
 
@@ -147,11 +149,43 @@ const registrarRepresentante = async (req, res) => {
 
 // Lista todos los representantes registrados
 const listarRepresentantes = async (req, res) => {
-    const representantesBDD = await Representante.find().select('-__v -createdAt -updatedAt -token -password -confirmEmail');
-    if (!representantesBDD) return res.status(400).json({ error: 'No hay representantes registrados' });
-    const representantes = representantesBDD.filter(representante => representante.estado === true);
-    if (representantes.length === 0) return res.status(400).json({ error: 'No hay representantes activos' });
-    res.status(200).json(representantes);
+    const { cursoId } = req.params;
+    const anio = req.userBDD.anio;
+    try {
+        // 1. Buscar el curso asignado para el año lectivo actual
+        const cursoAsignadoBDD = await CursoAsignado.findOne({ curso: cursoId, anioLectivo: anio })
+            .populate('estudiantes', '_id estado nombre apellido cedula');
+        if (!cursoAsignadoBDD) {
+            return res.status(400).json({ error: 'El curso no está registrado o no tiene estudiantes asignados' });
+        }
+        // Filtrar solo estudiantes activos
+        const estudiantesActivos = cursoAsignadoBDD.estudiantes.filter(est => est.estado !== false);
+        const estudiantesActivosIds = estudiantesActivos.map(est => est._id.toString());
+        // 2. Buscar representantes que tengan alguno de estos estudiantes
+        let representantes = await Representante.find({
+            estudiantes: { $in: estudiantesActivosIds },
+            estado: true
+        })
+            .populate('estudiantes', '_id nombre apellido cedula estado')
+            .select('-__v -createdAt -updatedAt -token -password -confirmEmail');
+        if (!representantes.length) {
+            return res.status(404).json({ error: 'No hay representantes asociados a este curso' });
+        }
+        // Filtrar los estudiantes de cada representante para que solo estén los del curso
+        representantes = representantes.map(rep => {
+            const estudiantesFiltrados = rep.estudiantes.filter(est =>
+                estudiantesActivosIds.includes(est._id.toString())
+            );
+            // Retornar el representante con solo los estudiantes del curso
+            return {
+                ...rep.toObject(),
+                estudiantes: estudiantesFiltrados
+            };
+        });
+        res.status(200).json(representantes);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al listar representantes' });
+    }
 };
 
 // Modifica los datos de un representante existente
@@ -204,6 +238,19 @@ const registrarCurso = async (req, res) => {
     }
 };
 
+// Elimina (desactiva) un curso
+const eliminarCurso = async (req, res) => {
+    const { cursoBDD } = req;
+    try {
+        // Borrado lógico
+        cursoBDD.estado = false;
+        await cursoBDD.save();
+        res.status(200).json({ msg: 'Curso eliminado correctamente' });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al eliminar curso' });
+    }
+};
+
 // Lista todos los cursos registrados
 const listarCursos = async (req, res) => {
     const cursosBDD = await Curso.find().select('-__v -createdAt -updatedAt -estudiantes -materias');
@@ -229,6 +276,24 @@ const registrarMaterias = async (req, res) => {
         res.status(500).json({ error: 'Error al registrar materia' });
     }
 }
+
+// Elimina (desactiva) una materia y la remueve del curso
+const eliminarMateria = async (req, res) => {
+    const { materiaBDD } = req;
+    try {
+        // Borrado lógico
+        materiaBDD.estado = false;
+        await materiaBDD.save();
+        // Opcional: eliminar referencia en el curso
+        await Curso.updateMany(
+            { materias: materiaBDD._id },
+            { $pull: { materias: materiaBDD._id } }
+        );
+        res.status(200).json({ msg: 'Materia eliminada correctamente' });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al eliminar materia' });
+    }
+};
 
 // Lista las materias de un curso específico
 const listarMaterias = async (req, res) => {
@@ -332,6 +397,25 @@ const modificarEstudiante = async (req, res) => {
     }
 }
 
+const reasignarCursoEstudiante = async (req, res) => {
+    const { estudianteBDD, cursoAnterior, cursoAsignadoBDD } = req;
+    try {
+        // Verificar si el estudiante ya está en el curso
+        const estudianteEnCurso = cursoAsignadoBDD.estudiantes.find(est => est._id.toString() === estudianteBDD._id.toString());
+        if (estudianteEnCurso) {
+            return res.status(400).json({ error: 'El estudiante ya está asignado a este curso' });
+        }
+        // Asignar el nuevo curso al estudiante
+        if (cursoAnterior) {
+            await cursoAnterior.eliminarEstudiante(estudianteBDD._id);
+        }
+        await cursoAsignadoBDD.agregarEstudiante(estudianteBDD._id);
+        res.status(200).json({ msg: 'Curso asignado correctamente' });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al asignar curso' });
+    }
+}
+
 // ==================== ASISTENCIA ====================
 
 // Registra la asistencia de los estudiantes de un curso
@@ -412,7 +496,9 @@ const terminarAnioLectivo = async (req, res) => {
 // Comienza un nuevo año lectivo
 const comenzarAnioLectivo = async (req, res) => {
     try {
+        const ultimoAnioLectivo = await AnioLectivo.findOne().sort({ fechaFin: -1 });
         const anio = await AnioLectivo.iniciarPeriodo();
+        await cursoAsignado.promoverEstudiantesPorNivel(ultimoAnioLectivo._id, anio._id);
         res.status(201).json({ msg: "Año Lectivo iniciado correctamente", anio });
     } catch (error) {
         res.status(400).json({ error: error.message });
@@ -429,7 +515,7 @@ const registrarFechaFin = async (req, res) => {
         res.status(200).json({ msg: 'Fecha de fin registrada correctamente' });
     } catch (error) {
         console.log(error)
-        res.status(500).json({ error: error.message});
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -477,6 +563,7 @@ export {
     registrarEstudiantes,
     //Asignar
     asignarRepresentante,
+    reasignarCursoEstudiante,
     //Asistencia
     registroAsistenciaEstudiantes,
     justificacionesEstudiantes,
@@ -497,6 +584,8 @@ export {
     eliminarEstudiante,
     eliminarAdministrador,
     eliminarRepresentante,
+    eliminarCurso,
+    eliminarMateria,
     //Modificar
     modificarAdministrador,
     modificarProfesor,

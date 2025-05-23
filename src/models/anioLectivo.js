@@ -33,6 +33,7 @@ const anioLectivoSchema = new Schema({
     },
     // Ponderaciones para cada tipo de evaluación
     ponderaciones: [{
+        _id: false,
         deberes: { type: Number, required: true, default: 0 },
         talleres: { type: Number, required: true, default: 0 },
         examenes: { type: Number, required: true, default: 0 },
@@ -60,11 +61,7 @@ anioLectivoSchema.statics.iniciarPeriodo = async function () {
     if (anioLectivoAnterior) throw new Error(`Ya existe un periodo ${anio}`);
     const nuevoAnioLectivo = new this();
     await nuevoAnioLectivo.save();
-    return {
-        periodo: nuevoAnioLectivo.periodo,
-        fechaInicio: nuevoAnioLectivo.fechaInicio,
-        estado: nuevoAnioLectivo.estado
-    };
+    return nuevoAnioLectivo;
 };
 
 // Método para establecer la fecha de fin del periodo

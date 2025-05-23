@@ -4,6 +4,7 @@ import { Schema, model } from 'mongoose';
 const observacionSchema = new Schema({
     // Lista de observaciones realizadas al estudiante
     observaciones: [{
+        _id: false,
         fecha: {
             type: String,
             required: true,

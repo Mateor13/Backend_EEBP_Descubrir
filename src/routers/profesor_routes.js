@@ -6,7 +6,9 @@ import {
     subirNotasEstudiantes, 
     visualizarCursosAsociados, 
     visualizarEstudiantesCurso, 
-    visualizarMateriasAsignadas 
+    visualizarEstudiantesDescripcion, 
+    visualizarMateriasAsignadas, 
+    visualizarTiposEstudiantes
 } from '../controllers/profesor_controller.js'; // Importa los controladores
 
 import { 
@@ -18,7 +20,10 @@ import {
     modificarNotasEstudiantesValidator, 
     observacionesEstudiantesValidator, 
     subirNotasEstudiantesValidator, 
-    visualizarEstudiantesCursoValidator, 
+    visualizarEstudiantesCursoValidator,
+    visualizarEstudiantesPorTipoValidator,
+    visualizarMateriasAsignadasValidator,
+    visualizarTiposNotasEstudiantesValidator, 
 } from '../validators/profesor_validator.js'; // Importa los validadores
 
 const router = Router();
@@ -27,15 +32,17 @@ const router = Router();
 // Estas rutas requieren autenticación y el rol de profesor
 
 // Gestión de notas
-router.post('/registro-nota', verificarAutenticacion, verificarRolProfesor, subirNotasEstudiantesValidator, subirNotasEstudiantes); // Registrar notas de estudiantes
-router.patch('/actualizar-nota', verificarAutenticacion, verificarRolProfesor, modificarNotasEstudiantesValidator, modificarNotasEstudiantes); // Modificar notas de estudiantes
+router.post('/registro-nota/:materiaId', verificarAutenticacion, verificarRolProfesor, subirNotasEstudiantesValidator, subirNotasEstudiantes); // Registrar notas de estudiantes
+router.patch('/actualizar-nota/:materiaId/:estudianteId', verificarAutenticacion, verificarRolProfesor, modificarNotasEstudiantesValidator, modificarNotasEstudiantes); // Modificar notas de estudiantes
 
 // Observaciones
 router.post('/observacion-estudiante', verificarAutenticacion, verificarRolProfesor, observacionesEstudiantesValidator, observacionesEstudiantes); // Registrar observaciones para estudiantes
 
 // Visualización de cursos y estudiantes
-router.get('/estudiantes/curso', verificarAutenticacion, verificarRolProfesor, visualizarEstudiantesCursoValidator, visualizarEstudiantesCurso); // Ver estudiantes de un curso
 router.get('/profesor/cursos', verificarAutenticacion, verificarRolProfesor, visualizarCursosAsociados); // Ver cursos asociados al profesor
-router.get('/profesor/:cursoId/materias', verificarAutenticacion, verificarRolProfesor, visualizarEstudiantesCursoValidator, visualizarMateriasAsignadas); // Ver materias asignadas a un curso
+router.get('/profesor/:cursoId/materias', verificarAutenticacion, verificarRolProfesor, visualizarMateriasAsignadasValidator, visualizarMateriasAsignadas); // Ver materias asignadas a un curso
+router.get('/estudiantes/:cursoId', verificarAutenticacion, verificarRolProfesor, visualizarEstudiantesCursoValidator, visualizarEstudiantesCurso); // Ver estudiantes de un curso
+router.get('/tipos/:materiaId/:tipo', verificarAutenticacion, verificarRolProfesor, visualizarTiposNotasEstudiantesValidator, visualizarTiposEstudiantes); // Ver notas de estudiantes por materia
+router.get('/descripcion/:materiaId/:tipo', verificarAutenticacion, verificarRolProfesor, visualizarEstudiantesPorTipoValidator, visualizarEstudiantesDescripcion); // Ver estudiantes de un curso y materia
 
 export default router;

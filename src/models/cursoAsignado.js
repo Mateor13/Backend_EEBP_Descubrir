@@ -33,6 +33,12 @@ cursoAsignadoSchema.methods.agregarEstudiante = async function (estudianteId) {
     await this.save()
 }
 
+// Método para eliminar un estudiante del curso asignado
+cursoAsignadoSchema.methods.eliminarEstudiante = async function (estudianteId) {
+    this.estudiantes = this.estudiantes.filter(id => id.toString() !== estudianteId.toString())
+    await this.save()
+}
+
 // Método para obtener los estudiantes asignados (con populate)
 cursoAsignadoSchema.methods.buscarEstudiantes = async function () {
     return await this.populate('estudiantes')
@@ -60,7 +66,7 @@ cursoAsignadoSchema.statics.promoverEstudiantesPorNivel = async function (anioLe
             //Vuelve a string el id del estudiante
             const id = nota.estudiante._id.toString();
             // Verifica si el estudiante está activo
-            if (!estudiante.estado) continue;
+            if (!nota.estudiante.estado) continue;
             // Verifica si el estudiante ya tiene notas, si no, lo inicializa
             if (!notasMap.has(id)) notasMap.set(id, []);
             // Agrega la nota al estudiante

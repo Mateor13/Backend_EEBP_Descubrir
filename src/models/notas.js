@@ -23,6 +23,7 @@ const notaSchema = new Schema({
     // Evaluaciones agrupadas por tipo: deberes, talleres, exámenes, pruebas
     evaluaciones: {
         deberes: [{
+            _id: false,
             nota: {
                 type: Number,
                 required: true,
@@ -43,6 +44,7 @@ const notaSchema = new Schema({
             }
         }],
         talleres: [{
+            _id: false,
             nota: {
                 type: Number,
                 required: true,
@@ -62,6 +64,7 @@ const notaSchema = new Schema({
             }
         }],
         examenes: [{
+            _id: false,
             nota: {
                 type: Number,
                 required: true,
@@ -81,6 +84,7 @@ const notaSchema = new Schema({
             }
         }],
         pruebas: [{
+            _id: false,
             nota: {
                 type: Number,
                 required: true,
