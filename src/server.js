@@ -10,7 +10,9 @@ import multer from 'multer';
 // Inicializadores de la aplicación
 const app = express()
 dotenv.config()
-const upload = multer()
+const upload = multer({
+    storage: multer.memoryStorage(), // Almacena archivos en memoria
+})
 
 // Configuración del puerto y middlewares globales
 app.set('port', process.env.PORT || 3000)

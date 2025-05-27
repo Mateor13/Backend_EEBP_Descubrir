@@ -4,6 +4,36 @@ import materias from "../models/materias.js";
 import Notas from "../models/notas.js";
 import axios from "axios";
 
+export const subirEvidencia = [
+  upload.single('imagen'),
+  async (req, res) => {
+    try {
+      const imagen = req.file;
+      if (!imagen) {
+        return res.status(400).json({ error: 'No se envió ninguna imagen' });
+      }
+
+      const response = await axios.post(
+        'https://api.imgur.com/3/image',
+        {
+          image: imagen.buffer.toString('base64'),
+          type: 'base64'
+        },
+        {
+          headers: {
+            Authorization: `Client-ID ${process.env.IMGUR_CLIENT_ID}`
+          }
+        }
+      );
+
+      const urlImgur = response.data.data.link;
+      res.json({ url: urlImgur });
+    } catch (error) {
+      res.status(500).json({ error: 'Error subiendo la imagen a Imgur' });
+    }
+  }
+];
+
 // Registra una nota para un estudiante en una materia y año lectivo
 const subirNotasEstudiantes = async (req, res) => {
     const { notas, tipo } = req.body;
