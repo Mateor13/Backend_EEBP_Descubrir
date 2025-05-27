@@ -2,6 +2,7 @@ import cursoAsignado from "../models/cursoAsignado.js";
 import cursos from "../models/cursos.js";
 import materias from "../models/materias.js";
 import Notas from "../models/notas.js";
+import axios from "axios";
 
 // Registra una nota para un estudiante en una materia y año lectivo
 const subirNotasEstudiantes = async (req, res) => {

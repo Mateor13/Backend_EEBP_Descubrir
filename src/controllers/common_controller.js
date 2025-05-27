@@ -38,7 +38,6 @@ const confirmarCuenta = async (req, res) => {
         const userBDD = await model.findOne({ token });
         if (userBDD) {
             userBDD.confirmEmail = true;
-            userBDD.token = null;
             await userBDD.save();
             return res.status(200).json({ mensaje: 'Su cuenta se ha confirmado exitosamente, ya puede iniciar sesión' });
         }

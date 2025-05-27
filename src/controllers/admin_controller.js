@@ -226,7 +226,7 @@ const registrarCurso = async (req, res) => {
     const { nivel, paralelo } = req.body;
     try {
         const nuevoCurso = new Curso({ nivel, paralelo });
-        const verificarCursoAsignadoBDD = await CursoAsignado.findOne({ curso: nuevoCurso._id, anioLectivo: req.userBDD.anio._id });
+        const verificarCursoAsignadoBDD = await CursoAsignado.findOne({ curso: nuevoCurso._id, anioLectivo: req.userBDD.anio });
         if (verificarCursoAsignadoBDD) return res.status(400).json({ error: 'El curso ya esta registrado en el año lectivo activo' });
         const crearCursoAsignado = new CursoAsignado({ curso: nuevoCurso._id, anioLectivo: req.userBDD.anio });
         await nuevoCurso.asignarNombre();
@@ -253,10 +253,24 @@ const eliminarCurso = async (req, res) => {
 
 // Lista todos los cursos registrados
 const listarCursos = async (req, res) => {
-    const cursosBDD = await Curso.find().select('-__v -createdAt -updatedAt -estudiantes -materias');
-    if (!cursosBDD) return res.status(400).json({ error: 'No hay cursos registrados' });
-    res.status(200).json(cursosBDD);
-}
+    try {
+        const cursos = await cursoAsignado.find({
+            anioLectivo: req.userBDD.anio,
+            estado: true
+        }).populate('curso');
+
+        const cursosBDD = cursos.map(curso => ({
+            _id: curso.curso._id,
+            nombre: curso.curso.nombre,
+            nivel: curso.curso.nivel,
+            paralelo: curso.curso.paralelo,
+        }));
+
+        res.status(200).json(cursosBDD);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al listar los cursos' });
+    }
+};
 
 // ==================== MATERIA ====================
 

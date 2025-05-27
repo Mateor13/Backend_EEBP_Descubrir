@@ -31,7 +31,7 @@ const sendMailToUser = (userMail, token, password) => {
         <br>
         <p>Para confirmar tu cuenta, por favor haz clic en el siguiente enlace:</p><br>
         <p style="text-align: center;">
-            <a href="${process.env.URL_PRODUCTION}confirmar-cuenta/${encodeURIComponent(token)}" style="background-color: #82a915; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Verificar cuenta</a>
+            <a href="${process.env.URL_PRODUCTION}confirmar/${encodeURIComponent(token)}" style="background-color: #82a915; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Verificar cuenta</a>
         </p>
         <br>
         <br>
@@ -104,7 +104,7 @@ const sendMailToProfesor = async (userMail, token, password) => {
         <br>
         <p>Para confirmar tu cuenta, por favor haz clic en el siguiente enlace:</p><br>
         <p style="text-align: center;">
-            <a href="${process.env.URL_PRODUCTION}confirmar-cuenta/${encodeURIComponent(token)}" style="background-color: #82a915; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Verificar cuenta</a>
+            <a href="${process.env.URL_PRODUCTION}confirmar/${encodeURIComponent(token)}" style="background-color: #82a915; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Verificar cuenta</a>
         </p>
         <br>
         <br>
@@ -170,7 +170,7 @@ const envioCredenciales = async (nombre, apellido, userMail, password, token) =>
         <br>
         <p>Por favor, ingrese al siguiente enlace para verificar su cuenta:</p><br>
         <p style="text-align: center;">
-            <a href="${process.env.URL_PRODUCTION}confirmar-cuenta/${encodeURIComponent(token)}" style="background-color: #82a915; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Verificar cuenta</a>
+            <a href="${process.env.URL_PRODUCTION}confirmar/${encodeURIComponent(token)}" style="background-color: #82a915; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Verificar cuenta</a>
         </p>
         <br>
         <br>
@@ -208,7 +208,7 @@ const estudianteRegistrado = async (userMail, cedula, nombre, apellido) => {
         <br>
         <p>Por favor, ingrese al siguiente enlace para acceder al sistema:</p><br>
         <p style="text-align: center;">
-            <a href="${process.env.URL_PRODUCTION}/login" style="background-color: #82a915; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Acceder al sistema</a>
+            <a href="${process.env.URL_PRODUCTION}" style="background-color: #82a915; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Acceder al sistema</a>
         <br>
         <p>Si has recibido este correo por error, por favor ignora este correo.</p>
         <p>Saludos cordiales</p>

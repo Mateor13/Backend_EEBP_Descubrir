@@ -710,9 +710,9 @@ const registrarFechaFinValidator = [
         .notEmpty()
         .withMessage('La fecha de fin es obligatoria')
         .custom((fecha) => {
-            const regExp = new RegExp(/^\d{4}\/\d{1,2}\/\d{1,2}$/);
+            const regExp = new RegExp(/^\d{4}-\d{1,2}\-\d{1,2}$/);
             if (!regExp.test(fecha)) throw new Error('La fecha no es válida');
-            const [year, month, day] = fecha.split('/').map(Number);
+            const [year, month, day] = fecha.split('-').map(Number);
             const date = new Date(`${year}-${month}-${day}`);
             if (month < 1 || month > 12) throw new Error('El mes no es válido');
             if (day < 1 || day > 31) throw new Error('El día no es válido');
@@ -727,11 +727,8 @@ const registrarFechaFinValidator = [
     // Validación de año lectivo activo
     check('anioLectivo')
         .custom(async (_, { req }) => {
-            const { anio } = req.userBDD 
-            console.log(anio)
-            const anioLectivoBDD = await AnioLectivo.findOne({ anio });
+            const anioLectivoBDD = await AnioLectivo.findOne({ estado: true });
             if (!anioLectivoBDD || anioLectivoBDD.estado === false) throw new Error('El año lectivo no está activo');
-            console.log(anioLectivoBDD)
             req.anioLectivoBDD = anioLectivoBDD;
             return true;
         }
@@ -803,10 +800,10 @@ const eliminarCursoValidator = [
         .custom(async (id, { req }) => {
             const cursoBDD = await Curso.findById(id);
             if (!cursoBDD) throw new Error('El curso no está registrado');
-            if (cursoBDD.estado === false) throw new Error('El curso ya está eliminado');
-            const cursoAsignadoBDD = await CursoAsignado.findOne({ curso: id, anioLectivo: req.userBDD.anio });
+            const cursoAsignadoBDD = await CursoAsignado.findOne({ curso: id, anioLectivo: req.userBDD.anio }).populate('curso', 'nivel paralelo');
             if (cursoAsignadoBDD?.estudiantes.length > 0) throw new Error('No se puede eliminar el curso porque tiene estudiantes asignados');
-            req.cursoBDD = cursoBDD;
+            if (cursoAsignadoBDD.estado === false) throw new Error('El curso ya está eliminado');
+            req.cursoBDD = cursoAsignadoBDD;
             return true;
         }),
     // Manejo de errores

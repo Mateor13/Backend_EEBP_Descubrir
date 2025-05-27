@@ -12,6 +12,11 @@ const cursoAsignadoSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'AnioLectivo'
     },
+    // Estado del curso asignado (activo, inactivo)
+    estado: {
+        type: Boolean,
+        default: true
+    },
     // Lista de estudiantes asignados al curso
     estudiantes: [{
         type: Schema.Types.ObjectId,
