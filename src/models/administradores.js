@@ -113,6 +113,11 @@ administradorSchema.statics.inicializarAdmin = async function () {
             confirmEmail: true
         });
     }
+    const anioLectivo = await this.model('AnioLectivo').countDocuments({})
+    // Si no existe ningún año lectivo, crea el año lectivo inicial
+    if (anioLectivo === 0) {
+        await this.model('AnioLectivo').create({});
+    }
 }
 
 export default model('Administrador', administradorSchema);

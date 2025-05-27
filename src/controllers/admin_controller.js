@@ -226,11 +226,11 @@ const registrarCurso = async (req, res) => {
     const { nivel, paralelo } = req.body;
     try {
         const nuevoCurso = new Curso({ nivel, paralelo });
-        const vereficarCursoAsignadoBDD = await CursoAsignado.findOne({ curso: nuevoCurso._id, anioLectivo: req.userBDD.anio._id });
-        if (vereficarCursoAsignadoBDD) return res.status(400).json({ error: 'El curso ya esta registrado en el año lectivo activo' });
+        const verificarCursoAsignadoBDD = await CursoAsignado.findOne({ curso: nuevoCurso._id, anioLectivo: req.userBDD.anio._id });
+        if (verificarCursoAsignadoBDD) return res.status(400).json({ error: 'El curso ya esta registrado en el año lectivo activo' });
         const crearCursoAsignado = new CursoAsignado({ curso: nuevoCurso._id, anioLectivo: req.userBDD.anio });
-        await crearCursoAsignado.save();
         await nuevoCurso.asignarNombre();
+        await crearCursoAsignado.save();
         await nuevoCurso.save();
         res.status(201).json({ msg: 'Curso registrado correctamente y asignado al año lectivo activo' });
     } catch (error) {
@@ -497,8 +497,13 @@ const terminarAnioLectivo = async (req, res) => {
 const comenzarAnioLectivo = async (req, res) => {
     try {
         const ultimoAnioLectivo = await AnioLectivo.findOne().sort({ fechaFin: -1 });
-        const anio = await AnioLectivo.iniciarPeriodo();
-        await cursoAsignado.promoverEstudiantesPorNivel(ultimoAnioLectivo._id, anio._id);
+        let anio;
+        if (ultimoAnioLectivo && ultimoAnioLectivo.estado === false) {
+            anio = await AnioLectivo.iniciarPeriodo();
+            await cursoAsignado.promoverEstudiantesPorNivel(ultimoAnioLectivo._id, anio._id);
+        } else {
+            anio = await AnioLectivo.iniciarPeriodo();
+        }
         res.status(201).json({ msg: "Año Lectivo iniciado correctamente", anio });
     } catch (error) {
         res.status(400).json({ error: error.message });

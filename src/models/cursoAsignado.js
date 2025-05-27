@@ -75,19 +75,27 @@ cursoAsignadoSchema.statics.promoverEstudiantesPorNivel = async function (anioLe
 
         // Función auxiliar para obtener o crear un curso por nivel y paralelo
         const obtenerOCrearCurso = async (nivel, paralelo) => {
-            return await Curso.findOneAndUpdate
-            (
-                { nivel, paralelo, nombre: `${nivel} ${paralelo}` },
-                {},
+            const cursos = ['Primero', 'Segundo', 'Tercero', 'Cuarto', 'Quinto', 'Sexto', 'Séptimo'];
+            const nombre = `${cursos[nivel - 1]} ${paralelo}`;
+            return await Curso.findOneAndUpdate(
+                { nivel, paralelo },
+                { nivel, paralelo, nombre },
                 { new: true, upsert: true, setDefaultsOnInsert: true }
             );
         };
 
         // Asegura que existan los cursos de nivel 1 para todos los paralelos
         const paralelos = ['A', 'B', 'C', 'D', 'E'];
-        for (const paralelo of paralelos) {
-            await obtenerOCrearCurso(1, paralelo);
-        }
+        await Promise.all(
+            paralelos.map(async (paralelo) => {
+                const primerCurso = await obtenerOCrearCurso(1, paralelo);
+                return this.findOneAndUpdate(
+                    { curso: primerCurso._id, anioLectivo: anioLectivoNuevoId },
+                    { curso: primerCurso._id, anioLectivo: anioLectivoNuevoId, estudiantes: [] },
+                    { upsert: true, new: true }
+                );
+            })
+        );
 
         // Procesa cada curso anterior para promover o hacer repetir estudiantes
         for (const cursoAnterior of cursosAnteriores) {
@@ -100,11 +108,11 @@ cursoAsignadoSchema.statics.promoverEstudiantesPorNivel = async function (anioLe
             const nivelDestino = esUltimoNivel ? nivel : nivel + 1;
 
             // Crea o obtiene el curso destino
-            const cursoDestino = await obtenerOCrearCurso(nivelDestino, paralelo );
+            const cursoDestino = await obtenerOCrearCurso(nivelDestino, paralelo);
             // Crea o obtiene el curso actual para reprobados
-            const cursoActual = await obtenerOCrearCurso(nivel, paralelo );
+            const cursoActual = await obtenerOCrearCurso(nivel, paralelo);
 
-            
+
             let cursoAsignadoDestino = await this.findOne({ curso: cursoDestino._id, anioLectivo: anioLectivoNuevoId });
             if (!cursoAsignadoDestino) {
                 cursoAsignadoDestino = new this({

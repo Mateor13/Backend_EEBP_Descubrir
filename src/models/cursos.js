@@ -6,7 +6,7 @@ const cursoSchema = new Schema({
     // Nombre del curso (ej: "Primero A")
     nombre:{
         type: String,
-        unique: true
+        required: true,
     },
     // Nivel del curso (1 a 7)
     nivel:{

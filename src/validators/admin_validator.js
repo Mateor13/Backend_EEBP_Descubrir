@@ -1009,8 +1009,7 @@ const comenzarAnioLectivoValidator = [
     // Validación de año lectivo activo
     check('anio').custom(async (_, { req }) => {
         const anioLectivoBDD = await AnioLectivo.findOne({ estado: true });
-        if (!anioLectivoBDD) throw new Error('No hay un año lectivo activo');
-        req.anioLectivoBDD = anioLectivoBDD;
+        if (anioLectivoBDD) throw new Error('Ya hay un año lectivo activo');
         return true;
     }),
     // Manejo de errores
