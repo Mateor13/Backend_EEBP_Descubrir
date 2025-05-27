@@ -29,7 +29,7 @@ export const subirEvidencia = [
       const urlImgur = response.data.data.link;
       res.json({ url: urlImgur });
     } catch (error) {
-      res.status(500).json({ error: 'Error subiendo la imagen a Imgur' });
+      res.status(500).json({ error: 'Error subiendo la imagen' });
     }
   }
 ];
