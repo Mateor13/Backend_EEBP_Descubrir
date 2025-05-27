@@ -54,11 +54,11 @@ anioLectivoSchema.methods.terminarPeriodo = async function () {
 // Método estático para iniciar un nuevo periodo académico
 anioLectivoSchema.statics.iniciarPeriodo = async function () {
     const anioLectivoActivo = await this.findOne({ estado: true });
-    if (anioLectivoActivo) throw new Error('Todavia existe un periodo activo, debe terminar el actual periodo para empezar otro');
-    const fecha = new Date();
-    const anio = `${fecha.getFullYear()}-${fecha.getFullYear() + 1}`;
-    const anioLectivoAnterior = await this.findOne({ periodo: anio });
-    if (anioLectivoAnterior) throw new Error(`Ya existe un periodo ${anio}`);
+    if (anioLectivoActivo) throw new Error('Todavía existe un periodo activo, debe terminar el actual periodo para empezar otro');
+    // const fecha = new Date();
+    // const anio = `${fecha.getFullYear()}-${fecha.getFullYear() + 1}`;
+    // const anioLectivoAnterior = await this.findOne({ periodo: anio });
+    // if (anioLectivoAnterior) throw new Error(`Ya existe un periodo ${anio}`);
     const nuevoAnioLectivo = new this();
     await nuevoAnioLectivo.save();
     return nuevoAnioLectivo;

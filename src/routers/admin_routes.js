@@ -71,7 +71,8 @@ import {
     registrarFechaFinValidator,
     eliminarCursoValidator,
     eliminarMateriaValidator,
-    reasignarCursoEstudianteValidator
+    reasignarCursoEstudianteValidator,
+    comenzarAnioLectivoValidator
 } from '../validators/admin_validator.js' // Importa los validadores
 
 const router = Router()
@@ -112,7 +113,7 @@ router.get('/materias/:cursoId', verificarAutenticacion, verificarRolAdmin, list
 
 // Gestión del año lectivo
 router.patch('/terminar-periodo', verificarAutenticacion, verificarRolAdmin, terminarAnioLectivoValidator, terminarAnioLectivo) // Terminar el año lectivo
-router.post('/iniciar-periodo', verificarAutenticacion, verificarRolAdmin, comenzarAnioLectivo) // Iniciar un nuevo año lectivo
+router.post('/iniciar-periodo', verificarAutenticacion, verificarRolAdmin, comenzarAnioLectivoValidator, comenzarAnioLectivo) // Iniciar un nuevo año lectivo
 router.patch('/fecha-fin-periodo', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, registrarFechaFinValidator, registrarFechaFin) // Registrar la fecha de fin del año lectivo
 router.post('/asignar-ponderaciones', verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, asignarPonderacionesValidator, asignarPonderaciones) // Asignar ponderaciones a materias
 

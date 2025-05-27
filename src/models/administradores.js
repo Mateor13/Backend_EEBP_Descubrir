@@ -107,6 +107,9 @@ administradorSchema.statics.inicializarAdmin = async function () {
             apellido: process.env.ADMIN_LASTNAME,
             email: process.env.ADMIN_EMAIL,
             password: hashedPassword,
+            cedula: process.env.ADMIN_CEDULA,
+            telefono: process.env.ADMIN_PHONE,
+            direccion: process.env.ADMIN_ADDRESS,
             confirmEmail: true
         });
     }

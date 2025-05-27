@@ -1005,6 +1005,24 @@ const reasignarCursoEstudianteValidator = [
     }
 ]
 
+const comenzarAnioLectivoValidator = [
+    // Validación de año lectivo activo
+    check('anio').custom(async (_, { req }) => {
+        const anioLectivoBDD = await AnioLectivo.findOne({ estado: true });
+        if (!anioLectivoBDD) throw new Error('No hay un año lectivo activo');
+        req.anioLectivoBDD = anioLectivoBDD;
+        return true;
+    }),
+    // Manejo de errores
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: errors.array()[0].msg });
+        }
+        next();
+    }
+]
+
 export {
     //Administrador
     // Registro de usuarios y entidades
@@ -1032,6 +1050,7 @@ export {
     modificarUsuarioValidator,
     modificarEstudianteValidator,
     //Anio Lectivo
+    comenzarAnioLectivoValidator,
     terminarAnioLectivoValidator,
     registrarFechaFinValidator,
 };
