@@ -180,13 +180,8 @@ notaSchema.methods.agregarNota = async function (tipo, nota, descripcion) {
 
 // Actualiza la nota de una evaluación existente por descripción
 notaSchema.methods.actualizarNota = async function (tipo, nota, descripcion) {
-    const tiposValidos = ['deberes', 'talleres', 'examenes', 'pruebas'];
-    if (!tiposValidos.includes(tipo)) throw new Error('Tipo de evaluación no válido');
-    if (nota < 0 || nota > 10) throw new Error('La nota debe estar entre 0 y 10');
-
     const existeNota = this.evaluaciones[tipo].find(e => e.descripcion === descripcion);
     if (!existeNota) throw new Error('La nota no existe');
-
     existeNota.nota = nota;
     await this.save();
 };

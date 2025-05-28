@@ -4,35 +4,35 @@ import materias from "../models/materias.js";
 import Notas from "../models/notas.js";
 import axios from "axios";
 
-export const subirEvidencia = [
-  upload.single('imagen'),
-  async (req, res) => {
-    try {
-      const imagen = req.file;
-      if (!imagen) {
-        return res.status(400).json({ error: 'No se envió ninguna imagen' });
-      }
+// const subirEvidencia = [
+//   upload.single('imagen'),
+//   async (req, res) => {
+//     try {
+//       const imagen = req.file;
+//       if (!imagen) {
+//         return res.status(400).json({ error: 'No se envió ninguna imagen' });
+//       }
 
-      const response = await axios.post(
-        'https://api.imgur.com/3/image',
-        {
-          image: imagen.buffer.toString('base64'),
-          type: 'base64'
-        },
-        {
-          headers: {
-            Authorization: `Client-ID ${process.env.IMGUR_CLIENT_ID}`
-          }
-        }
-      );
+//       const response = await axios.post(
+//         'https://api.imgur.com/3/image',
+//         {
+//           image: imagen.buffer.toString('base64'),
+//           type: 'base64'
+//         },
+//         {
+//           headers: {
+//             Authorization: `Client-ID ${process.env.IMGUR_CLIENT_ID}`
+//           }
+//         }
+//       );
 
-      const urlImgur = response.data.data.link;
-      res.json({ url: urlImgur });
-    } catch (error) {
-      res.status(500).json({ error: 'Error subiendo la imagen' });
-    }
-  }
-];
+//       const urlImgur = response.data.data.link;
+//       res.json({ url: urlImgur });
+//     } catch (error) {
+//       res.status(500).json({ error: 'Error subiendo la imagen' });
+//     }
+//   }
+// ];
 
 // Registra una nota para un estudiante en una materia y año lectivo
 const subirNotasEstudiantes = async (req, res) => {
@@ -71,18 +71,37 @@ const subirNotasEstudiantes = async (req, res) => {
         if (errores.length > 0) return res.status(400).json({ error: errores.join(', ') });
         res.status(200).json({ msg: 'Notas registradas correctamente' });
     } catch (error) {
-        console.error(error);
         res.status(500).json({ error: 'Error al registrar notas' });
     }
 };
 
 // Modifica una nota existente de un estudiante
 const modificarNotasEstudiantes = async (req, res) => {
-    const { nota, tipo, descripcion } = req.body;
-    const { notasEstudiante } = req;
-    const actualizarNota = await notasEstudiante.actualizarNota(tipo, nota, descripcion);
-    if (actualizarNota?.error) return res.status(400).json({ error: actualizarNota.error });
-    res.status(200).json({ msg: 'Nota actualizada correctamente' });
+    const { notas, tipo, descripcion } = req.body;
+    const { materiaBDD } = req;
+    const anioLectivo = req.userBDD.anio;
+    try {
+        // Registrar la nota para todos los estudiantes con la misma descripción
+        const errores = [];
+        for (const [estudianteId, nota] of Object.entries(notas)) {
+            let notasEstudiante = await Notas.findOne({ estudiante: estudianteId, materia: materiaBDD._id, anioLectivo });
+            if (!notasEstudiante) {
+                    errores.push(`El estudiante con ID ${estudianteId} no tiene notas registradas`);
+                    continue;
+                }
+            const resultado = await notasEstudiante.actualizarNota(tipo, nota, descripcion);
+            if (resultado?.error) {
+                errores.push(`Error en estudiante ${estudianteId}: ${resultado.error}`);
+            } else {
+                await notasEstudiante.save();
+            }
+        }
+        if (errores.length > 0) return res.status(400).json({ error: errores.join(', ') });
+        res.status(200).json({ msg: 'Notas registradas correctamente' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error al registrar notas' });
+    }
 }
 
 // Registra una observación para un estudiante por parte del profesor

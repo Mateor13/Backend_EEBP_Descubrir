@@ -44,34 +44,36 @@ const subirNotasEstudiantesValidator = [
 
 // Validador para modificar notas de estudiantes por parte del profesor
 const modificarNotasEstudiantesValidator = [
-    check('anio')
-        .custom((_, { req }) => {
-            if (!req.userBDD.anio) throw new Error('Este año lectivo ya ha finalizado');
-            return true;
-        }),
-    check(['estudianteId', 'nota', 'materiaId', 'descripcion', 'tipo'])
+    check('materiaId')
         .notEmpty()
-        .withMessage('Todos los campos son obligatorios'),
-    check('estudianteId')
-        .isMongoId()
-        .withMessage('El estudiante debe tener un formato válido')
-        .custom(async (estudianteId, { req }) => {
-            const estudiante = await Estudiantes.findById(estudianteId);
-            if (!estudiante) throw new Error('El estudiante no existe');
-            const materias = await Materias.findById(req.params.materiaId)
-            if (!materias) throw new Error('La materia no existe');
-            const notasEstudiante = await Notas.findOne({ estudiante: estudiante._id, materia: materias._id, anioLectivo: req.userBDD.anio });
-            if (!notasEstudiante) throw new Error('El estudiante no tiene notas registradas');
-            req.notasEstudiante = notasEstudiante;
+        .withMessage('La materia es obligatoria'),
+    check('tipo')
+        .notEmpty()
+        .withMessage('El tipo de evaluación es obligatorio')
+        .isIn(['deberes', 'talleres', 'examenes', 'pruebas']),
+    check('descripcion')
+        .notEmpty()
+        .withMessage('La descripción es obligatoria'),
+    check('notas')
+        .custom(async (notas, { req }) => {
+            const { materiaId } = req.params;
+            if (!materiaId) throw new Error('La materia es obligatoria');
+            // Validar que la materia exista y esté asignada al profesor
+            const materiaBDD = await Materias.findById(materiaId);
+            if (!materiaBDD) throw new Error('La materia no existe o no está asignada a usted');
+            req.materiaBDD = materiaBDD;
+            // Validar cada estudiante y sus datos
+            for (const [estudianteId, nota] of Object.entries(notas)) {
+                // Validar existencia del estudiante
+                const estudiante = await Estudiantes.findById(estudianteId);
+                if (!estudiante) throw new Error(`El estudiante con ID ${estudianteId} no existe`);
+                // Validar campos de la nota
+                if (typeof nota !== 'number' || nota < 0 || nota > 10) {
+                    throw new Error(`La nota de ${estudiante.nombre} debe ser un número entre 0 y 10`);
+                }
+            }
             return true;
         }),
-    check('tipo')
-        .isIn(['deberes', 'talleres', 'examenes', 'pruebas'])
-        .withMessage('El tipo de evaluación no es válido'),
-    check('nota')
-        .isNumeric()
-        .withMessage('La nota debe ser un número')
-        .isInt({ min: 0, max: 10 }),
     (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });

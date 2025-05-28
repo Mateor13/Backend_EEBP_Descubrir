@@ -33,7 +33,7 @@ const router = Router();
 
 // Gestión de notas
 router.post('/registro-nota/:materiaId', verificarAutenticacion, verificarRolProfesor, subirNotasEstudiantesValidator, subirNotasEstudiantes); // Registrar notas de estudiantes
-router.patch('/actualizar-nota/:materiaId/:estudianteId', verificarAutenticacion, verificarRolProfesor, modificarNotasEstudiantesValidator, modificarNotasEstudiantes); // Modificar notas de estudiantes
+router.patch('/actualizar-nota/:materiaId', verificarAutenticacion, verificarRolProfesor, modificarNotasEstudiantesValidator, modificarNotasEstudiantes); // Modificar notas de estudiantes
 
 // Observaciones
 router.post('/observacion-estudiante', verificarAutenticacion, verificarRolProfesor, observacionesEstudiantesValidator, observacionesEstudiantes); // Registrar observaciones para estudiantes
@@ -43,6 +43,6 @@ router.get('/profesor/cursos', verificarAutenticacion, verificarRolProfesor, vis
 router.get('/profesor/:cursoId/materias', verificarAutenticacion, verificarRolProfesor, visualizarMateriasAsignadasValidator, visualizarMateriasAsignadas); // Ver materias asignadas a un curso
 router.get('/estudiantes/:cursoId', verificarAutenticacion, verificarRolProfesor, visualizarEstudiantesCursoValidator, visualizarEstudiantesCurso); // Ver estudiantes de un curso
 router.get('/tipos/:materiaId/:tipo', verificarAutenticacion, verificarRolProfesor, visualizarTiposNotasEstudiantesValidator, visualizarTiposEstudiantes); // Ver notas de estudiantes por materia
-router.get('/descripcion/:materiaId/:tipo', verificarAutenticacion, verificarRolProfesor, visualizarEstudiantesPorTipoValidator, visualizarEstudiantesDescripcion); // Ver estudiantes de un curso y materia
+router.post('/descripcion/:materiaId/:tipo', verificarAutenticacion, verificarRolProfesor, visualizarEstudiantesPorTipoValidator, visualizarEstudiantesDescripcion); // Ver estudiantes de un curso y materia
 
 export default router;
