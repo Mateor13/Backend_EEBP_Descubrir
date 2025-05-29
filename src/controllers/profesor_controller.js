@@ -6,34 +6,47 @@ import axios from 'axios';
 
 // Subir una imagen a Imgur y devolver la URL
 const subirFotoEvidencia = async (req, res) => {
-  const { tipo, descripcion } = req.body;
-  const { materiaBDD, cursoBDD } = req;
-  const anioLectivo = req.userBDD.anio;
-  const url = req.urlImgur;
-  try {
-    const errores = [];
-    for (const estudianteId of cursoBDD.estudiantes) {
-        console.log(estudianteId, tipo, url, descripcion);
-      let notasEstudiante = await Notas.findOne({ estudiante: estudianteId, materia: materiaBDD._id, anioLectivo });
-      if (!notasEstudiante) {
-        errores.push('No se encontraron notas para este estudiante en la materia y año lectivo especificados');
-        continue;
-      }
-      const resultado = await notasEstudiante.guardarEvidencia(tipo, url, descripcion);
-      if (resultado?.error) {
-        errores.push(`Error en estudiante ${estudianteId}: ${resultado.error}`);
-        continue
-      }
-      await notasEstudiante.save();
+    const { tipo } = req.body;
+    const { materiaBDD, cursoBDD } = req;
+    const anioLectivo = req.userBDD.anio;
+    const url = req.urlImgur;
+    const tipoMap = {
+        deberes: 'Deber',
+        talleres: 'Taller',
+        pruebas: 'Prueba',
+        examenes: 'Examen'
+    };
+    try {
+        // 1. Obtener el mayor número de evidencias del tipo para todos los estudiantes del curso
+        let maxCantidad = 0;
+        for (const estudianteId of cursoBDD.estudiantes) {
+            let notasEstudiante = await Notas.findOne({ estudiante: estudianteId, materia: materiaBDD._id, anioLectivo });
+            const cantidad = (notasEstudiante?.evaluaciones?.[tipo]?.length || 0);
+            if (cantidad > maxCantidad) maxCantidad = cantidad;
+        }
+        // El número de evidencia será +1
+        const descripcion = `${tipoMap[tipo] || tipo} ${maxCantidad + 1}`;
+        const errores = [];
+        // 2. Guardar la evidencia para todos los estudiantes del curso
+        for (const estudianteId of cursoBDD.estudiantes) {
+            let notasEstudiante = await Notas.findOne({ estudiante: estudianteId, materia: materiaBDD._id, anioLectivo });
+            if (!notasEstudiante) {
+                notasEstudiante = new Notas({ estudiante: estudianteId, materia: materiaBDD._id, anioLectivo });
+            }
+            const resultado = await notasEstudiante.guardarEvidencia(tipo, descripcion, url);
+            if (resultado?.error) {
+                errores.push(`Error en estudiante ${estudianteId}: ${resultado.error}`);
+                continue;
+            }
+            await notasEstudiante.save();
+        }
+        if (errores.length > 0) {
+            return res.status(400).json({ error: errores.join(', ') });
+        }
+        res.status(200).json({ msg: 'Foto de evidencia registrada correctamente', descripcion });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al registrar la foto de evidencia' });
     }
-    if (errores.length > 0) {
-      return res.status(400).json({ error: errores.join(', ') });
-    }
-    res.status(200).json({ msg: 'Foto de evidencia registrada correctamente' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al registrar la foto de evidencia' });
-  }
 };
 
 // Registra una nota para un estudiante en una materia y año lectivo
@@ -55,7 +68,7 @@ const subirNotasEstudiantes = async (req, res) => {
             const cantidad = (notasEstudiante?.evaluaciones?.[tipo]?.length || 0);
             if (cantidad > maxCantidad) maxCantidad = cantidad;
         }
-        const descripcion = `${tipoMap[tipo] || tipo} ${maxCantidad + 1}`;
+        const descripcion = `${tipoMap[tipo] || tipo} ${maxCantidad}`;
         // 2. Registrar la nota para todos los estudiantes con la misma descripción
         const errores = [];
         for (const [estudianteId, nota] of Object.entries(notas)) {
@@ -71,7 +84,7 @@ const subirNotasEstudiantes = async (req, res) => {
             }
         }
         if (errores.length > 0) return res.status(400).json({ error: errores.join(', ') });
-        res.status(200).json({ msg: 'Notas registradas correctamente' });
+        res.status(200).json({ msg: 'Notas registradas correctamente', descripcion });
     } catch (error) {
         res.status(500).json({ error: 'Error al registrar notas' });
     }
@@ -101,7 +114,6 @@ const modificarNotasEstudiantes = async (req, res) => {
         if (errores.length > 0) return res.status(400).json({ error: errores.join(', ') });
         res.status(200).json({ msg: 'Notas registradas correctamente' });
     } catch (error) {
-        console.error(error);
         res.status(500).json({ error: 'Error al registrar notas' });
     }
 }

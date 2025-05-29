@@ -146,7 +146,6 @@ const cambiarPasswordValidator = [
         .isLength({ min: 6 })
         .withMessage('La contraseña debe tener al menos 6 caracteres')
         .custom((newPassword, { req }) => {
-            console.log(req.body)
             if (newPassword === req.body.password) throw new Error('La nueva contraseña debe ser diferente a la actual');
             if (newPassword !== req.body.confirmPassword) throw new Error('Las contraseñas no coinciden');
             return true;

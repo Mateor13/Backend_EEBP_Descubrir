@@ -104,7 +104,6 @@ const subirEvidenciaImgur = async (req, res, next) => {
     req.urlImgur = response.data.data.link;
     next();
   } catch (error) {
-    console.log(error)
     res.status(500).json({ error: 'Error subiendo la imagen' });
   }
 };
@@ -133,9 +132,6 @@ const subirEvidenciasEstudiantesValidator = [
         .notEmpty()
         .withMessage('El tipo de evaluación es obligatorio')
         .isIn(['deberes', 'talleres', 'examenes', 'pruebas']),
-    check('descripcion')
-        .notEmpty()
-        .withMessage('La descripción es obligatoria'),
     (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });

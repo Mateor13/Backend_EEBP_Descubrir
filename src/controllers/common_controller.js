@@ -64,7 +64,6 @@ const recuperarPassword = async (req, res) => {
 const comprobarTokenPassword = async (req, res) => {
     const { token } = req.params
     for (const { model } of roles) {
-        console.log(model)
         const userBDD = await model.findOne({ token: token });
         if (userBDD) {
             return res.status(200).json({ mensaje: 'Este token es válido' });

@@ -14,8 +14,8 @@ let transporter = nodemailer.createTransport({
 });
 
 // Envía correo de verificación de cuenta a un usuario (admin)
-const sendMailToUser = (userMail, token, password) => {
-    let mailOptions = {
+const sendMailToUser = async (userMail, token, password) => {
+    let mailOptions = await transporter.sendMail({
         from: process.env.USER_MAILTRAP,
         to: userMail,
         subject: "Verificar cuenta",
@@ -44,25 +44,16 @@ const sendMailToUser = (userMail, token, password) => {
         </footer>
     </div>       
         `
-    };
-    
-
-    transporter.sendMail(mailOptions, function(error, info){
-        if (error) {
-            console.log(error);
-        } else {
-            console.log('Correo enviado: ' + info.response);
-        }
     });
 };
 
 // Envía correo para recuperación de contraseña (admin)
-const sendMailToRecoveryPassword = async(userMail,token)=>{
+const sendMailToRecoveryPassword = async (userMail, token) => {
     let info = await transporter.sendMail({
-    from: 'admin@vet.com',
-    to: userMail,
-    subject: "Correo para el reestablecimiento de contraseña",
-    html: `
+        from: 'admin@vet.com',
+        to: userMail,
+        subject: "Correo para el reestablecimiento de contraseña",
+        html: `
     <div style="font-family: Arial, sans-serif; color: #333; text-align: center;">
         <h1 style="color: #82a915;">Sistema de Gestión de Notas Escuela Descubrir</h1>
         <br>
@@ -83,7 +74,6 @@ const sendMailToRecoveryPassword = async(userMail,token)=>{
     </div>
     `
     });
-    console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
 }
 
 // Envía correo de verificación de cuenta a un profesor
@@ -117,16 +107,15 @@ const sendMailToProfesor = async (userMail, token, password) => {
         </footer>`
 
     });
-    console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
 }
 
 // Envía correo para recuperación de contraseña (profesor)
-const sendMailToRecoveryPasswordProfesor = async(userMail,token)=>{
+const sendMailToRecoveryPasswordProfesor = async (userMail, token) => {
     let info = await transporter.sendMail({
-    from: 'admin@ued.com',
-    to: userMail,
-    subject: "Correo para el reestablecimiento de contraseña",
-    html: `
+        from: 'admin@ued.com',
+        to: userMail,
+        subject: "Correo para el reestablecimiento de contraseña",
+        html: `
     <div style="font-family: Arial, sans-serif; color: #333; text-align: center;">
 
         <h1 style="color: #82a915;">Sistema de Gestión de Notas Escuela Descubrir</h1>
@@ -147,7 +136,6 @@ const sendMailToRecoveryPasswordProfesor = async(userMail,token)=>{
         </footer>
     </div>`
     });
-    console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
 }
 
 // Envía credenciales y enlace de verificación a un representante
@@ -157,7 +145,7 @@ const envioCredenciales = async (nombre, apellido, userMail, password, token) =>
         to: userMail,
         subject: "Correo con las credenciales de acceso para representantes",
         html:
-        `
+            `
         <div style="font-family: Arial, sans-serif; color: #333; text-align: center;">
 
         <h1 style="color: #82a915;">Sistema de Gestión de Notas Escuela Descubrir</h1>
@@ -188,7 +176,6 @@ const envioCredenciales = async (nombre, apellido, userMail, password, token) =>
         </footer>
     </div>`
     });
-    console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
 }
 
 // Notifica a un representante que un estudiante ha sido registrado y asignado a su cuenta
@@ -198,7 +185,7 @@ const estudianteRegistrado = async (userMail, cedula, nombre, apellido) => {
         to: userMail,
         subject: "Estudiante registrado en la plataforma",
         html:
-        `
+            `
         <div style="font-family: Arial, sans-serif; color: #333; text-align: center;">
         <h1 style="color: #82a915;">Sistema de Gestión de Notas Escuela Descubrir</h1>
         <br>
@@ -218,17 +205,16 @@ const estudianteRegistrado = async (userMail, cedula, nombre, apellido) => {
             <p>&copy; ${new Date().getFullYear()} Escuela Descubrir
         </footer>
     </div>`
-});
-console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
+    });
 }
 
 // Envía correo para recuperación de contraseña (representante)
 const sendMailToRecoveryPasswordRepresentante = async (userMail, token) => {
-  let info = await transporter.sendMail({
-    from:"info@eebpd.edu",
-    to: userMail,
-    subject: "Correo para el reestablecimiento de contraseña",
-    html: `	
+    let info = await transporter.sendMail({
+        from: "info@eebpd.edu",
+        to: userMail,
+        subject: "Correo para el reestablecimiento de contraseña",
+        html: `	
     <div style="font-family: Arial, sans-serif; color: #333; text-align: center;">
     <h1 style="color: #82a915;">Sistema de Gestión de Notas Escuela Descubrir</h1>
     <br>
@@ -247,8 +233,7 @@ const sendMailToRecoveryPasswordRepresentante = async (userMail, token) => {
         <p>&copy; ${new Date().getFullYear()} Escuela Descubrir. Todos los derechos reservados.</p>
     </footer>
 </div>`
-  });
-  console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
+    });
 }
 
 // Envía correo notificando el cambio de email
@@ -273,8 +258,7 @@ const sendMailToChangeEmail = async (userMail, newEmail) => {
             <p>&copy; ${new Date().getFullYear()} Escuela Descubrir. Todos los derechos reservados.</p>
         </footer>
     </div>`
-});
-console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
+    });
 }
 
 export {

@@ -214,7 +214,6 @@ const eliminarRepresentante = async (req, res) => {
         await representanteBDD.save();
         res.status(200).json({ msg: 'Representante eliminado correctamente' });
     } catch (error) {
-        console.log(error);
         res.status(500).json({ error: 'Error al eliminar representante' });
     }
 }
@@ -348,7 +347,6 @@ const registrarEstudiantes = async (req, res) => {
         await nuevaObservacion.save();
         res.status(201).json({ msg: 'Estudiante registrado correctamente' });
     } catch (error) {
-        console.log(error)
         res.status(500).json({ error: 'Error al registrar estudiante' });
 
     }
@@ -437,7 +435,6 @@ const registroAsistenciaEstudiantes = async (req, res) => {
     // Paso 1: Obtener Datos
     const { asistencias } = req.body;
     const { cursoAsignadoBDD } = req;
-    console.log(asistencias)
     // Paso 2: Manipular la BDD
     try {
         const errores = [];
@@ -460,7 +457,7 @@ const registroAsistenciaEstudiantes = async (req, res) => {
         if (errores.length > 0) return res.status(400).json({ error: errores.join(', ') });
         res.status(200).json({ msg: 'Asistencia registrada correctamente' });
     } catch (error) {
-        console.log(error)
+        res.status(500).json({ error: 'Error al registrar asistencia' });
     }
 };
 
@@ -533,7 +530,6 @@ const registrarFechaFin = async (req, res) => {
         await anioLectivoBDD.establecerFechaFin(fecha);
         res.status(200).json({ msg: 'Fecha de fin registrada correctamente' });
     } catch (error) {
-        console.log(error)
         res.status(500).json({ error: error.message });
     }
 };

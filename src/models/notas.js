@@ -26,9 +26,9 @@ const notaSchema = new Schema({
             _id: false,
             nota: {
                 type: Number,
-                required: true,
                 min: 0,
-                max: 10
+                max: 10,
+                required: false
             },
             descripcion: {
                 type: String,
@@ -51,9 +51,9 @@ const notaSchema = new Schema({
             _id: false,
             nota: {
                 type: Number,
-                required: true,
                 min: 0,
-                max: 10
+                max: 10,
+                required: false
             },
             descripcion: {
                 type: String,
@@ -75,9 +75,9 @@ const notaSchema = new Schema({
             _id: false,
             nota: {
                 type: Number,
-                required: true,
                 min: 0,
-                max: 10
+                max: 10,
+                required: false
             },
             descripcion: {
                 type: String,
@@ -99,9 +99,9 @@ const notaSchema = new Schema({
             _id: false,
             nota: {
                 type: Number,
-                required: true,
                 min: 0,
-                max: 10
+                max: 10,
+                required: false
             },
             descripcion: {
                 type: String,
@@ -171,9 +171,19 @@ notaSchema.methods.calcularPromedioGeneral = async function () {
 
 // Agrega una nueva nota a un tipo de evaluación, evitando duplicados por descripción
 notaSchema.methods.agregarNota = async function (tipo, nota, descripcion) {
+    // Buscar si existe una evaluación con la misma descripción
     const existeNota = this.evaluaciones[tipo].find(e => e.descripcion === descripcion);
-    if (existeNota) return ({ error: 'La nota ya existe' });
-
+    if (existeNota) {
+        // Si ya tiene nota, rechaza
+        if (existeNota.nota !== undefined && existeNota.nota !== null) {
+            return { error: 'La nota ya existe' };
+        }
+        // Si no tiene nota, asígnala
+        existeNota.nota = nota;
+        await this.save();
+        return;
+    }
+    // Si no existe, agrega una nueva
     this.evaluaciones[tipo].push({ nota, descripcion });
     await this.save();
 };
@@ -188,10 +198,12 @@ notaSchema.methods.actualizarNota = async function (tipo, nota, descripcion) {
 
 // Guardar la url de la imagen de evidencia de una evaluación
 notaSchema.methods.guardarEvidencia = async function (tipo, descripcion, url) {
-    console.log("tipo:", tipo, "descripcion", descripcion, "url", url);
-    const existeNota = this.evaluaciones[tipo].find(e => e.descripcion === descripcion);
-    if (!existeNota) throw new Error('La nota no existe');
-    existeNota.evidenciaUrl = url;
+    // Verifica si ya existe una evaluación con esa descripción
+    const existe = this.evaluaciones[tipo].find(e => e.descripcion === descripcion);
+    if (existe) {
+        return { error: 'Ya existe una evidencia con esa descripción' };
+    }
+    this.evaluaciones[tipo].push({ descripcion, evidenciaUrl: url });
     await this.save();
 };
 

@@ -66,7 +66,6 @@ const verMateriasEstudiante = async (req, res) => {
         }));
         return res.status(200).json(materiasFiltradas);
     } catch (error) {
-        console.error('Error al obtener materias del estudiante:', error);
         return res.status(500).json({ error: 'Error interno del servidor' });
     }
 }
@@ -119,7 +118,6 @@ const verNotasEstudiante = async (req, res) => {
             evaluaciones
         });
     } catch (error) {
-        console.error('Error al obtener notas del estudiante:', error);
         return res.status(500).json({ error: 'Error interno del servidor' });
     }
 }
@@ -159,7 +157,6 @@ const verObservacionesEstudiante = async (req, res) => {
 
         res.status(200).json(respuesta);
     } catch (error) {
-        console.error('Error al obtener observaciones del estudiante:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 }
@@ -192,7 +189,6 @@ const verAsistenciaEstudiante = async (req, res) => {
 
         return res.status(200).json(respuesta)
     } catch (error) {
-        console.error('Error al obtener asistencia del estudiante:', error);
         return res.status(500).json({ error: 'Error interno del servidor' });
     }
 }

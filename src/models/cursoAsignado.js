@@ -197,7 +197,6 @@ cursoAsignadoSchema.statics.promoverEstudiantesPorNivel = async function (anioLe
         return { mensaje: 'Promoción completada' };
 
     } catch (error) {
-        console.error(`Error promoviendo estudiantes: ${error.message}`);
         return { error: 'Error promoviendo estudiantes' };
     }
 };
