@@ -5,6 +5,8 @@ import Materias from '../models/materias.js';
 import Estudiantes from '../models/estudiantes.js';
 import Observaciones from '../models/observaciones.js';
 import Notas from '../models/notas.js';
+import axios from 'axios';
+import CursosAsignados from '../models/cursoAsignado.js';
 
 // Validador para subir notas de estudiantes por parte del profesor
 const subirNotasEstudiantesValidator = [
@@ -74,6 +76,66 @@ const modificarNotasEstudiantesValidator = [
             }
             return true;
         }),
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
+        next();
+    }
+]
+
+const subirEvidenciaImgur = async (req, res, next) => {
+  try {
+    const imagen = req.file;
+    if (!imagen) {
+      return res.status(400).json({ error: 'No se envió ninguna imagen' });
+    }
+    const response = await axios.post(
+      'https://api.imgur.com/3/image',
+      {
+        image: imagen.buffer.toString('base64'),
+        type: 'base64'
+      },
+      {
+        headers: {
+          Authorization: `Client-ID ${process.env.IMGUR_CLIENT_ID}`
+        }
+      }
+    );
+    req.urlImgur = response.data.data.link;
+    next();
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ error: 'Error subiendo la imagen' });
+  }
+};
+
+// Validador para subir evidencias de estudiantes
+const subirEvidenciasEstudiantesValidator = [
+    check('cursoId')
+        .notEmpty()
+        .withMessage('El curso es obligatorio')
+        .custom(async (cursoId, { req }) => {
+            const cursoBDD = await CursosAsignados.findOne({curso: cursoId, anioLectivo: req.userBDD.anio});
+            if (!cursoBDD) throw new Error('El curso no existe');
+            req.cursoBDD = cursoBDD;
+            return true;
+        }),
+    check('materiaId')
+        .notEmpty()
+        .withMessage('La materia es obligatoria')
+        .custom(async (materiaId, { req }) => {
+            const materiaBDD = await Materias.findById(materiaId);
+            if (!materiaBDD) throw new Error('La materia no existe o no está asignada a usted');
+            req.materiaBDD = materiaBDD;
+            return true;
+        }),
+    check('tipo')
+        .notEmpty()
+        .withMessage('El tipo de evaluación es obligatorio')
+        .isIn(['deberes', 'talleres', 'examenes', 'pruebas']),
+    check('descripcion')
+        .notEmpty()
+        .withMessage('La descripción es obligatoria'),
     (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
@@ -230,5 +292,7 @@ export {
     visualizarMateriasAsignadasValidator,
     visualizarEstudiantesPorMateriaValidator,
     visualizarTiposNotasEstudiantesValidator,
-    visualizarEstudiantesPorTipoValidator
+    visualizarEstudiantesPorTipoValidator,
+    subirEvidenciaImgur,
+    subirEvidenciasEstudiantesValidator
 };

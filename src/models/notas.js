@@ -186,4 +186,13 @@ notaSchema.methods.actualizarNota = async function (tipo, nota, descripcion) {
     await this.save();
 };
 
+// Guardar la url de la imagen de evidencia de una evaluación
+notaSchema.methods.guardarEvidencia = async function (tipo, descripcion, url) {
+    console.log("tipo:", tipo, "descripcion", descripcion, "url", url);
+    const existeNota = this.evaluaciones[tipo].find(e => e.descripcion === descripcion);
+    if (!existeNota) throw new Error('La nota no existe');
+    existeNota.evidenciaUrl = url;
+    await this.save();
+};
+
 export default model('Nota', notaSchema);

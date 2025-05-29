@@ -2,37 +2,39 @@ import cursoAsignado from "../models/cursoAsignado.js";
 import cursos from "../models/cursos.js";
 import materias from "../models/materias.js";
 import Notas from "../models/notas.js";
-import axios from "axios";
+import axios from 'axios';
 
-// const subirEvidencia = [
-//   upload.single('imagen'),
-//   async (req, res) => {
-//     try {
-//       const imagen = req.file;
-//       if (!imagen) {
-//         return res.status(400).json({ error: 'No se envió ninguna imagen' });
-//       }
-
-//       const response = await axios.post(
-//         'https://api.imgur.com/3/image',
-//         {
-//           image: imagen.buffer.toString('base64'),
-//           type: 'base64'
-//         },
-//         {
-//           headers: {
-//             Authorization: `Client-ID ${process.env.IMGUR_CLIENT_ID}`
-//           }
-//         }
-//       );
-
-//       const urlImgur = response.data.data.link;
-//       res.json({ url: urlImgur });
-//     } catch (error) {
-//       res.status(500).json({ error: 'Error subiendo la imagen' });
-//     }
-//   }
-// ];
+// Subir una imagen a Imgur y devolver la URL
+const subirFotoEvidencia = async (req, res) => {
+  const { tipo, descripcion } = req.body;
+  const { materiaBDD, cursoBDD } = req;
+  const anioLectivo = req.userBDD.anio;
+  const url = req.urlImgur;
+  try {
+    const errores = [];
+    for (const estudianteId of cursoBDD.estudiantes) {
+        console.log(estudianteId, tipo, url, descripcion);
+      let notasEstudiante = await Notas.findOne({ estudiante: estudianteId, materia: materiaBDD._id, anioLectivo });
+      if (!notasEstudiante) {
+        errores.push('No se encontraron notas para este estudiante en la materia y año lectivo especificados');
+        continue;
+      }
+      const resultado = await notasEstudiante.guardarEvidencia(tipo, url, descripcion);
+      if (resultado?.error) {
+        errores.push(`Error en estudiante ${estudianteId}: ${resultado.error}`);
+        continue
+      }
+      await notasEstudiante.save();
+    }
+    if (errores.length > 0) {
+      return res.status(400).json({ error: errores.join(', ') });
+    }
+    res.status(200).json({ msg: 'Foto de evidencia registrada correctamente' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al registrar la foto de evidencia' });
+  }
+};
 
 // Registra una nota para un estudiante en una materia y año lectivo
 const subirNotasEstudiantes = async (req, res) => {
@@ -86,9 +88,9 @@ const modificarNotasEstudiantes = async (req, res) => {
         for (const [estudianteId, nota] of Object.entries(notas)) {
             let notasEstudiante = await Notas.findOne({ estudiante: estudianteId, materia: materiaBDD._id, anioLectivo });
             if (!notasEstudiante) {
-                    errores.push(`El estudiante con ID ${estudianteId} no tiene notas registradas`);
-                    continue;
-                }
+                errores.push(`El estudiante con ID ${estudianteId} no tiene notas registradas`);
+                continue;
+            }
             const resultado = await notasEstudiante.actualizarNota(tipo, nota, descripcion);
             if (resultado?.error) {
                 errores.push(`Error en estudiante ${estudianteId}: ${resultado.error}`);
@@ -221,5 +223,6 @@ export {
     visualizarEstudiantesCurso,
     visualizarMateriasAsignadas,
     visualizarTiposEstudiantes,
-    visualizarEstudiantesDescripcion
+    visualizarEstudiantesDescripcion,
+    subirFotoEvidencia
 }

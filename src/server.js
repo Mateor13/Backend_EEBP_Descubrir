@@ -5,19 +5,14 @@ import adminRouter from './routers/admin_routes.js'
 import profesorRouter from './routers/profesor_routes.js'
 import representanteRouter from './routers/representante_routes.js'
 import publicRouter from './routers/common_routes.js'
-import multer from 'multer';
 
 // Inicializadores de la aplicación
 const app = express()
 dotenv.config()
-const upload = multer({
-    storage: multer.memoryStorage(), // Almacena archivos en memoria
-})
 
 // Configuración del puerto y middlewares globales
 app.set('port', process.env.PORT || 3000)
-app.use(cors())
-app.use(upload.none()) // Para manejo de formularios multipart
+app.use(cors()) // Habilita CORS para todas las rutas
 app.use(express.json()) // Para parsear JSON en las peticiones
 
 // Ruta principal para comprobar que el servidor está en línea
