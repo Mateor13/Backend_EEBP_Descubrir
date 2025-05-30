@@ -4,7 +4,6 @@ import Cursos from '../models/cursos.js';
 import Materias from '../models/materias.js';
 import Estudiantes from '../models/estudiantes.js';
 import Observaciones from '../models/observaciones.js';
-import Notas from '../models/notas.js';
 import axios from 'axios';
 import CursosAsignados from '../models/cursoAsignado.js';
 
@@ -268,6 +267,15 @@ const visualizarEstudiantesPorTipoValidator = [
             const materiaBDD = await Materias.findById(materiaId);
             if (!materiaBDD) throw new Error('La materia no existe');
             req.materiaBDD = materiaBDD;
+            return true;
+        }),
+    check('cursoId')
+        .notEmpty()
+        .withMessage('El curso es obligatorio')
+        .custom(async (cursoId, { req }) => {
+            const cursoBDD = await CursosAsignados.findOne({curso: cursoId, anioLectivo: req.userBDD.anio}).populate('estudiantes', '_id nombre apellido cedula');
+            if (!cursoBDD) throw new Error('El curso no existe');
+            req.cursoBDD = cursoBDD;
             return true;
         }),
     check('descripcion')

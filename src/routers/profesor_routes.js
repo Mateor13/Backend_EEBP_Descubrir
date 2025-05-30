@@ -48,6 +48,6 @@ router.get('/profesor/cursos', upload.none(), verificarAutenticacion, verificarR
 router.get('/profesor/:cursoId/materias', upload.none(), verificarAutenticacion, verificarRolProfesor, visualizarMateriasAsignadasValidator, visualizarMateriasAsignadas); // Ver materias asignadas a un curso
 router.get('/estudiantes/:cursoId', upload.none(), verificarAutenticacion, verificarRolProfesor, visualizarEstudiantesCursoValidator, visualizarEstudiantesCurso); // Ver estudiantes de un curso
 router.get('/tipos/:materiaId/:tipo', upload.none(), verificarAutenticacion, verificarRolProfesor, visualizarTiposNotasEstudiantesValidator, visualizarTiposEstudiantes); // Ver notas de estudiantes por materia
-router.post('/descripcion/:materiaId/:tipo', upload.none(), verificarAutenticacion, verificarRolProfesor, visualizarEstudiantesPorTipoValidator, visualizarEstudiantesDescripcion); // Ver estudiantes de un curso y materia
+router.post('/descripcion/:cursoId/:materiaId/:tipo', upload.none(), verificarAutenticacion, verificarRolProfesor, visualizarEstudiantesPorTipoValidator, visualizarEstudiantesDescripcion); // Ver estudiantes de un curso y materia
 
 export default router;

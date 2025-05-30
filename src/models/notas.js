@@ -129,20 +129,15 @@ const notaSchema = new Schema({
 notaSchema.methods.calcularPromedioPorTipo = async function (tipo) {
     const tiposValidos = ['deberes', 'talleres', 'examenes', 'pruebas'];
     if (!tiposValidos.includes(tipo)) throw new Error('Tipo de evaluación no válido');
-
     const evaluaciones = this.evaluaciones[tipo];
     if (!evaluaciones || evaluaciones.length === 0) return 0;
-
     const suma = evaluaciones.reduce((acc, evalObj) => acc + evalObj.nota, 0);
     const promedio = suma / evaluaciones.length;
-
     const anioLectivo = await model('AnioLectivo').findById(this.anioLectivo);
     const ponderacion = anioLectivo?.ponderaciones?.[tipo];
     if (ponderacion == null) throw new Error(`No hay ponderación para tipo ${tipo}`);
-
     return promedio * (ponderacion / 100);
 };
-
 // Determina si la materia está reprobada (promedio general < 7)
 notaSchema.methods.esMateriaReprobada = async function () {
     const promedio = await this.calcularPromedioGeneral();
@@ -153,19 +148,16 @@ notaSchema.methods.esMateriaReprobada = async function () {
 notaSchema.methods.calcularPromedioGeneral = async function () {
     const tipos = ['deberes', 'talleres', 'examenes', 'pruebas'];
     let sumaTotal = 0;
-
     const anioLectivo = await model('AnioLectivo').findById(this.anioLectivo);
     for (const tipo of tipos) {
         const evaluaciones = this.evaluaciones[tipo];
         const ponderacion = anioLectivo.ponderaciones[tipo];
-
         if (evaluaciones && evaluaciones.length > 0 && ponderacion != null) {
             const suma = evaluaciones.reduce((acc, evalObj) => acc + evalObj.nota, 0);
             const promedio = suma / evaluaciones.length;
             sumaTotal += promedio * (ponderacion / 100);
         }
     }
-
     return sumaTotal;
 };
 
@@ -191,8 +183,11 @@ notaSchema.methods.agregarNota = async function (tipo, nota, descripcion) {
 // Actualiza la nota de una evaluación existente por descripción
 notaSchema.methods.actualizarNota = async function (tipo, nota, descripcion) {
     const existeNota = this.evaluaciones[tipo].find(e => e.descripcion === descripcion);
-    if (!existeNota) throw new Error('La nota no existe');
-    existeNota.nota = nota;
+    if (!existeNota) {
+        this.evaluaciones[tipo].push({ nota, descripcion });
+    } else {
+        existeNota.nota = nota;
+    }
     await this.save();
 };
 

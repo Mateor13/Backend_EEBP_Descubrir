@@ -2,7 +2,6 @@ import cursoAsignado from "../models/cursoAsignado.js";
 import cursos from "../models/cursos.js";
 import materias from "../models/materias.js";
 import Notas from "../models/notas.js";
-import axios from 'axios';
 
 // Subir una imagen a Imgur y devolver la URL
 const subirFotoEvidencia = async (req, res) => {
@@ -97,22 +96,15 @@ const modificarNotasEstudiantes = async (req, res) => {
     const anioLectivo = req.userBDD.anio;
     try {
         // Registrar la nota para todos los estudiantes con la misma descripción
-        const errores = [];
         for (const [estudianteId, nota] of Object.entries(notas)) {
             let notasEstudiante = await Notas.findOne({ estudiante: estudianteId, materia: materiaBDD._id, anioLectivo });
             if (!notasEstudiante) {
-                errores.push(`El estudiante con ID ${estudianteId} no tiene notas registradas`);
-                continue;
+                notasEstudiante = new Notas({ estudiante: estudianteId, materia: materiaBDD._id, anioLectivo });
             }
-            const resultado = await notasEstudiante.actualizarNota(tipo, nota, descripcion);
-            if (resultado?.error) {
-                errores.push(`Error en estudiante ${estudianteId}: ${resultado.error}`);
-            } else {
-                await notasEstudiante.save();
-            }
+            await notasEstudiante.actualizarNota(tipo, nota, descripcion);
+            await notasEstudiante.save();
         }
-        if (errores.length > 0) return res.status(400).json({ error: errores.join(', ') });
-        res.status(200).json({ msg: 'Notas registradas correctamente' });
+        res.status(200).json({ msg: 'Notas actualizadas correctamente' });
     } catch (error) {
         res.status(500).json({ error: 'Error al registrar notas' });
     }
@@ -185,7 +177,7 @@ const visualizarTiposEstudiantes = async (req, res) => {
     const { anio } = req.userBDD;
     const notasEstudiante = await Notas.find({ materia: materiaBDD._id, anioLectivo: anio });
     if (!notasEstudiante.length) {
-        return res.status(404).json({ error: 'No hay notas registradas para este estudiante' });
+        return res.status(404).json({ error: 'No hay notas registradas' });
     }
     // Usar un Set para evitar descripciones repetidas
     const descripcionesSet = new Set();
@@ -202,27 +194,53 @@ const visualizarTiposEstudiantes = async (req, res) => {
 // Ver los estudiantes por tipo de evaluaciones y descripción
 const visualizarEstudiantesDescripcion = async (req, res) => {
     const { tipo } = req.params;
-    const { materiaBDD } = req;
+    const { materiaBDD, cursoBDD } = req;
     const { descripcion } = req.body;
     const { anio } = req.userBDD;
-    // Poblamos el estudiante para obtener sus datos
-    const notasEstudiante = await Notas.find({ materia: materiaBDD._id, anioLectivo: anio })
-        .populate('estudiante', 'nombre apellido cedula');
-    if (!notasEstudiante.length) {
-        return res.status(404).json({ error: 'No hay notas registradas para este estudiante' });
-    }
+    // Buscar las notas de todos los estudiantes del curso
+    const notasEstudiantes = await Notas.find({
+        materia: materiaBDD._id,
+        anioLectivo: anio,
+        estudiante: { $in: cursoBDD.estudiantes }
+    }).populate('estudiante', 'nombre apellido cedula');
+    // Crear un mapa para acceso rápido por id
+    const notasMap = new Map();
+    notasEstudiantes.forEach(nota => {
+        notasMap.set(nota.estudiante._id.toString(), nota);
+    });
+    // Armar la respuesta para todos los estudiantes del curso
     const estudiantes = [];
-    for (const nota of notasEstudiante) {
-        const evaluacion = nota.evaluaciones[tipo]?.find(e => e.descripcion === descripcion);
-        if (evaluacion && nota.estudiante) {
-            estudiantes.push({
-                id: nota.estudiante._id,
-                nombre: nota.estudiante.nombre,
-                apellido: nota.estudiante.apellido,
-                cedula: nota.estudiante.cedula,
-                nota: evaluacion.nota
-            });
+    for (const estudiante of cursoBDD.estudiantes) {
+        // Si estudiante es un objeto poblado, usa estudiante._id
+        const estudianteId = estudiante._id ? estudiante._id.toString() : estudiante.toString();
+        const notaEstudiante = notasMap.get(estudianteId);
+        let estudianteInfo = {
+            id: estudianteId,
+            nombre: '',
+            apellido: '',
+            cedula: '',
+            nota: 0
+        };
+        // Si tienes los datos poblados, asígnalos
+        if (estudiante.nombre) {
+            estudianteInfo.nombre = estudiante.nombre;
+            estudianteInfo.apellido = estudiante.apellido;
+            estudianteInfo.cedula = estudiante.cedula;
         }
+        // Si existe la nota, busca la evaluación
+        if (notaEstudiante && notaEstudiante.estudiante) {
+            // Si por alguna razón no tienes los datos arriba, asígnalos aquí también
+            if (!estudianteInfo.nombre) {
+                estudianteInfo.nombre = notaEstudiante.estudiante.nombre;
+                estudianteInfo.apellido = notaEstudiante.estudiante.apellido;
+                estudianteInfo.cedula = notaEstudiante.estudiante.cedula;
+            }
+            const evaluacion = notaEstudiante.evaluaciones[tipo]?.find(e => e.descripcion === descripcion);
+            if (evaluacion && evaluacion.nota !== undefined && evaluacion.nota !== null) {
+                estudianteInfo.nota = evaluacion.nota;
+            }
+        }
+        estudiantes.push(estudianteInfo);
     }
     res.status(200).json({ estudiantes });
 }

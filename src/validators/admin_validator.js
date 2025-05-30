@@ -228,27 +228,19 @@ const registroRepresentanteValidator = [
 
 // Validador para registro de cursos
 const registroCursoValidator = [
-    // Validación de campos obligatorios
     check(['nivel', 'paralelo'])
-        .notEmpty()
-        .withMessage('Todos los campos son obligatorios'),
-    // Validación de nivel
+        .notEmpty().withMessage('Todos los campos son obligatorios'),
     check('nivel')
-        .isInt({ min: 1, max: 7 })
-        .withMessage('El nivel debe ser un número entre 1 y 7'),
-    // Validación de paralelo
+        .isInt({ min: 1, max: 7 }).withMessage('El nivel debe ser un número entre 1 y 7'),
     check('paralelo')
-        .isIn(['A', 'B', 'C', 'D', 'E'])
-        .withMessage('El paralelo debe ser una letra entre A y E')
-        .custom(async (value, { req }) => {
-            const cursoBDD = await Curso.findOne({ nivel: req.body.nivel, paralelo: value });
-            if (cursoBDD) throw new Error('El curso ya está registrado');
-            const anioLectivoBDD = await AnioLectivo.findOne({ estado: true });
-            if (!anioLectivoBDD) throw new Error('No hay un año lectivo activo');
-            req.anioLectivoBDD = anioLectivoBDD;
-            return true;
-        }),
-    // Manejo de errores
+        .isIn(['A', 'B', 'C', 'D', 'E']).withMessage('El paralelo debe ser una letra entre A y E'),
+    // Validación personalizada
+    check('paralelo').custom(async (value, { req }) => {
+        const anioLectivoBDD = await AnioLectivo.findOne({ estado: true });
+        if (!anioLectivoBDD) throw new Error('No hay un año lectivo activo');
+        req.anioLectivoBDD = anioLectivoBDD;
+        return true;
+    }),
     (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -256,7 +248,7 @@ const registroCursoValidator = [
         }
         next();
     }
-]
+];
 
 // Validador para registro de materias
 const registroMateriaValidator = [
@@ -801,7 +793,8 @@ const eliminarCursoValidator = [
             const cursoBDD = await Curso.findById(id);
             if (!cursoBDD) throw new Error('El curso no está registrado');
             const cursoAsignadoBDD = await CursoAsignado.findOne({ curso: id, anioLectivo: req.userBDD.anio }).populate('curso', 'nivel paralelo');
-            if (cursoAsignadoBDD?.estudiantes.length > 0) throw new Error('No se puede eliminar el curso porque tiene estudiantes asignados');
+            if (!cursoAsignadoBDD) throw new Error('El curso no está asignado en este año lectivo');
+            if (cursoAsignadoBDD.estudiantes.length > 0) throw new Error('No se puede eliminar el curso porque tiene estudiantes asignados');
             if (cursoAsignadoBDD.estado === false) throw new Error('El curso ya está eliminado');
             req.cursoBDD = cursoAsignadoBDD;
             return true;

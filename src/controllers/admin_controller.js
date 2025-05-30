@@ -14,7 +14,6 @@ import Asistencia from '../models/asistencia.js';
 import Observacion from '../models/observaciones.js';
 import AnioLectivo from '../models/anioLectivo.js';
 import CursoAsignado from '../models/cursoAsignado.js';
-import anioLectivo from '../models/anioLectivo.js';
 import cursoAsignado from '../models/cursoAsignado.js';
 
 // ==================== ADMINISTRADOR ====================
@@ -224,13 +223,21 @@ const eliminarRepresentante = async (req, res) => {
 const registrarCurso = async (req, res) => {
     const { nivel, paralelo } = req.body;
     try {
-        const nuevoCurso = new Curso({ nivel, paralelo });
-        const verificarCursoAsignadoBDD = await CursoAsignado.findOne({ curso: nuevoCurso._id, anioLectivo: req.userBDD.anio });
-        if (verificarCursoAsignadoBDD) return res.status(400).json({ error: 'El curso ya esta registrado en el año lectivo activo' });
-        const crearCursoAsignado = new CursoAsignado({ curso: nuevoCurso._id, anioLectivo: req.userBDD.anio });
-        await nuevoCurso.asignarNombre();
-        await crearCursoAsignado.save();
-        await nuevoCurso.save();
+        // 1. Buscar o crear el curso base
+        let curso = await Curso.findOne({ nivel, paralelo });
+        if (!curso) {
+            curso = new Curso({ nivel, paralelo });
+            await curso.asignarNombre();
+            await curso.save();
+        }
+        // 2. Verificar que no exista ya la asignación en el año lectivo activo
+        const existeCursoAsignado = await CursoAsignado.findOne({ curso: curso._id, anioLectivo: req.anioLectivoBDD._id });
+        if (existeCursoAsignado) {
+            return res.status(400).json({ error: 'El curso ya está registrado en el año lectivo activo' });
+        }
+        // 3. Crear la asignación del curso para el año lectivo activo
+        const nuevoCursoAsignado = new CursoAsignado({ curso: curso._id, anioLectivo: req.anioLectivoBDD._id });
+        await nuevoCursoAsignado.save();
         res.status(201).json({ msg: 'Curso registrado correctamente y asignado al año lectivo activo' });
     } catch (error) {
         res.status(500).json({ error: 'Error al registrar curso' });
