@@ -29,7 +29,7 @@ const sendMailToUser = async (userMail, token, password) => {
         <p><strong>Correo:</strong> ${userMail}</p>
         <p><strong>Contraseña:</strong> ${password}</p>
         <br>
-        <p>Para confirmar tu cuenta, por favor haz clic en el siguiente enlace:</p><br>
+        <p>Para confirmar tu cuenta, por favor Has clic en el siguiente enlace:</p><br>
         <p style="text-align: center;">
             <a href="${process.env.URL_PRODUCTION}confirmar/${encodeURIComponent(token)}" style="background-color: #82a915; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Verificar cuenta</a>
         </p>
@@ -58,9 +58,9 @@ const sendMailToRecoveryPassword = async (userMail, token) => {
         <h1 style="color: #82a915;">Sistema de Gestión de Notas Escuela Descubrir</h1>
         <br>
         <p>Hola</p>
-        <p>Has solicitado un cambio de contraseña. Para reestablecer tu contraseña, por favor haz clic en el siguiente enlace:</p><br>
+        <p>Has solicitado un cambio de contraseña. Para reestablecer tu contraseña, por favor has clic en el siguiente enlace:</p><br>
         <p style="text-align: center;">
-            <a href="${process.env.URL_PRODUCTION}confirmar-token/${encodeURIComponent(token)}" style="background-color: #82a915; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Reestablecer tu contraseña</a>
+            <a href="${process.env.URL_PRODUCTION}recuperar-password/${encodeURIComponent(token)}" style="background-color: #82a915; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Reestablecer tu contraseña</a>
         </p>
         <br>
         <br>
@@ -87,12 +87,12 @@ const sendMailToProfesor = async (userMail, token, password) => {
         <h1 style="color: #82a915;">Bienvenido a Escuela Descubrir</h1>
         <br>
         <p>Hola</p>
-        <p>Haz sido registrado como profesor. Estamos encantados de tenerte con nosotros.</p>
+        <p>Has sido registrado como profesor. Estamos encantados de tenerte con nosotros.</p>
         <p>Estas son tus credenciales de acceso:</p>
         <p><strong>Correo:</strong> ${userMail}</p>
         <p><strong>Contraseña:</strong> ${password}</p>
         <br>
-        <p>Para confirmar tu cuenta, por favor haz clic en el siguiente enlace:</p><br>
+        <p>Para confirmar tu cuenta, por favor has clic en el siguiente enlace:</p><br>
         <p style="text-align: center;">
             <a href="${process.env.URL_PRODUCTION}confirmar/${encodeURIComponent(token)}" style="background-color: #82a915; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Verificar cuenta</a>
         </p>
@@ -121,9 +121,9 @@ const sendMailToRecoveryPasswordProfesor = async (userMail, token) => {
         <h1 style="color: #82a915;">Sistema de Gestión de Notas Escuela Descubrir</h1>
         <br>
         <p>Hola</p>
-        <p>Has solicitado un cambio de contraseña. Para reestablecer tu contraseña, por favor haz clic en el siguiente enlace:</p><br>
+        <p>Has solicitado un cambio de contraseña. Para reestablecer tu contraseña, por favor has clic en el siguiente enlace:</p><br>
         <p style="text-align: center;">
-            <a href="${process.env.URL_PRODUCTION}confirmar-token/${encodeURIComponent(token)}" style="background-color: #82a915; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Reestablecer tu contraseña</a>
+            <a href="${process.env.URL_PRODUCTION}recuperar-password/${encodeURIComponent(token)}" style="background-color: #82a915; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Reestablecer tu contraseña</a>
         </p>
         <br>
         <br>
@@ -151,7 +151,7 @@ const envioCredenciales = async (nombre, apellido, userMail, password, token) =>
         <h1 style="color: #82a915;">Sistema de Gestión de Notas Escuela Descubrir</h1>
         <br>
         <p>Saludos estimad@ ${nombre} ${apellido}</p>
-        <p>Ha sido registrad@ como representante en la Escuela de Educacion Básica Particular Descubrir</p><br>
+        <p>Has sido registrad@ como representante en la Escuela de Educacion Básica Particular Descubrir</p><br>
         <p>Estas son las credenciales de acceso:</p>
         <p><strong>Correo:</strong> ${userMail}</p>
         <p><strong>Contraseña: </strong>${password}</p>
@@ -219,13 +219,13 @@ const sendMailToRecoveryPasswordRepresentante = async (userMail, token) => {
     <h1 style="color: #82a915;">Sistema de Gestión de Notas Escuela Descubrir</h1>
     <br>
     <p>Hola</p>
-    <p>Haz solicitado un reestablecimiento de tu contraseña, por favor haz clic en el siguiente enlace:</p><br>
+    <p>Has solicitado un reestablecimiento de tu contraseña, por favor has clic en el siguiente enlace:</p><br>
     <p style="text-align: center;">
-        <a href="${process.env.URL_PRODUCTION}confirmar-token/${encodeURIComponent(token)}" style="background-color: #82a915; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Reestablecer tu contraseña</a>
+        <a href="${process.env.URL_PRODUCTION}recuperar-password/${encodeURIComponent(token)}" style="background-color: #82a915; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor:pointer;">Reestablecer tu contraseña</a>
     </p>
     <br>
     <br>
-    <p>Si no haz solicitado este cambio, por favor ignora este correo.</p>
+    <p>Si no has solicitado este cambio, por favor ignora este correo.</p>
     <p>Saludos cordiales</p>
     <p><strong>Equipo de Escuela Descubrir</strong></p>
     <footer style="text-align: center; color: #777; margin-top: 20px;">
@@ -247,7 +247,7 @@ const sendMailToChangeEmail = async (userMail, newEmail) => {
         <h1 style="color: #82a915;">Sistema de Gestión de Notas Escuela Descubrir</h1>
         <br>
         <p>Hola</p>
-        <p>Se cambiad correctamente el correo electrónico. Por favor, verifica tu nueva dirección de correo electrónico.</p><br>
+        <p>Se ha cambiado correctamente el correo electrónico. Por favor, verifica tu nueva dirección de correo electrónico.</p><br>
         <p><strong>Nuevo correo electrónico:</strong> ${newEmail}</p>
         <br>
         <br>
