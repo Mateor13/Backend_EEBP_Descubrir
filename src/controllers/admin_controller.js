@@ -14,7 +14,7 @@ import Asistencia from '../models/asistencia.js';
 import Observacion from '../models/observaciones.js';
 import AnioLectivo from '../models/anioLectivo.js';
 import CursoAsignado from '../models/cursoAsignado.js';
-import cursoAsignado from '../models/cursoAsignado.js';
+import Notas from '../models/notas.js'
 
 // ==================== ADMINISTRADOR ====================
 
@@ -260,7 +260,7 @@ const eliminarCurso = async (req, res) => {
 // Lista todos los cursos registrados
 const listarCursos = async (req, res) => {
     try {
-        const cursos = await cursoAsignado.find({
+        const cursos = await CursoAsignado.find({
             anioLectivo: req.userBDD.anio,
             estado: true
         }).populate('curso');
@@ -335,29 +335,56 @@ const listarMaterias = async (req, res) => {
 
 // ==================== ESTUDIANTE ====================
 
-// Registra un nuevo estudiante, lo asigna a un representante y a un curso
 const registrarEstudiantes = async (req, res) => {
-    //Paso 1: Obtener los datos
     const { nombre, apellido, cedula } = req.body;
-    const { representanteBDD, cursoAsignadoBDD } = req;
-    //Paso 2: Manipular la BDD
+    const { representanteBDD, cursoAsignadoBDD, cursoBDD } = req;
     try {
+        // Crear instancia del estudiante
         const nuevoEstudiante = new Estudiante({ nombre, apellido, cedula });
+        // Asignar al representante
         const asignarRepresentante = await representanteBDD.asignarEstudiante(nuevoEstudiante._id);
-        if (asignarRepresentante?.error) return res.status(400).json({ error: asignarRepresentante.error });
+        if (asignarRepresentante?.error) {
+            return res.status(400).json({ error: asignarRepresentante.error });
+        }
+        // Enviar correo al representante con los datos del estudiante
         await estudianteRegistrado(representanteBDD.email, cedula, nombre, apellido);
+        // Asignar al curso
         await cursoAsignadoBDD.agregarEstudiante(nuevoEstudiante._id);
-        const nuevaAsistencia = new Asistencia({ estudiante: nuevoEstudiante._id, anioLectivo: req.userBDD.anio });
-        const nuevaObservacion = new Observacion({ estudiante: nuevoEstudiante._id, anioLectivo: req.userBDD.anio });
+        // Crear documentos de asistencia y observación
+        const anioLectivo = req.userBDD.anio;
+        const nuevaAsistencia = new Asistencia({ estudiante: nuevoEstudiante._id, anioLectivo });
+        const nuevaObservacion = new Observacion({ estudiante: nuevoEstudiante._id, anioLectivo });
+        for (const materia of cursoBDD.materias) {
+            const nuevaNota = new Notas({
+                estudiante: nuevoEstudiante._id,
+                materia: materia._id,
+                anioLectivo
+            });
+            // Copiar los deberes ya asignados a una materia
+            const evaluacionesPorTipo = await Notas.copiarEvaluacionesDeCurso({
+                materiaId: materia._id,
+                anioLectivo,
+                estudiantes: cursoAsignadoBDD.estudiantes
+            });
+            if (Object.keys(evaluacionesPorTipo).length > 0) {
+                nuevaNota.evaluaciones = {};
+                for (const tipo of Object.keys(evaluacionesPorTipo)) {
+                    nuevaNota.evaluaciones[tipo] = evaluacionesPorTipo[tipo];
+                }
+            }
+            await nuevaNota.save();
+        }
+        // Guardar estudiante y documentos asociados
         await nuevoEstudiante.save();
         await nuevaAsistencia.save();
         await nuevaObservacion.save();
         res.status(201).json({ msg: 'Estudiante registrado correctamente' });
     } catch (error) {
+        console.error('Error al registrar estudiante:', error);
         res.status(500).json({ error: 'Error al registrar estudiante' });
-
     }
-}
+};
+
 
 // Asigna un representante a un estudiante
 const asignarRepresentante = async (req, res) => {
@@ -518,7 +545,7 @@ const comenzarAnioLectivo = async (req, res) => {
         let anio;
         if (ultimoAnioLectivo && ultimoAnioLectivo.estado === false) {
             anio = await AnioLectivo.iniciarPeriodo();
-            await cursoAsignado.promoverEstudiantesPorNivel(ultimoAnioLectivo._id, anio._id);
+            await CursoAsignado.promoverEstudiantesPorNivel(ultimoAnioLectivo._id, anio._id);
         } else {
             anio = await AnioLectivo.iniciarPeriodo();
         }

@@ -96,6 +96,7 @@ const verNotasEstudiante = async (req, res) => {
                 evaluaciones.push({
                     tipo: tipoMap[tipo],
                     nota: ev.nota,
+                    evidenciaUrl: ev.evidenciaUrl || null,
                     descripcion: ev.descripcion,
                     fecha: ev.fecha,
                     id: ev._id

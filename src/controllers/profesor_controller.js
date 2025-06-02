@@ -95,12 +95,18 @@ const modificarNotasEstudiantes = async (req, res) => {
     const { materiaBDD } = req;
     const anioLectivo = req.userBDD.anio;
     try {
-        // Registrar la nota para todos los estudiantes con la misma descripción
         for (const [estudianteId, nota] of Object.entries(notas)) {
             let notasEstudiante = await Notas.findOne({ estudiante: estudianteId, materia: materiaBDD._id, anioLectivo });
             if (!notasEstudiante) {
+                // Crear el documento de notas si no existe
                 notasEstudiante = new Notas({ estudiante: estudianteId, materia: materiaBDD._id, anioLectivo });
+                // Intentar completar la evidencia desde otros documentos
+                await notasEstudiante.completarEvidenciaDesdeOtros(tipo, descripcion, materiaBDD._id, anioLectivo);
+            } else {
+                // Si existe pero no tiene la evidencia, también intenta completarla
+                await notasEstudiante.completarEvidenciaDesdeOtros(tipo, descripcion, materiaBDD._id, anioLectivo);
             }
+            // Actualizar o crear la nota
             await notasEstudiante.actualizarNota(tipo, nota, descripcion);
             await notasEstudiante.save();
         }

@@ -180,6 +180,73 @@ notaSchema.methods.agregarNota = async function (tipo, nota, descripcion) {
     await this.save();
 };
 
+// Copia la estructura de evaluaciones y evidencias de otros estudiantes del curso
+notaSchema.statics.copiarEvaluacionesDeCurso = async function({ materiaId, anioLectivo, estudiantes }) {
+    // Buscar notas existentes en otros estudiantes del curso para esta materia
+    const otrasNotas = await this.find({
+        materia: materiaId,
+        anioLectivo,
+        estudiante: { $in: estudiantes }
+    });
+
+    if (otrasNotas.length === 0) return {};
+
+    const evaluacionesPorTipo = {};
+    for (const notaDoc of otrasNotas) {
+        for (const tipo of Object.keys(notaDoc.evaluaciones || {})) {
+            for (const evaluacion of notaDoc.evaluaciones[tipo]) {
+                if (!evaluacionesPorTipo[tipo]) evaluacionesPorTipo[tipo] = [];
+                const yaExiste = evaluacionesPorTipo[tipo].some(e => e.descripcion === evaluacion.descripcion);
+                if (!yaExiste) {
+                    evaluacionesPorTipo[tipo].push({
+                        descripcion: evaluacion.descripcion,
+                        evidenciaUrl: evaluacion.evidenciaUrl || null
+                    });
+                }
+            }
+        }
+    }
+    return evaluacionesPorTipo;
+};
+
+// Busca la evidencia de tipo y descripción en otros documentos y la agrega si no existe o está vacía
+notaSchema.methods.completarEvidenciaDesdeOtros = async function(tipo, descripcion, materiaId, anioLectivo) {
+    // Busca la evaluación correspondiente en el documento actual
+    const evaluacion = this.evaluaciones[tipo]?.find(e => e.descripcion === descripcion);
+    // Si ya tiene una evidencia válida, no hace nada
+    if (evaluacion && evaluacion.evidenciaUrl && evaluacion.evidenciaUrl !== '' && evaluacion.evidenciaUrl !== null && evaluacion.evidenciaUrl !== undefined) {
+        return { msg: 'Ya tiene evidencia' };
+    }
+    // Busca en TODOS los documentos de la misma materia y año lectivo
+    const otrasNotas = await this.constructor.find({
+        materia: materiaId,
+        anioLectivo,
+        _id: { $ne: this._id } // Excluye el documento actual
+    });
+    // Busca la evidencia en cualquier documento
+    let evidenciaUrlEncontrada = null;
+    for (const otraNota of otrasNotas) {
+        const otraEvaluacion = otraNota.evaluaciones[tipo]?.find(e => e.descripcion === descripcion && e.evidenciaUrl);
+        if (otraEvaluacion && otraEvaluacion.evidenciaUrl) {
+            evidenciaUrlEncontrada = otraEvaluacion.evidenciaUrl;
+            break;
+        }
+    }
+    if (evidenciaUrlEncontrada) {
+        if (evaluacion) {
+            evaluacion.evidenciaUrl = evidenciaUrlEncontrada;
+        } else {
+            this.evaluaciones[tipo].push({
+                descripcion,
+                evidenciaUrl: evidenciaUrlEncontrada
+            });
+        }
+        await this.save();
+        return { msg: 'Evidencia agregada desde otro documento' };
+    }
+    return { error: 'No se encontró evidencia en otros documentos' };
+};
+
 // Actualiza la nota de una evaluación existente por descripción
 notaSchema.methods.actualizarNota = async function (tipo, nota, descripcion) {
     const existeNota = this.evaluaciones[tipo].find(e => e.descripcion === descripcion);
