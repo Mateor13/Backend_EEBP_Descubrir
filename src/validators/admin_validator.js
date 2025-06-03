@@ -833,43 +833,6 @@ const eliminarMateriaValidator = [
     }
 ]
 
-// Validador para reemplazar profesor
-const reemplazarProfesorValidator = [
-    // Validación de ids de profesores
-    check(['idProfesor', 'idProfesorNuevo'])
-        .notEmpty()
-        .withMessage('El id del profesor es obligatorio')
-        .isMongoId()
-        .withMessage('Los ids de los profesores deben ser válidos'),
-    // Validación de id del nuevo profesor
-    check('idProfesorNuevo')
-        .custom(async (idProfesorNuevo, { req }) => {
-            const profesorBDD = await Profesor.findById(idProfesorNuevo);
-            if (!profesorBDD) throw new Error('El nuevo profesor no está registrado');
-            req.nuevoProfesorBDD = profesorBDD;
-            if (idProfesorNuevo === req.body.idProfesor) throw new Error('No se puede asignar el mismo profesor');
-            return true;
-        }),
-    // Validación de id del profesor actual
-    check('idProfesor')
-        .custom(async (idProfesor, { req }) => {
-            const profesorBDD = await Profesor.findById(idProfesor);
-            if (!profesorBDD) throw new Error('El profesor no está registrado');
-            const materiasBDD = await Materia.find({ profesor: profesorBDD._id });
-            if (materiasBDD.length === 0) throw new Error('El profesor no está asociado a ningún curso');
-            req.materiasBDD = materiasBDD;
-            return true;
-        }),
-    // Manejo de errores
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
-        next();
-    }
-]
-
 // Validador para eliminar estudiante
 const eliminarEstAdminValidator = [
     // Validación de id del estudiante
@@ -897,8 +860,8 @@ const eliminarEstAdminValidator = [
     }
 ]
 
-// Validador para reasignar materia a otro profesor
-const reasignarMateriaProfesorValidator = [
+// Validador para modificar materia
+const modificarMateriaValidator = [
     // Validación de campos obligatorios
     check('idMateria')
         .notEmpty()
@@ -1031,12 +994,11 @@ export {
     registroAsistenciaEstudiantesValidator,
     justificarInasistenciaValidator,
     eliminarProfesorValidator,
-    reemplazarProfesorValidator,
     eliminarEstAdminValidator,
     eliminarRepresentanteValidator,
     eliminarCursoValidator,
     eliminarMateriaValidator,
-    reasignarMateriaProfesorValidator,
+    modificarMateriaValidator,
     modificarUsuarioValidator,
     modificarEstudianteValidator,
     //Anio Lectivo

@@ -30,16 +30,15 @@ import {
     eliminarEstudiante,
     eliminarAdministrador,
     eliminarRepresentante,
+    eliminarCurso,
+    eliminarMateria,
     //Modificar
     modificarAdministrador,
     modificarProfesor,
     modificarRepresentante,
     modificarEstudiante,
+    modificarMateria,
     //Reemplazar
-    reemplazarProfesor,
-    reasignarMateriaProfesor,
-    eliminarCurso,
-    eliminarMateria,
     reasignarCursoEstudiante
 } from '../controllers/admin_controller.js' // Importa los controladores
 
@@ -53,9 +52,7 @@ import {
     asignarPonderacionesValidator, 
     asignarRepresentanteValidator,
     eliminarProfesorValidator, 
-    justificarInasistenciaValidator, 
-    reasignarMateriaProfesorValidator, 
-    reemplazarProfesorValidator, 
+    justificarInasistenciaValidator,
     registroAdminValidator, 
     registroAsistenciaEstudiantesValidator, 
     registroCursoValidator, 
@@ -72,7 +69,8 @@ import {
     eliminarCursoValidator,
     eliminarMateriaValidator,
     reasignarCursoEstudianteValidator,
-    comenzarAnioLectivoValidator
+    comenzarAnioLectivoValidator,
+    modificarMateriaValidator
 } from '../validators/admin_validator.js' // Importa los validadores
 import multer from 'multer' // Importa multer para manejar archivos
 const upload = multer() // Configura multer para manejar archivos, aunque no se usará en estas rutas
@@ -98,11 +96,10 @@ router.patch('/modificar-administrador/:id', upload.none(), verificarAutenticaci
 router.patch('/modificar-profesor/:id', upload.none(), verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, modificarUsuarioValidator, modificarProfesor) // Modificar un profesor
 router.patch('/modificar-representante/:id', upload.none(), verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, modificarUsuarioValidator, modificarRepresentante) // Modificar un representante
 router.patch('/modificar-estudiante/:id', upload.none(), verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, modificarEstudianteValidator, modificarEstudiante) // Modificar un estudiante
+router.patch('/reasignar-materia/:idMateria/:idProfesorNuevo', upload.none(), verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, modificarMateriaValidator, modificarMateria) // Modificar materias de un profesor a otro
 
 // Justificaciones y reasignaciones
 router.patch('/justificar-inasistencia', upload.none(), verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, justificarInasistenciaValidator, justificacionesEstudiantes) // Justificar inasistencias de estudiantes
-router.patch('/reemplazar-profesor/:idProfesor/:idProfesorNuevo', upload.none(), verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, reemplazarProfesorValidator, reemplazarProfesor) // Reemplazar un profesor
-router.patch('/reasignar-materia/:idMateria/:idProfesorNuevo', upload.none(), verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, reasignarMateriaProfesorValidator, reasignarMateriaProfesor) // Reasignar materias de un profesor a otro
 router.patch('/reasignar-curso/:idCurso/:idEstudiante', upload.none(), verificarAutenticacion, verificarAnioLectivo, verificarRolAdmin, reasignarCursoEstudianteValidator, reasignarCursoEstudiante) // Reasignar un curso a un estudiante
 
 // Listado de usuarios por rol y entidades

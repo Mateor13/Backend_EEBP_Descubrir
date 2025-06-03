@@ -333,6 +333,25 @@ const listarMaterias = async (req, res) => {
     res.status(200).json(materias);
 };
 
+// Modificar una materia de un profesor a otro en un curso
+const modificarMateria = async (req, res) => {
+    const { nombre } = req.body;
+    const { materiaBDD, nuevoProfesorBDD } = req;
+    try {
+        // Si el profesor cambia
+        if (materiaBDD.profesor._id.toString() !== nuevoProfesorBDD._id.toString()) {
+            // Cambiar el profesor en la materia
+            await materiaBDD.reemplazar_profesor(nuevoProfesorBDD._id);
+        }
+        // Actualizar el nombre si cambió
+        materiaBDD.nombre = nombre;
+        await materiaBDD.save();
+        res.status(200).json({ msg: 'Materia modificada correctamente' });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al modificar materia' });
+    }
+};
+
 // ==================== ESTUDIANTE ====================
 
 const registrarEstudiantes = async (req, res) => {
@@ -568,40 +587,6 @@ const registrarFechaFin = async (req, res) => {
     }
 };
 
-// ==================== REEMPLAZOS ====================
-
-// Reemplaza un profesor por otro en las materias indicadas
-const reemplazarProfesor = async (req, res) => {
-    const { nuevoProfesorBDD, materiasBDD } = req;
-    try {
-        for (const materia of materiasBDD) {
-            await materia.reemplazar_profesor(nuevoProfesorBDD._id);
-        }
-        res.status(200).json({ msg: 'Profesor reemplazado correctamente' });
-    } catch (error) {
-        res.status(500).json({ error: 'Error al reemplazar profesor' });
-    }
-}
-
-// Reasigna una materia de un profesor a otro en un curso
-const reasignarMateriaProfesor = async (req, res) => {
-    const { nombre } = req.body;
-    const { materiaBDD, nuevoProfesorBDD } = req;
-    try {
-        // Si el profesor cambia
-        if (materiaBDD.profesor._id.toString() !== nuevoProfesorBDD._id.toString()) {
-            // Cambiar el profesor en la materia
-            await materiaBDD.reemplazar_profesor(nuevoProfesorBDD._id);
-        }
-        // Actualizar el nombre si cambió
-        materiaBDD.nombre = nombre;
-        await materiaBDD.save();
-        res.status(200).json({ msg: 'Materia reasignada correctamente' });
-    } catch (error) {
-        res.status(500).json({ error: 'Error al reasignar materia' });
-    }
-}
-
 export {
     //Registrar
     registrarAdmin,
@@ -640,7 +625,5 @@ export {
     modificarProfesor,
     modificarRepresentante,
     modificarEstudiante,
-    //Reemplazar
-    reemplazarProfesor,
-    reasignarMateriaProfesor
+    modificarMateria
 }
