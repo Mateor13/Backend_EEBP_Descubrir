@@ -876,7 +876,7 @@ const eliminarEstAdminValidator = [
         .custom(async (id, { req }) => {
             for (const { model, rol } of rolesEstudianteAdministrador) {
                 if (model === Administrador) {
-                    if (await model.countDocuments() === 1) {
+                    if (await model.countDocuments({ estado: true }) === 1) {
                         throw new Error('No se puede eliminar el último administrador');
                     }
                 }
