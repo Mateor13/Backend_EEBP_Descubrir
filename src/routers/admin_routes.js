@@ -1,6 +1,6 @@
 // Importaciones necesarias
 import Router from 'express' // Importa el enrutador de Express
-import { 
+import {
     //Registrar
     registrarAdmin,
     registrarProfesor,
@@ -42,26 +42,26 @@ import {
     reasignarCursoEstudiante
 } from '../controllers/admin_controller.js' // Importa los controladores
 
-import { 
-    verificarAnioLectivo, 
-    verificarAutenticacion, 
-    verificarRolAdmin 
+import {
+    verificarAnioLectivo,
+    verificarAutenticacion,
+    verificarRolAdmin
 } from '../middlewares/JWT.js' // Importa los middlewares de autenticación y autorización
 
-import { 
-    asignarPonderacionesValidator, 
+import {
+    asignarPonderacionesValidator,
     asignarRepresentanteValidator,
-    eliminarProfesorValidator, 
+    eliminarProfesorValidator,
     justificarInasistenciaValidator,
-    registroAdminValidator, 
-    registroAsistenciaEstudiantesValidator, 
-    registroCursoValidator, 
-    registroEstudianteValidator, 
-    registroMateriaValidator, 
-    registroProfesorValidator, 
-    registroRepresentanteValidator, 
+    registroAdminValidator,
+    registroAsistenciaEstudiantesValidator,
+    registroCursoValidator,
+    registroEstudianteValidator,
+    registroMateriaValidator,
+    registroProfesorValidator,
+    registroRepresentanteValidator,
     terminarAnioLectivoValidator,
-    modificarUsuarioValidator, 
+    modificarUsuarioValidator,
     modificarEstudianteValidator,
     eliminarEstAdminValidator,
     eliminarRepresentanteValidator,

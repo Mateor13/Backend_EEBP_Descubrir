@@ -6,12 +6,15 @@ import Estudiantes from '../models/estudiantes.js';
 import Observaciones from '../models/observaciones.js';
 import axios from 'axios';
 import CursosAsignados from '../models/cursoAsignado.js';
+import mongoose from 'mongoose';
 
 // Validador para subir notas de estudiantes por parte del profesor
 const subirNotasEstudiantesValidator = [
     check('materiaId')
         .notEmpty()
-        .withMessage('La materia es obligatoria'),
+        .withMessage('La materia es obligatoria')
+        .isMongoId()
+        .withMessage('El id de la materia debe tener un formato válido'),
     check('tipo')
         .notEmpty()
         .withMessage('El tipo de evaluación es obligatorio')
@@ -47,7 +50,9 @@ const subirNotasEstudiantesValidator = [
 const modificarNotasEstudiantesValidator = [
     check('materiaId')
         .notEmpty()
-        .withMessage('La materia es obligatoria'),
+        .withMessage('La materia es obligatoria')
+        .isMongoId()
+        .withMessage('El id de la materia debe tener un formato válido'),
     check('tipo')
         .notEmpty()
         .withMessage('El tipo de evaluación es obligatorio')
@@ -58,7 +63,6 @@ const modificarNotasEstudiantesValidator = [
     check('notas')
         .custom(async (notas, { req }) => {
             const { materiaId } = req.params;
-            if (!materiaId) throw new Error('La materia es obligatoria');
             // Validar que la materia exista y esté asignada al profesor
             const materiaBDD = await Materias.findById(materiaId);
             if (!materiaBDD) throw new Error('La materia no existe o no está asignada a usted');
@@ -83,28 +87,28 @@ const modificarNotasEstudiantesValidator = [
 ]
 
 const subirEvidenciaImgur = async (req, res, next) => {
-  try {
-    const imagen = req.file;
-    if (!imagen) {
-      return res.status(400).json({ error: 'No se envió ninguna imagen' });
-    }
-    const response = await axios.post(
-      'https://api.imgur.com/3/image',
-      {
-        image: imagen.buffer.toString('base64'),
-        type: 'base64'
-      },
-      {
-        headers: {
-          Authorization: `Client-ID ${process.env.IMGUR_CLIENT_ID}`
+    try {
+        const imagen = req.file;
+        if (!imagen) {
+            return res.status(400).json({ error: 'No se envió ninguna imagen' });
         }
-      }
-    );
-    req.urlImgur = response.data.data.link;
-    next();
-  } catch (error) {
-    res.status(500).json({ error: 'Error subiendo la imagen' });
-  }
+        const response = await axios.post(
+            'https://api.imgur.com/3/image',
+            {
+                image: imagen.buffer.toString('base64'),
+                type: 'base64'
+            },
+            {
+                headers: {
+                    Authorization: `Client-ID ${process.env.IMGUR_CLIENT_ID}`
+                }
+            }
+        );
+        req.urlImgur = response.data.data.link;
+        next();
+    } catch (error) {
+        res.status(500).json({ error: 'Error subiendo la imagen' });
+    }
 };
 
 // Validador para subir evidencias de estudiantes
@@ -112,8 +116,10 @@ const subirEvidenciasEstudiantesValidator = [
     check('cursoId')
         .notEmpty()
         .withMessage('El curso es obligatorio')
+        .isMongoId()
+        .withMessage('El id del curso debe tener un formato válido')
         .custom(async (cursoId, { req }) => {
-            const cursoBDD = await CursosAsignados.findOne({curso: cursoId, anioLectivo: req.userBDD.anio});
+            const cursoBDD = await CursosAsignados.findOne({ curso: cursoId, anioLectivo: req.userBDD.anio });
             if (!cursoBDD) throw new Error('El curso no existe');
             req.cursoBDD = cursoBDD;
             return true;
@@ -121,6 +127,8 @@ const subirEvidenciasEstudiantesValidator = [
     check('materiaId')
         .notEmpty()
         .withMessage('La materia es obligatoria')
+        .isMongoId()
+        .withMessage('El id de la materia debe tener un formato válido')
         .custom(async (materiaId, { req }) => {
             const materiaBDD = await Materias.findById(materiaId);
             if (!materiaBDD) throw new Error('La materia no existe o no está asignada a usted');
@@ -179,12 +187,11 @@ const observacionesEstudiantesValidator = [
 
 // Validador para visualizar estudiantes de un curso y materia
 const visualizarEstudiantesCursoValidator = [
-    check(['cursoId'])
-        .notEmpty()
-        .withMessage('Todos los campos son obligatorios'),
     check('cursoId')
+        .notEmpty()
+        .withMessage('El curso es obligatorio')
         .isMongoId()
-        .withMessage('El curso debe tener un formato válido')
+        .withMessage('El id del curso debe tener un formato válido')
         .custom(async (cursoId, { req }) => {
             const cursoBDD = await Cursos.findById(cursoId);
             if (!cursoBDD) throw new Error('El curso no existe');
@@ -203,6 +210,8 @@ const visualizarMateriasAsignadasValidator = [
     check('cursoId')
         .notEmpty()
         .withMessage('El curso es obligatorio')
+        .isMongoId()
+        .withMessage('El id del curso debe tener un formato válido')
         .custom(async (cursoId, { req }) => {
             const cursoBDD = await Cursos.findById(cursoId).populate('materias', '_id nombre profesor').populate('materias.profesor', '_id nombre apellido');
             if (!cursoBDD) throw new Error('El curso no existe');
@@ -221,6 +230,8 @@ const visualizarEstudiantesPorMateriaValidator = [
     check('materiaId')
         .notEmpty()
         .withMessage('La materia es obligatoria')
+        .isMongoId()
+        .withMessage('El id de la materia debe tener un formato válido')
         .custom(async (materiaId, { req }) => {
             const materiaBDD = await Materias.findById(materiaId).populate('profesor', '_id nombre apellido');
             if (!materiaBDD) throw new Error('La materia no existe');
@@ -242,6 +253,8 @@ const visualizarTiposNotasEstudiantesValidator = [
     check('materiaId')
         .notEmpty()
         .withMessage('La materia es obligatoria')
+        .isMongoId()
+        .withMessage('El id de la materia debe tener un formato válido')
         .custom(async (materiaId, { req }) => {
             const materiaBDD = await Materias.findById(materiaId);
             if (!materiaBDD) throw new Error('La materia no existe');
@@ -263,6 +276,8 @@ const visualizarEstudiantesPorTipoValidator = [
     check('materiaId')
         .notEmpty()
         .withMessage('La materia es obligatoria')
+        .isMongoId()
+        .withMessage('El id de la materia debe tener un formato válido')
         .custom(async (materiaId, { req }) => {
             const materiaBDD = await Materias.findById(materiaId);
             if (!materiaBDD) throw new Error('La materia no existe');
@@ -272,8 +287,10 @@ const visualizarEstudiantesPorTipoValidator = [
     check('cursoId')
         .notEmpty()
         .withMessage('El curso es obligatorio')
+        .isMongoId()
+        .withMessage('El id del curso debe tener un formato válido')
         .custom(async (cursoId, { req }) => {
-            const cursoBDD = await CursosAsignados.findOne({curso: cursoId, anioLectivo: req.userBDD.anio}).populate('estudiantes', '_id nombre apellido cedula');
+            const cursoBDD = await CursosAsignados.findOne({ curso: cursoId, anioLectivo: req.userBDD.anio }).populate('estudiantes', '_id nombre apellido cedula');
             if (!cursoBDD) throw new Error('El curso no existe');
             req.cursoBDD = cursoBDD;
             return true;

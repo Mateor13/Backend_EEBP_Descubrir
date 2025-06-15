@@ -9,7 +9,7 @@ const observacionSchema = new Schema({
             type: String,
             required: true,
             // Por defecto, asigna la fecha actual (como objeto Date)
-            default: function() {
+            default: function () {
                 return date = new Date();
             }
         },
@@ -46,7 +46,7 @@ const observacionSchema = new Schema({
 });
 
 // Método para registrar una nueva observación
-observacionSchema.methods.registrarObservacion = async function(observacion) {
+observacionSchema.methods.registrarObservacion = async function (observacion) {
     this.observaciones.push(observacion);
     this.numeroObservaciones = this.numeroObservaciones + 1;
     await this.save();

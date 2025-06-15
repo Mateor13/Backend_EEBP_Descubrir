@@ -181,7 +181,7 @@ notaSchema.methods.agregarNota = async function (tipo, nota, descripcion) {
 };
 
 // Copia la estructura de evaluaciones y evidencias de otros estudiantes del curso
-notaSchema.statics.copiarEvaluacionesDeCurso = async function({ materiaId, anioLectivo, estudiantes }) {
+notaSchema.statics.copiarEvaluacionesDeCurso = async function ({ materiaId, anioLectivo, estudiantes }) {
     // Buscar notas existentes en otros estudiantes del curso para esta materia
     const otrasNotas = await this.find({
         materia: materiaId,
@@ -210,7 +210,7 @@ notaSchema.statics.copiarEvaluacionesDeCurso = async function({ materiaId, anioL
 };
 
 // Busca la evidencia de tipo y descripción en otros documentos y la agrega si no existe o está vacía
-notaSchema.methods.completarEvidenciaDesdeOtros = async function(tipo, descripcion, materiaId, anioLectivo) {
+notaSchema.methods.completarEvidenciaDesdeOtros = async function (tipo, descripcion, materiaId, anioLectivo) {
     // Busca la evaluación correspondiente en el documento actual
     const evaluacion = this.evaluaciones[tipo]?.find(e => e.descripcion === descripcion);
     // Si ya tiene una evidencia válida, no hace nada

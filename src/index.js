@@ -7,6 +7,6 @@ import app from './server.js'
 connection()
 
 // Inicia el servidor en el puerto configurado y muestra un mensaje en consola
-app.listen(app.get('port'),()=>{
+app.listen(app.get('port'), () => {
     console.log(`Servidor local en el puerto ${app.get('port')} está en línea`)
 })

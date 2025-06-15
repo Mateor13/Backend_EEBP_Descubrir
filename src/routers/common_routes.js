@@ -1,30 +1,30 @@
 // Importaciones necesarias
 import Router from 'express'; // Importa el enrutador de Express
-import { 
-    cambiarDatos, 
-    cambiarPassword, 
-    comprobarTokenPassword, 
-    confirmarCuenta, 
-    listarAniosLectivos, 
-    login, 
-    nuevaContrasena, 
-    perfil, 
-    recuperarPassword 
+import {
+    cambiarDatos,
+    cambiarPassword,
+    comprobarTokenPassword,
+    confirmarCuenta,
+    listarAniosLectivos,
+    login,
+    nuevaContrasena,
+    perfil,
+    recuperarPassword
 } from '../controllers/common_controller.js'; // Importa los controladores
 
-import { 
-    verificarAutenticacion 
+import {
+    verificarAutenticacion
 } from '../middlewares/JWT.js'; // Importa el middleware de autenticación
 
-import { 
-    confirmarCuentaValidator, 
-    loginValidator, 
-    recuperarPasswordValidator, 
-    comprobarTokenPasswordValidator, 
-    nuevaContrasenaValidator, 
-    perfilValidator, 
-    cambiarPasswordValidator, 
-    cambiarDatosValidator 
+import {
+    confirmarCuentaValidator,
+    loginValidator,
+    recuperarPasswordValidator,
+    comprobarTokenPasswordValidator,
+    nuevaContrasenaValidator,
+    perfilValidator,
+    cambiarPasswordValidator,
+    cambiarDatosValidator
 } from '../validators/common_validator.js'; // Importa los validadores
 import multer from 'multer'; // Importa multer para manejar archivos
 const upload = multer(); // Configura multer para manejar archivos, aunque no se usará en estas rutas

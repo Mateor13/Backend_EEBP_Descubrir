@@ -7,6 +7,8 @@ const validarIdEstudiante = [
     check('idEstudiante')
         .notEmpty()
         .withMessage('El id del estudiante es obligatorio')
+        .isMongoId()
+        .withMessage('El id del estudiante debe ser un id válido')
         .custom(async (idEstudiante) => {
             // Busca el estudiante por id
             const estudiante = await Estudiantes.findById(idEstudiante);
@@ -25,6 +27,8 @@ const validarIdEstudianteIdMateria = [
     check('idEstudiante')
         .notEmpty()
         .withMessage('El id del estudiante es obligatorio')
+        .isMongoId()
+        .withMessage('El id del estudiante debe ser un id válido')
         .custom(async (idEstudiante) => {
             // Busca el estudiante por id
             const estudiante = await Estudiantes.findById(idEstudiante);
@@ -34,6 +38,8 @@ const validarIdEstudianteIdMateria = [
     check('idMateria')
         .notEmpty()
         .withMessage('El id de la materia es obligatorio')
+        .isMongoId()
+        .withMessage('El id de la materia debe ser un id válido')
         .custom(async (idMateria) => {
             // Busca la materia por id
             const materia = await Materias.findById(idMateria);

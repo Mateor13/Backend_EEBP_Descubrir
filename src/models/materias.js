@@ -18,7 +18,7 @@ const materiaSchema = new Schema({
     estado: {
         type: Boolean,
         default: true
-    }    
+    }
 }, {
     timestamps: true,
     collection: 'materias'

@@ -1,27 +1,27 @@
 // Importaciones necesarias
 import Router from 'express'; // Importa el enrutador de Express
 import multer from 'multer'; // Importa multer para manejar archivos
-import { 
-    modificarNotasEstudiantes, 
-    observacionesEstudiantes, 
-    subirNotasEstudiantes, 
-    visualizarCursosAsociados, 
-    visualizarEstudiantesCurso, 
-    visualizarEstudiantesDescripcion, 
-    visualizarMateriasAsignadas, 
+import {
+    modificarNotasEstudiantes,
+    observacionesEstudiantes,
+    subirNotasEstudiantes,
+    visualizarCursosAsociados,
+    visualizarEstudiantesCurso,
+    visualizarEstudiantesDescripcion,
+    visualizarMateriasAsignadas,
     visualizarTiposEstudiantes,
     subirFotoEvidencia
 } from '../controllers/profesor_controller.js'; // Importa los controladores
 
-import { 
-    verificarAutenticacion, 
-    verificarRolProfesor 
+import {
+    verificarAutenticacion,
+    verificarRolProfesor
 } from '../middlewares/JWT.js'; // Importa los middlewares de autenticación y autorización
 
-import { 
-    modificarNotasEstudiantesValidator, 
-    observacionesEstudiantesValidator, 
-    subirNotasEstudiantesValidator, 
+import {
+    modificarNotasEstudiantesValidator,
+    observacionesEstudiantesValidator,
+    subirNotasEstudiantesValidator,
     visualizarEstudiantesCursoValidator,
     visualizarEstudiantesPorTipoValidator,
     visualizarMateriasAsignadasValidator,
@@ -36,8 +36,8 @@ const upload = multer({ storage: multer.memoryStorage() });
 // Estas rutas requieren autenticación y el rol de profesor
 
 // Gestión de notas
-router.post('/registro-nota/:materiaId', upload.none(),verificarAutenticacion, verificarRolProfesor, subirNotasEstudiantesValidator, subirNotasEstudiantes); // Registrar notas de estudiantes
-router.patch('/actualizar-nota/:materiaId', upload.none(),verificarAutenticacion, verificarRolProfesor, modificarNotasEstudiantesValidator, modificarNotasEstudiantes); // Modificar notas de estudiantes
+router.post('/registro-nota/:materiaId', upload.none(), verificarAutenticacion, verificarRolProfesor, subirNotasEstudiantesValidator, subirNotasEstudiantes); // Registrar notas de estudiantes
+router.patch('/actualizar-nota/:materiaId', upload.none(), verificarAutenticacion, verificarRolProfesor, modificarNotasEstudiantesValidator, modificarNotasEstudiantes); // Modificar notas de estudiantes
 router.post('/subir-evidencia/:materiaId/:cursoId', verificarAutenticacion, verificarRolProfesor, upload.single('imagen'), subirEvidenciaImgur, subirEvidenciasEstudiantesValidator, subirFotoEvidencia); // Subir evidencia de notas de estudiantes
 
 // Observaciones

@@ -7,6 +7,7 @@ import Estudiante from '../models/estudiantes.js';
 import AnioLectivo from '../models/anioLectivo.js';
 import Materia from '../models/materias.js';
 import CursoAsignado from '../models/cursoAsignado.js';
+import mongoose from 'mongoose';
 
 // Listas de roles para validaciones cruzadas
 const todosRoles = [
@@ -262,6 +263,8 @@ const registroMateriaValidator = [
         .withMessage('El nombre de la materia solo puede contener letras'),
     // Validación de curso
     check('curso')
+        .isMongoId()
+        .withMessage('El id del curso debe ser válido')
         .custom(async (curso, { req }) => {
             // Buscar el curso y poblar las materias con su nombre
             const cursoBDD = await Curso.findById(curso).populate('materias', 'nombre');
@@ -315,6 +318,8 @@ const registroEstudianteValidator = [
         }),
     // Validación de curso
     check('curso')
+        .isMongoId()
+        .withMessage('El id del curso debe ser un identificador de MongoDB válido')
         .custom(async (curso, { req }) => {
             const cursoBDD = await Curso.findById(curso);
             if (!cursoBDD) throw new Error('El curso no está registrado');
@@ -388,6 +393,8 @@ const asignarEstudianteACursoValidator = [
         .withMessage('Todos los campos son obligatorios'),
     // Validación de id del estudiante
     check('idEstudiante')
+        .isMongoId()
+        .withMessage('El id del estudiante debe ser válido')
         .custom(async (idEstudiante, { req }) => {
             const estudianteBDD = await Estudiante.findById(idEstudiante);
             if (!estudianteBDD) throw new Error('El estudiante no está registrado');
@@ -396,6 +403,8 @@ const asignarEstudianteACursoValidator = [
         }),
     // Validación de id del curso
     check('idCurso')
+        .isMongoId()
+        .withMessage('El id del curso debe ser válido')
         .custom(async (idCurso, { req }) => {
             const cursoBDD = await Curso.findById(idCurso);
             if (!cursoBDD) throw new Error('El curso no está registrado');
@@ -476,6 +485,8 @@ const registroAsistenciaEstudiantesValidator = [
         .withMessage('Especificar el curso es obligatorio'),
     // Validación de curso
     check('curso')
+        .isMongoId()
+        .withMessage('El id del curso debe ser válido')
         .custom(async (curso, { req }) => {
             const cursoBDD = await Curso.findById(curso);
             if (!cursoBDD) throw new Error('El curso no está registrado');
@@ -508,6 +519,8 @@ const modificarUsuarioValidator = [
         .withMessage('Todos los campos son obligatorios'),
     // Validación de id y obtención del usuario
     check('id')
+        .isMongoId()
+        .withMessage('El id del usuario debe ser válido')
         .custom(async (id, { req }) => {
             // Buscar el usuario en todos los roles sin estudiantes
             let usuarioBDD = null;
@@ -603,6 +616,9 @@ const modificarEstudianteValidator = [
         .matches(/^\d{10}$/)
         .withMessage('La cédula debe tener exactamente 10 dígitos y solo números')
         .custom(async (cedula, { req }) => {
+            if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+                throw new Error('El id del estudiante no tiene un formato válido');
+            }
             const usuarioBDD = await Estudiante.findById(req.params.id);
             if (!usuarioBDD) throw new Error('El estudiante no está registrado');
             if (usuarioBDD.cedula !== cedula) {
@@ -742,6 +758,8 @@ const eliminarProfesorValidator = [
     check('id')
         .notEmpty()
         .withMessage('El id del profesor es obligatorio')
+        .isMongoId()
+        .withMessage('El id del profesor debe ser válido')
         .custom(async (id, { req }) => {
             const profesorBDD = await Profesor.findById(id);
             if (!profesorBDD) throw new Error('El profesor no está registrado');
@@ -767,6 +785,8 @@ const eliminarRepresentanteValidator = [
     check('id')
         .notEmpty()
         .withMessage('El id del representante es obligatorio')
+        .isMongoId()
+        .withMessage('El id del representante debe ser válido')
         .custom(async (id, { req }) => {
             const representanteBDD = await Representante.findById(id);
             if (!representanteBDD) throw new Error('El representante no está registrado');
@@ -790,6 +810,8 @@ const eliminarCursoValidator = [
     check('id')
         .notEmpty()
         .withMessage('El id del curso es obligatorio')
+        .isMongoId()
+        .withMessage('El id del curso debe ser válido')
         .custom(async (id, { req }) => {
             const cursoBDD = await Curso.findById(id);
             if (!cursoBDD) throw new Error('El curso no está registrado');
@@ -816,6 +838,8 @@ const eliminarMateriaValidator = [
     check('id')
         .notEmpty()
         .withMessage('El id de la materia es obligatorio')
+        .isMongoId()
+        .withMessage('El id de la materia debe ser válido')
         .custom(async (id, { req }) => {
             const materiaBDD = await Materia.findById(id);
             if (!materiaBDD) throw new Error('La materia no está registrada');
@@ -835,22 +859,27 @@ const eliminarMateriaValidator = [
 
 // Validador para eliminar estudiante
 const eliminarEstAdminValidator = [
-    // Validación de id del estudiante
     check('id')
-        .notEmpty()
-        .withMessage('El id del estudiante es obligatorio')
+        .notEmpty().withMessage('El id es obligatorio')
+        .isMongoId().withMessage('El id debe ser válido')
         .custom(async (id, { req }) => {
             for (const { model, rol } of rolesEstudianteAdministrador) {
+                if (model === Administrador) {
+                    if (await model.countDocuments() === 1) {
+                        throw new Error('No se puede eliminar el último administrador');
+                    }
+                }
                 const usuarioBDD = await model.findById(id);
                 if (usuarioBDD) {
-                    if (usuarioBDD.estado === false) throw new Error(`El ${rol} ya está eliminado`);
+                    if (usuarioBDD.estado === false) {
+                        throw new Error(`El ${rol} ya está eliminado`);
+                    }
                     req.usuarioBDD = usuarioBDD;
                     return true;
                 }
             }
             throw new Error('El usuario no está registrado');
         }),
-    // Manejo de errores
     (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -858,17 +887,21 @@ const eliminarEstAdminValidator = [
         }
         next();
     }
-]
+];
 
 // Validador para modificar materia
 const modificarMateriaValidator = [
     // Validación de campos obligatorios
     check('idMateria')
         .notEmpty()
-        .withMessage('El id de la materia es obligatorio'),
+        .withMessage('El id de la materia es obligatorio')
+        .isMongoId()
+        .withMessage('El id de la materia debe ser válido'),
     check('idProfesorNuevo')
         .notEmpty()
-        .withMessage('El id del nuevo profesor es obligatorio'),
+        .withMessage('El id del nuevo profesor es obligatorio')
+        .isMongoId()
+        .withMessage('El id del nuevo profesor debe ser válido'),
     check('nombre')
         .notEmpty()
         .withMessage('El nombre es obligatorio')
@@ -922,10 +955,14 @@ const reasignarCursoEstudianteValidator = [
     // Validación de campos obligatorios
     check('idEstudiante')
         .notEmpty()
-        .withMessage('El id del estudiante es obligatorio'),
+        .withMessage('El id del estudiante es obligatorio')
+        .isMongoId()
+        .withMessage('El id del estudiante debe ser válido'),
     check('idCurso')
         .notEmpty()
-        .withMessage('El id del nuevo curso es obligatorio'),
+        .withMessage('El id del nuevo curso es obligatorio')
+        .isMongoId()
+        .withMessage('El id del nuevo curso debe ser válido'),
     // Validación de id del estudiante
     check('idEstudiante')
         .custom(async (idEstudiante, { req }) => {
