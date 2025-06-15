@@ -8,6 +8,7 @@ import AnioLectivo from '../models/anioLectivo.js';
 import Materia from '../models/materias.js';
 import CursoAsignado from '../models/cursoAsignado.js';
 import mongoose from 'mongoose';
+import anioLectivo from '../models/anioLectivo.js';
 
 // Listas de roles para validaciones cruzadas
 const todosRoles = [
@@ -31,6 +32,15 @@ const rolesEstudianteAdministrador = [
 
 // Validador para registro de administradores
 const registroAdminValidator = [
+    check('anio')
+        .custom(async (_, { req }) => {
+            const { anio } = req.userBDD;
+            await anioLectivo.findById(anio).then((anioBDD) => {
+                if (!anioBDD) throw new Error('El año lectivo no existe');
+                if (anioBDD.estado === false) throw new Error('El año lectivo no está activo');
+            });
+            return true;
+        }),
     // Validación de campos obligatorios
     check(['nombre', 'apellido', 'email', 'telefono', 'cedula', 'direccion'])
         .notEmpty()
@@ -97,6 +107,7 @@ const registroAdminValidator = [
 
 // Validador para registro de profesores
 const registroProfesorValidator = [
+
     // Validación de campos obligatorios
     check(['nombre', 'apellido', 'email', 'direccion', 'telefono', 'cedula'])
         .notEmpty()

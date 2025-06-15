@@ -6,7 +6,7 @@ import Estudiantes from '../models/estudiantes.js';
 import Observaciones from '../models/observaciones.js';
 import axios from 'axios';
 import CursosAsignados from '../models/cursoAsignado.js';
-import mongoose from 'mongoose';
+import anioLectivo from '../models/anioLectivo.js';
 
 // Validador para subir notas de estudiantes por parte del profesor
 const subirNotasEstudiantesValidator = [
@@ -21,6 +21,11 @@ const subirNotasEstudiantesValidator = [
         .isIn(['deberes', 'talleres', 'examenes', 'pruebas']),
     check('notas')
         .custom(async (notas, { req }) => {
+            const { anio } = req.userBDD;
+            await anioLectivo.findById(anio).then((anioBDD) => {
+                if (!anioBDD) throw new Error('El año lectivo no existe');
+                if (anioBDD.estado === false) throw new Error('El año lectivo no está activo');
+            });
             const { materiaId } = req.params;
             if (!materiaId) throw new Error('La materia es obligatoria');
             // Validar que la materia exista y esté asignada al profesor
@@ -62,6 +67,11 @@ const modificarNotasEstudiantesValidator = [
         .withMessage('La descripción es obligatoria'),
     check('notas')
         .custom(async (notas, { req }) => {
+            const { anio } = req.userBDD;
+            await anioLectivo.findById(anio).then((anioBDD) => {
+                if (!anioBDD) throw new Error('El año lectivo no existe');
+                if (anioBDD.estado === false) throw new Error('El año lectivo no está activo');
+            });
             const { materiaId } = req.params;
             // Validar que la materia exista y esté asignada al profesor
             const materiaBDD = await Materias.findById(materiaId);
@@ -119,7 +129,12 @@ const subirEvidenciasEstudiantesValidator = [
         .isMongoId()
         .withMessage('El id del curso debe tener un formato válido')
         .custom(async (cursoId, { req }) => {
-            const cursoBDD = await CursosAsignados.findOne({ curso: cursoId, anioLectivo: req.userBDD.anio });
+            const { anio } = req.userBDD;
+            await anioLectivo.findById(anio).then((anioBDD) => {
+                if (!anioBDD) throw new Error('El año lectivo no existe');
+                if (anioBDD.estado === false) throw new Error('El año lectivo no está activo');
+            });
+            const cursoBDD = await CursosAsignados.findOne({ curso: cursoId, anioLectivo: anio });
             if (!cursoBDD) throw new Error('El curso no existe');
             req.cursoBDD = cursoBDD;
             return true;
@@ -149,9 +164,12 @@ const subirEvidenciasEstudiantesValidator = [
 // Validador para registrar observaciones sobre estudiantes
 const observacionesEstudiantesValidator = [
     check('anio')
-        .custom((_, { req }) => {
-            if (!req.userBDD.anio) throw new Error('Este año lectivo ya ha finalizado');
-            return true;
+        .custom(async (_, { req }) => {
+            const { anio } = req.userBDD;
+            await anioLectivo.findById(anio).then((anioBDD) => {
+                if (!anioBDD) throw new Error('El año lectivo no existe');
+                if (anioBDD.estado === false) throw new Error('El año lectivo no está activo');
+            });
         }),
     check(['cedula', 'observacion'])
         .notEmpty()
