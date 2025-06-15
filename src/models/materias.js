@@ -18,6 +18,12 @@ const materiaSchema = new Schema({
     estado: {
         type: Boolean,
         default: true
+    },
+    // Referencia al año lectivo
+    anioLectivo: {
+        type: Schema.Types.ObjectId,
+        ref: 'AnioLectivo',
+        required: true
     }
 }, {
     timestamps: true,

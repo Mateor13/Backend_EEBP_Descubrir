@@ -49,18 +49,13 @@ const verMateriasEstudiante = async (req, res) => {
     try {
         const { idEstudiante } = req.params;
         const { anio } = req.userBDD;
-        const materias = await cursoAsignados.findOne({ estudiantes: idEstudiante, anioLectivo: anio })
-            .populate({
-                path: 'curso',
-                populate: {
-                    path: 'materias',
-                    select: 'nombre _id'
-                }
-            });
-        if (!materias || !materias.curso || !materias.curso.materias) {
+        const materias = await cursoAsignados.findOne
+        ({ estudiantes: idEstudiante, anioLectivo: anio })
+            .populate('materias', 'nombre');
+        if (!materias || !materias.materias) {
             return res.status(404).json({ error: 'No se encontraron materias para el estudiante' });
         }
-        const materiasFiltradas = materias.curso.materias.map(materia => ({
+        const materiasFiltradas = materias.materias.map(materia => ({
             id: materia._id,
             nombre: materia.nombre
         }));

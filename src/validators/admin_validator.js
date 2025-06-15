@@ -9,6 +9,7 @@ import Materia from '../models/materias.js';
 import CursoAsignado from '../models/cursoAsignado.js';
 import mongoose from 'mongoose';
 import anioLectivo from '../models/anioLectivo.js';
+import cursoAsignado from '../models/cursoAsignado.js';
 
 // Listas de roles para validaciones cruzadas
 const todosRoles = [
@@ -278,14 +279,19 @@ const registroMateriaValidator = [
         .withMessage('El id del curso debe ser válido')
         .custom(async (curso, { req }) => {
             // Buscar el curso y poblar las materias con su nombre
-            const cursoBDD = await Curso.findById(curso).populate('materias', 'nombre');
+            const cursoBDD = await Curso.findById(curso).populate('nombre');
             if (!cursoBDD) throw new Error('El curso no está registrado');
+            const cursoAsignadoBDD = await CursoAsignado.findOne({ curso: cursoBDD._id, anioLectivo: req.userBDD.anio })
+                .populate('materias');
+            if (!cursoAsignadoBDD){
+                throw new Error('El curso no está asignado a un año lectivo');
+            }
             // Verificar si ya existe una materia con el mismo nombre en el curso
-            const existeMateria = cursoBDD.materias.some(
+            const existeMateria = cursoAsignadoBDD.materias.some(
                 materia => materia.nombre.trim().toLowerCase() === req.body.nombre.trim().toLowerCase()
             );
             if (existeMateria) throw new Error('Ya existe una materia registrada en este curso');
-            req.cursoBDD = cursoBDD;
+            req.cursoAsignadoBDD = cursoAsignadoBDD;
             return true;
         }),
     // Validación de cédula del profesor
@@ -335,7 +341,7 @@ const registroEstudianteValidator = [
             const cursoBDD = await Curso.findById(curso);
             if (!cursoBDD) throw new Error('El curso no está registrado');
             req.cursoBDD = cursoBDD;
-            const cursoAsignadoBDD = await CursoAsignado.findOne({ curso: cursoBDD._id, anioLectivo: req.userBDD.anio });
+            const cursoAsignadoBDD = await CursoAsignado.findOne({ curso: cursoBDD._id, anioLectivo: req.userBDD.anio }).populate('materias');
             if (!cursoAsignadoBDD) throw new Error('No se puede registrar el estudiante porque el curso no está asignado a un año lectivo');
             req.cursoAsignadoBDD = cursoAsignadoBDD;
             return true;
@@ -924,22 +930,21 @@ const modificarMateriaValidator = [
             const materiaBDD = await Materia.findById(idMateria).populate('profesor', 'nombre _id');
             if (!materiaBDD) throw new Error('La materia no está registrada');
             req.materiaBDD = materiaBDD;
-
             // Validar nombre solo si cambia
             if (req.body.nombre.trim().toLowerCase() !== materiaBDD.nombre.trim().toLowerCase()) {
                 // Buscar el curso al que pertenece la materia
-                const cursoBDD = await Curso.findOne({ materias: materiaBDD._id }).populate('materias', 'nombre');
-                if (!cursoBDD) throw new Error('La materia no está asociada a ningún curso');
-                const existe = cursoBDD.materias.some(
+                const cursoAsignadoBDD = await CursoAsignado.findOne({ materias: materiaBDD._id }).populate('materias', 'nombre');
+                if (!cursoAsignadoBDD) throw new Error('La materia no está asociada a ningún curso');
+                const existe = cursoAsignadoBDD.materias.some(
                     m => m.nombre.trim().toLowerCase() === req.body.nombre.trim().toLowerCase()
                 );
                 if (existe) throw new Error('Ya existe una materia registrada con ese nombre');
-                req.cursoBDD = cursoBDD;
+                req.cursoAsignadoBDD = cursoAsignadoBDD;
             } else {
                 // Si el nombre no cambia, igual obtenemos el curso
-                const cursoBDD = await Curso.findOne({ materias: materiaBDD._id });
-                if (!cursoBDD) throw new Error('La materia no está asociada a ningún curso');
-                req.cursoBDD = cursoBDD;
+                const cursoAsignadoBDD = await CursoAsignado.findOne({ materias: materiaBDD._id });
+                if (!cursoAsignadoBDD) throw new Error('La materia no está asociada a ningún curso');
+                req.cursoAsignadoBDD = cursoAsignadoBDD;
             }
             return true;
         }),

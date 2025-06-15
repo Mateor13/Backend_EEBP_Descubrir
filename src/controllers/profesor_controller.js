@@ -161,9 +161,9 @@ const visualizarCursosAsociados = async (req, res) => {
 
 // Visualiza las materias asignadas a un curso específico
 const visualizarMateriasAsignadas = async (req, res) => {
-    const { cursoBDD } = req;
+    const { cursoAsignadoBDD } = req;
     const { id } = req.userBDD;
-    const materiasAsignadas = cursoBDD.materias.filter(materia =>
+    const materiasAsignadas = cursoAsignadoBDD.materias.filter(materia =>
         materia.profesor._id.toString() === id.toString()
     );
     if (!materiasAsignadas.length) {
@@ -209,7 +209,7 @@ const visualizarEstudiantesDescripcion = async (req, res) => {
         materia: materiaBDD._id,
         anioLectivo: anio,
         estudiante: { $in: cursoBDD.estudiantes }
-    }).populate('estudiante', 'nombre apellido cedula');
+    }).populate('estudiante', 'nombre apellido cedula estado');
     // Crear un mapa para acceso rápido por id
     const notasMap = new Map();
     notasEstudiantes.forEach(nota => {
@@ -221,33 +221,46 @@ const visualizarEstudiantesDescripcion = async (req, res) => {
         // Si estudiante es un objeto poblado, usa estudiante._id
         const estudianteId = estudiante._id ? estudiante._id.toString() : estudiante.toString();
         const notaEstudiante = notasMap.get(estudianteId);
-        let estudianteInfo = {
-            id: estudianteId,
-            nombre: '',
-            apellido: '',
-            cedula: '',
-            nota: 0
-        };
-        // Si tienes los datos poblados, asígnalos
-        if (estudiante.nombre) {
-            estudianteInfo.nombre = estudiante.nombre;
-            estudianteInfo.apellido = estudiante.apellido;
-            estudianteInfo.cedula = estudiante.cedula;
-        }
-        // Si existe la nota, busca la evaluación
-        if (notaEstudiante && notaEstudiante.estudiante) {
-            // Si por alguna razón no tienes los datos arriba, asígnalos aquí también
-            if (!estudianteInfo.nombre) {
-                estudianteInfo.nombre = notaEstudiante.estudiante.nombre;
-                estudianteInfo.apellido = notaEstudiante.estudiante.apellido;
-                estudianteInfo.cedula = notaEstudiante.estudiante.cedula;
+
+        // Si no hay nota para el estudiante, inicializa como null
+        const estadoEstudiante = estudiante.estado !== undefined
+            ? estudiante.estado
+            : (notaEstudiante?.estudiante?.estado);
+
+        // Si el estudiante no está activo, no lo incluimos
+        const tieneNota = !!(notaEstudiante &&
+            notaEstudiante.evaluaciones[tipo] &&
+            notaEstudiante.evaluaciones[tipo].some(e => e.descripcion === descripcion && e.nota !== undefined && e.nota !== null)
+        );
+        
+        if (estadoEstudiante === true || tieneNota) {
+            let estudianteInfo = {
+                id: estudianteId,
+                nombre: '',
+                apellido: '',
+                cedula: '',
+                nota: 0
+            };
+            // Asignar datos poblados si existen
+            if (estudiante.nombre) {
+                estudianteInfo.nombre = estudiante.nombre;
+                estudianteInfo.apellido = estudiante.apellido;
+                estudianteInfo.cedula = estudiante.cedula;
             }
-            const evaluacion = notaEstudiante.evaluaciones[tipo]?.find(e => e.descripcion === descripcion);
-            if (evaluacion && evaluacion.nota !== undefined && evaluacion.nota !== null) {
-                estudianteInfo.nota = evaluacion.nota;
+            // Si existe la nota, buscar la evaluación
+            if (notaEstudiante && notaEstudiante.estudiante) {
+                if (!estudianteInfo.nombre) {
+                    estudianteInfo.nombre = notaEstudiante.estudiante.nombre;
+                    estudianteInfo.apellido = notaEstudiante.estudiante.apellido;
+                    estudianteInfo.cedula = notaEstudiante.estudiante.cedula;
+                }
+                const evaluacion = notaEstudiante.evaluaciones[tipo]?.find(e => e.descripcion === descripcion);
+                if (evaluacion && evaluacion.nota !== undefined && evaluacion.nota !== null) {
+                    estudianteInfo.nota = evaluacion.nota;
+                }
             }
+            estudiantes.push(estudianteInfo);
         }
-        estudiantes.push(estudianteInfo);
     }
     res.status(200).json({ estudiantes });
 }

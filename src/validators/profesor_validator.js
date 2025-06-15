@@ -231,9 +231,10 @@ const visualizarMateriasAsignadasValidator = [
         .isMongoId()
         .withMessage('El id del curso debe tener un formato válido')
         .custom(async (cursoId, { req }) => {
-            const cursoBDD = await Cursos.findById(cursoId).populate('materias', '_id nombre profesor').populate('materias.profesor', '_id nombre apellido');
+            const cursoBDD = await Cursos.findById(cursoId)
             if (!cursoBDD) throw new Error('El curso no existe');
-            req.cursoBDD = cursoBDD;
+            const cursoAsignado = await CursosAsignados.findOne({ curso: cursoId, anioLectivo: req.userBDD.anio }).populate('materias', '_id nombre profesor').populate('materias.profesor', '_id nombre apellido');
+            req.cursoAsignadoBDD = cursoAsignado;
             return true;
         }),
     (req, res, next) => {

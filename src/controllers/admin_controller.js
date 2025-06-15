@@ -284,13 +284,14 @@ const listarCursos = async (req, res) => {
 const registrarMaterias = async (req, res) => {
     //Paso 1: Obtener los datos
     const { nombre } = req.body;
-    const { cursoBDD, profesorBDD } = req;
+    const { cursoAsignadoBDD, profesorBDD } = req;
+    const anioLectivo = req.userBDD.anio;
     //Paso 2: Manipular la BDD
     try {
-        const nuevaMateria = new Materia({ nombre, profesor: profesorBDD._id });
-        await cursoBDD.agregarMaterias(nuevaMateria._id);
+        const nuevaMateria = new Materia({ nombre, profesor: profesorBDD._id, anioLectivo });
+        await cursoAsignadoBDD.agregarMaterias(nuevaMateria._id);
         await nuevaMateria.save();
-        await cursoBDD.save();
+        await cursoAsignadoBDD.save();
         res.status(201).json({ msg: 'Materia registrada correctamente' });
     } catch (error) {
         res.status(500).json({ error: 'Error al registrar materia' });
@@ -305,7 +306,7 @@ const eliminarMateria = async (req, res) => {
         materiaBDD.estado = false;
         await materiaBDD.save();
         // Opcional: eliminar referencia en el curso
-        await Curso.updateMany(
+        await CursoAsignado.updateMany(
             { materias: materiaBDD._id },
             { $pull: { materias: materiaBDD._id } }
         );
@@ -318,17 +319,20 @@ const eliminarMateria = async (req, res) => {
 // Lista las materias de un curso específico
 const listarMaterias = async (req, res) => {
     const { cursoId } = req.params;
-    const cursoBDD = await Curso.findById(cursoId)
+    const anioLectivo = req.userBDD.anio;
+    const cursoBDD = await Curso.findById(cursoId);
+    const cursoAsignadoBDD = await CursoAsignado.findOne({ curso: cursoBDD._id, anioLectivo })
         .populate({
             path: 'materias',
+            match: { anioLectivo },
             select: 'nombre profesor estado',
             populate: {
                 path: 'profesor',
                 select: 'nombre apellido'
             }
         });
-    if (!cursoBDD) return res.status(400).json({ error: 'El curso no esta registrado' });
-    const materias = cursoBDD.materias.filter(materia => materia.estado === true);
+    if (!cursoAsignadoBDD) return res.status(400).json({ error: 'El curso no esta registrado' });
+    const materias = cursoAsignadoBDD.materias.filter(materia => materia.estado === true);
     if (materias.length === 0) return res.status(400).json({ error: 'No hay materias registradas' });
     res.status(200).json(materias);
 };
@@ -356,7 +360,7 @@ const modificarMateria = async (req, res) => {
 
 const registrarEstudiantes = async (req, res) => {
     const { nombre, apellido, cedula } = req.body;
-    const { representanteBDD, cursoAsignadoBDD, cursoBDD } = req;
+    const { representanteBDD, cursoAsignadoBDD } = req;
     try {
         // Crear instancia del estudiante
         const nuevoEstudiante = new Estudiante({ nombre, apellido, cedula });
@@ -373,7 +377,7 @@ const registrarEstudiantes = async (req, res) => {
         const anioLectivo = req.userBDD.anio;
         const nuevaAsistencia = new Asistencia({ estudiante: nuevoEstudiante._id, anioLectivo });
         const nuevaObservacion = new Observacion({ estudiante: nuevoEstudiante._id, anioLectivo });
-        for (const materia of cursoBDD.materias) {
+        for (const materia of cursoAsignadoBDD.materias) {
             const nuevaNota = new Notas({
                 estudiante: nuevoEstudiante._id,
                 materia: materia._id,

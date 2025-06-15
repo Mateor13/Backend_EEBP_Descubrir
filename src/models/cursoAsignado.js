@@ -22,6 +22,11 @@ const cursoAsignadoSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'Estudiante'
     }],
+    // Materias asignadas al curso
+    materias: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Materia'
+    }],
     // Fecha en la que se realizó la asignación
     fechaAsignacion: {
         type: Date,
@@ -31,6 +36,12 @@ const cursoAsignadoSchema = new Schema({
     timestamps: true,
     collection: 'cursosAsignados'
 })
+
+// Método para agregar una materia al curso (evita duplicados)
+cursoAsignadoSchema.methods.agregarMaterias = async function (materia) {
+    this.materias.push(materia)
+    await this.save()
+}
 
 // Método para agregar un estudiante al curso asignado
 cursoAsignadoSchema.methods.agregarEstudiante = async function (estudianteId) {
@@ -49,156 +60,181 @@ cursoAsignadoSchema.methods.buscarEstudiantes = async function () {
     return await this.populate('estudiantes')
 }
 
+// Agrupa notas por estudiante en un Map
+function agruparNotasPorEstudiante(notas) {
+    const notasMap = new Map();
+    for (const nota of notas) {
+        const id = nota.estudiante._id.toString();
+        if (!nota.estudiante.estado) continue;
+        if (!notasMap.has(id)) notasMap.set(id, []);
+        notasMap.get(id).push(nota);
+    }
+    return notasMap;
+}
+
+// Crea o actualiza un curso por nivel y paralelo
+async function obtenerOCrearCurso(nivel, paralelo, Curso) {
+    const cursos = ['Primero', 'Segundo', 'Tercero', 'Cuarto', 'Quinto', 'Sexto', 'Séptimo'];
+    const nombre = `${cursos[nivel - 1]} ${paralelo}`;
+    return await Curso.findOneAndUpdate(
+        { nivel, paralelo },
+        { nivel, paralelo, nombre },
+        { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+}
+
+// Clona materias del curso anterior
+async function crearMateriasDelCursoAnterior(materiasAnt, anioLectivoNuevoId, Materia) {
+    const nuevas = [];
+    for (const materia of materiasAnt) {
+        let existente = await Materia.findOne({
+            nombre: materia.nombre,
+            profesor: materia.profesor,
+            anioLectivo: anioLectivoNuevoId,
+            estado: true
+        });
+        if (!existente) {
+            existente = new Materia({
+                nombre: materia.nombre,
+                profesor: materia.profesor,
+                anioLectivo: anioLectivoNuevoId,
+                estado: true
+            });
+            await existente.save();
+        }
+        nuevas.push(existente._id);
+    }
+    return nuevas;
+}
+
+// Evalúa si el estudiante aprueba o repite, y genera operaciones bulk
+function asignarEstudiantes(estudiantes, nivel, esUltimoNivel, notasMap, cursoAsignadoDestino, cursoAsignadoActual, anioLectivoNuevoId) {
+    const estudiantesARepetir = [];
+    const estudiantesAPromover = [];
+    const observacionesBulk = [];
+    const asistenciasBulk = [];
+
+    for (const estudianteId of estudiantes) {
+        const idStr = estudianteId.toString();
+        const notas = notasMap.get(idStr) || [];
+        if (!notasMap.has(idStr)) continue;
+
+        const reprobado = (nivel > 4 && notas.length === 0) ||
+            (nivel > 4 && notas.some(n => n.esMateriaReprobada && n.esMateriaReprobada()));
+
+        const yaAsignado = cursoAsignadoDestino.estudiantes.some(id => id.equals(estudianteId)) ||
+            cursoAsignadoActual.estudiantes.some(id => id.equals(estudianteId));
+        if (yaAsignado) continue;
+
+        const bulkOp = {
+            updateOne: {
+                filter: { estudiante: estudianteId, anioLectivo: anioLectivoNuevoId },
+                update: {},
+                upsert: true,
+            }
+        };
+        observacionesBulk.push(bulkOp);
+        asistenciasBulk.push(bulkOp);
+
+        if (reprobado) {
+            estudiantesARepetir.push(estudianteId);
+        } else if (!esUltimoNivel) {
+            estudiantesAPromover.push(estudianteId);
+        }
+    }
+
+    return { estudiantesARepetir, estudiantesAPromover, observacionesBulk, asistenciasBulk };
+}
+
 // Método estático para promover estudiantes de un año lectivo a otro
 cursoAsignadoSchema.statics.promoverEstudiantesPorNivel = async function (anioLectivoAnteriorId, anioLectivoNuevoId) {
     try {
-        // Modelos requeridos para la promoción
         const Curso = model('Curso');
         const Nota = model('Nota');
         const Observacion = model('Observacion');
         const Asistencia = model('Asistencia');
+        const Materia = model('Materia');
 
-        // Obtiene los cursos asignados del año anterior y las notas de los estudiantes
         const cursosAnteriores = await this.find({ anioLectivo: anioLectivoAnteriorId }).populate('curso');
-        const notasPorEstudiante = await Nota
-            .find({ anioLectivo: anioLectivoAnteriorId })
-            .populate('materia', 'nombre')
-            .populate('estudiante', 'nombre apellido estado');
+        const notasPorEstudiante = await Nota.find({ anioLectivo: anioLectivoAnteriorId })
+            .populate('estudiante', 'estado');
 
-        // Mapea las notas por estudiante
-        const notasMap = new Map();
-        for (const nota of notasPorEstudiante) {
-            //Vuelve a string el id del estudiante
-            const id = nota.estudiante._id.toString();
-            // Verifica si el estudiante está activo
-            if (!nota.estudiante.estado) continue;
-            // Verifica si el estudiante ya tiene notas, si no, lo inicializa
-            if (!notasMap.has(id)) notasMap.set(id, []);
-            // Agrega la nota al estudiante
-            notasMap.get(id).push(nota);
-        }
+        const notasMap = agruparNotasPorEstudiante(notasPorEstudiante);
 
-        // Función auxiliar para obtener o crear un curso por nivel y paralelo
-        const obtenerOCrearCurso = async (nivel, paralelo) => {
-            const cursos = ['Primero', 'Segundo', 'Tercero', 'Cuarto', 'Quinto', 'Sexto', 'Séptimo'];
-            const nombre = `${cursos[nivel - 1]} ${paralelo}`;
-            return await Curso.findOneAndUpdate(
-                { nivel, paralelo },
-                { nivel, paralelo, nombre },
-                { new: true, upsert: true, setDefaultsOnInsert: true }
-            );
-        };
-
-        // Asegura que existan los cursos de nivel 1 para todos los paralelos
+        // Asegura cursos nivel 1
         const paralelos = ['A', 'B', 'C', 'D', 'E'];
         await Promise.all(
             paralelos.map(async (paralelo) => {
-                const primerCurso = await obtenerOCrearCurso(1, paralelo);
+                const curso = await obtenerOCrearCurso(1, paralelo, Curso);
                 return this.findOneAndUpdate(
-                    { curso: primerCurso._id, anioLectivo: anioLectivoNuevoId },
-                    { curso: primerCurso._id, anioLectivo: anioLectivoNuevoId, estudiantes: [] },
+                    { curso: curso._id, anioLectivo: anioLectivoNuevoId },
+                    { curso: curso._id, anioLectivo: anioLectivoNuevoId, estudiantes: [] },
                     { upsert: true, new: true }
                 );
             })
         );
 
-        // Procesa cada curso anterior para promover o hacer repetir estudiantes
         for (const cursoAnterior of cursosAnteriores) {
             const { estudiantes, curso } = cursoAnterior;
             const { nivel, paralelo } = curso;
-
-            // Verifica si es el último nivel
             const esUltimoNivel = nivel === 7;
-            // Si es el último nivel, no se promueve
             const nivelDestino = esUltimoNivel ? nivel : nivel + 1;
 
-            // Crea o obtiene el curso destino
-            const cursoDestino = await obtenerOCrearCurso(nivelDestino, paralelo);
-            // Crea o obtiene el curso actual para reprobados
-            const cursoActual = await obtenerOCrearCurso(nivel, paralelo);
+            const cursoDestino = await obtenerOCrearCurso(nivelDestino, paralelo, Curso);
+            const cursoActual = await obtenerOCrearCurso(nivel, paralelo, Curso);
 
+            // Obtener cursoAsignado destino y actual
+            let cursoAsignadoDestino = await this.findOne({ curso: cursoDestino._id, anioLectivo: anioLectivoNuevoId }) || new this({
+                curso: cursoDestino._id, anioLectivo: anioLectivoNuevoId, estudiantes: []
+            });
 
-            let cursoAsignadoDestino = await this.findOne({ curso: cursoDestino._id, anioLectivo: anioLectivoNuevoId });
-            if (!cursoAsignadoDestino) {
-                cursoAsignadoDestino = new this({
-                    curso: cursoDestino._id,
-                    anioLectivo: anioLectivoNuevoId,
-                    estudiantes: []
-                });
+            let cursoAsignadoActual = await this.findOne({ curso: cursoActual._id, anioLectivo: anioLectivoNuevoId }) || new this({
+                curso: cursoActual._id, anioLectivo: anioLectivoNuevoId, estudiantes: []
+            });
+
+            // Copiar materias solo si no es último nivel
+            if (!esUltimoNivel) {
+                const cursoAnteriorCompleto = await this.findById(cursoAnterior._id).populate('materias');
+                const materiasAnt = cursoAnteriorCompleto.materias;
+
+                const nuevasMaterias = await crearMateriasDelCursoAnterior(materiasAnt, anioLectivoNuevoId, Materia);
+                cursoAsignadoDestino.materias = nuevasMaterias;
+                await cursoAsignadoDestino.save();
             }
 
-            let cursoAsignadoActual = await this.findOne({ curso: cursoActual._id, anioLectivo: anioLectivoNuevoId });
-            if (!cursoAsignadoActual) {
-                cursoAsignadoActual = new this({
-                    curso: cursoActual._id,
-                    anioLectivo: anioLectivoNuevoId,
-                    estudiantes: []
-                });
-            }
+            const { estudiantesARepetir, estudiantesAPromover, observacionesBulk, asistenciasBulk } =
+                asignarEstudiantes(estudiantes, nivel, esUltimoNivel, notasMap, cursoAsignadoDestino, cursoAsignadoActual, anioLectivoNuevoId);
 
-            const estudiantesARepetir = [];
-            const estudiantesAPromover = [];
-            const observacionesBulk = [];
-            const asistenciasBulk = [];
-
-            for (const estudianteId of estudiantes) {
-                const idStr = estudianteId.toString();
-                const notas = notasMap.get(idStr) || [];
-                // Verifica si el estudiante tiene notas
-                if (!notasMap.has(idStr)) continue;
-                // Determina si el estudiante debe repetir (por notas)
-                const reprobado = (nivel > 4 && notas.length === 0) || (nivel > 4 && notas.some(n => n.esMateriaReprobada()));
-
-                // Evita asignar dos veces al mismo estudiante
-                const yaAsignado = cursoAsignadoDestino.estudiantes.some(id => id.equals(estudianteId)) ||
-                    cursoAsignadoActual.estudiantes.some(id => id.equals(estudianteId));
-                if (yaAsignado) continue;
-
-                // Prepara operaciones bulk para observaciones y asistencias
-                const bulkOp = {
-                    updateOne: {
-                        filter: { estudiante: estudianteId, anioLectivo: anioLectivoNuevoId },
-                        update: {},
-                        upsert: true,
-                    },
-                };
-                observacionesBulk.push(bulkOp);
-                asistenciasBulk.push(bulkOp);
-
-                if (reprobado) {
-                    estudiantesARepetir.push(estudianteId);
-                } else if (!esUltimoNivel) {
-                    estudiantesAPromover.push(estudianteId);
-                }
-            }
-            // Asigna estudiantes a repetir al curso actual
             if (estudiantesARepetir.length) {
                 cursoAsignadoActual.estudiantes.push(...estudiantesARepetir);
+
+                // Si el curso actual no tiene materias todavía, clonarlas también
+                if (!cursoAsignadoActual.materias || cursoAsignadoActual.materias.length === 0) {
+                    const cursoAnteriorCompleto = await this.findById(cursoAnterior._id).populate('materias');
+                    const materiasAnt = cursoAnteriorCompleto.materias;
+
+                    const nuevasMaterias = await crearMateriasDelCursoAnterior(materiasAnt, anioLectivoNuevoId, Materia);
+                    cursoAsignadoActual.materias = nuevasMaterias;
+                }
+
                 await cursoAsignadoActual.save();
             }
-            // Asigna estudiantes promovidos al curso destino
+
             if (estudiantesAPromover.length) {
                 cursoAsignadoDestino.estudiantes.push(...estudiantesAPromover);
                 await cursoAsignadoDestino.save();
             }
 
-            // Realiza operaciones bulk para observaciones y asistencias
-            if (observacionesBulk.length) {
-                await Observacion.bulkWrite(observacionesBulk);
-            }
-            if (asistenciasBulk.length) {
-                await Asistencia.bulkWrite(asistenciasBulk);
-            }
-
-            await cursoAsignadoDestino.save();
-            await cursoAsignadoActual.save();
+            if (observacionesBulk.length) await Observacion.bulkWrite(observacionesBulk);
+            if (asistenciasBulk.length) await Asistencia.bulkWrite(asistenciasBulk);
         }
 
         return { mensaje: 'Promoción completada' };
-
     } catch (error) {
-        return { error: 'Error promoviendo estudiantes' };
+        console.error('Error promoviendo estudiantes:', error);
+        return { error: error.message };
     }
 };
+
 
 export default model('CursoAsignado', cursoAsignadoSchema)

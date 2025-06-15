@@ -1,5 +1,4 @@
-import mongoose, { Schema, model } from 'mongoose'
-import Materias from './materias.js'
+import { Schema, model } from 'mongoose'
 
 // Esquema para el modelo de Curso
 const cursoSchema = new Schema({
@@ -19,12 +18,7 @@ const cursoSchema = new Schema({
         type: String,
         required: true,
         enum: ['A', 'B', 'C', 'D', 'E']
-    },
-    // Materias asociadas al curso
-    materias: [{
-        type: Schema.Types.ObjectId,
-        ref: 'Materia'
-    }]
+    }
 }, {
     timestamps: true, // Agrega createdAt y updatedAt
     collection: 'cursos'
@@ -34,12 +28,6 @@ const cursoSchema = new Schema({
 cursoSchema.methods.asignarNombre = async function () {
     const cursos = ['Primero', 'Segundo', 'Tercero', 'Cuarto', 'Quinto', 'Sexto', 'Séptimo']
     this.nombre = `${cursos[this.nivel - 1]} ${this.paralelo}`
-    await this.save()
-}
-
-// Método para agregar una materia al curso (evita duplicados)
-cursoSchema.methods.agregarMaterias = async function (materia) {
-    this.materias.push(materia)
     await this.save()
 }
 
