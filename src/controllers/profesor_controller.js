@@ -130,7 +130,8 @@ const observacionesEstudiantes = async (req, res) => {
 // Visualiza los estudiantes de un curso para una materia y profesor
 const visualizarEstudiantesCurso = async (req, res) => {
     const { cursoBDD } = req;
-    const listado = await cursoAsignado.findOne({ curso: cursoBDD._id }).populate('estudiantes', 'nombre apellido cedula estado');
+    const { anio } = req.userBDD;
+    const listado = await cursoAsignado.findOne({ curso: cursoBDD._id, anioLectivo: anio }).populate('estudiantes', 'nombre apellido cedula estado');
     if (listado?.estudiantes.length === 0) return res.status(404).json({ error: 'No hay estudiantes en este curso' });
     const estudiantes = listado.estudiantes.filter(estudiante => estudiante.estado === true);
     if (estudiantes.length === 0) return res.status(404).json({ error: 'No hay estudiantes activos en este curso' });
