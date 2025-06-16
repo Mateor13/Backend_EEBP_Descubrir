@@ -112,6 +112,7 @@ administradorSchema.statics.inicializarAdmin = async function () {
             direccion: process.env.ADMIN_ADDRESS,
             confirmEmail: true
         });
+        console.log('Administrador inicial creado exitosamente');
     }
     const anioLectivo = await this.model('AnioLectivo').countDocuments({})
     // Si no existe ningún año lectivo, crea el año lectivo inicial

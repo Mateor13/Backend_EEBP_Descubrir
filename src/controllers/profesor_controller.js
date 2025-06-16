@@ -1,5 +1,4 @@
 import cursoAsignado from "../models/cursoAsignado.js";
-import cursos from "../models/cursos.js";
 import materias from "../models/materias.js";
 import Notas from "../models/notas.js";
 
@@ -138,7 +137,6 @@ const visualizarEstudiantesCurso = async (req, res) => {
     res.status(200).json({ estudiantes });
 }
 
-// Visualiza los cursos asociados a un profesor
 const visualizarCursosAsociados = async (req, res) => {
     const { id } = req.userBDD;
     // 1. Buscar las materias que dicta el profesor
@@ -146,15 +144,16 @@ const visualizarCursosAsociados = async (req, res) => {
     if (!materiasProfesor.length) {
         return res.status(404).json({ error: 'No hay materias asociadas a este profesor' });
     }
-    // 2. Buscar los cursos que tienen esas materias
-    const cursosAsociados = await cursos.find({ materias: { $in: materiasProfesor.map(m => m._id) } })
-        .populate('materias', 'nombre _id');
+    // 2. Buscar los cursos asignados que tienen esas materias
+    const cursosAsociados = await cursoAsignado.find({ materias: { $in: materiasProfesor.map(m => m._id) } })
+        .populate('materias', 'nombre _id')
+        .populate('curso', 'nombre _id');
     if (!cursosAsociados.length) {
         return res.status(404).json({ error: 'No hay cursos asociados' });
     }
-    const respuesta = cursosAsociados.map(curso => ({
-        id: curso._id,
-        nombre: curso.nombre
+    const respuesta = cursosAsociados.map(cursoAsignado => ({
+        id: cursoAsignado.curso._id,
+        nombre: cursoAsignado.curso.nombre
     }));
     res.status(200).json({ cursosAsociados: respuesta });
 }
