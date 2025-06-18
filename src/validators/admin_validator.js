@@ -7,9 +7,9 @@ import Estudiante from '../models/estudiantes.js';
 import AnioLectivo from '../models/anioLectivo.js';
 import Materia from '../models/materias.js';
 import CursoAsignado from '../models/cursoAsignado.js';
+import Asistencia from '../models/asistencia.js';
 import mongoose from 'mongoose';
 import anioLectivo from '../models/anioLectivo.js';
-import cursoAsignado from '../models/cursoAsignado.js';
 
 // Listas de roles para validaciones cruzadas
 const todosRoles = [
@@ -668,9 +668,11 @@ const justificarInasistenciaValidator = [
         .matches(/^\d{10}$/)
         .withMessage('La cédula debe tener exactamente 10 dígitos y solo números')
         .custom(async (cedula, { req }) => {
-            const estudianteBDD = await asistencia.findOne({ cedula });
+            const estudianteBDD = await Estudiante.findOne({ cedula });
             if (!estudianteBDD) throw new Error('El estudiante no está registrado');
-            req.estudianteBDD = estudianteBDD;
+            const asistenciaBDD = await Asistencia.findOne({ estudiante: estudianteBDD._id });
+            if (!asistenciaBDD) throw new Error('No se encontró asistencia para el estudiante');
+            req.asistenciaBDD = asistenciaBDD;
             return true;
         }),
     // Validación de fecha
@@ -999,7 +1001,10 @@ const reasignarCursoEstudianteValidator = [
             if (cursoBDD.estado === false) throw new Error('El nuevo curso ya está eliminado');
             const cursoAsignadoBDD = await CursoAsignado.findOne({ curso: idCurso, anioLectivo: req.userBDD.anio });
             if (!cursoAsignadoBDD) throw new Error('El nuevo curso no está asignado a un año lectivo');
-            req.cursoBDD = cursoAsignadoBDD;
+            if (cursoAsignadoBDD.estudiantes.includes(req.estudianteBDD._id)) {
+                throw new Error('El estudiante ya está asignado a este curso');
+            }
+            req.cursoAsignadoBDD = cursoAsignadoBDD;
             return true;
         }),
     // Manejo de errores

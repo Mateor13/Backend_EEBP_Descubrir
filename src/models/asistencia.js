@@ -56,17 +56,16 @@ asistenciaSchema.methods.marcarAsistencia = async function (asistencia) {
 
 // Método para justificar una inasistencia en una fecha específica
 asistenciaSchema.methods.justificarInasistencia = async function (fecha, justificacion) {
+    // Normaliza la fecha al formato "YYYY/M/D"
+    const dateObj = new Date(fecha)
+    const normalizedFecha = `${dateObj.getFullYear()}/${dateObj.getMonth() + 1}/${dateObj.getDate()}`
     // Busca el registro de asistencia por fecha
-    const index = this.asistencia.findIndex(asistencia => asistencia.fecha === fecha)
-    if (index === -1) return { error: 'La fecha no existe' }
-    // Verifica si ya está justificado
+    const index = this.asistencia.findIndex(asistencia => asistencia.fecha === normalizedFecha)
+    if (index === -1) return { error: 'La fecha no está registrada' }
     if (this.asistencia[index].justificacion !== "") return { error: 'El estudiante ya está justificado' }
-    // No permite justificar si el estudiante estuvo presente
     if (this.asistencia[index].presente) return { error: 'El estudiante está presente' }
-    // Justifica la falta y la marca como presente
     this.asistencia[index].justificacion = justificacion
     this.asistencia[index].presente = true
-    // Disminuye el contador de faltas si es posible
     if (this.faltas > 0) {
         this.faltas = this.faltas - 1
     }

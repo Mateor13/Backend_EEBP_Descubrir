@@ -471,9 +471,6 @@ const reasignarCursoEstudiante = async (req, res) => {
     try {
         // Verificar si el estudiante ya está en el curso
         const estudianteEnCurso = cursoAsignadoBDD.estudiantes.find(est => est._id.toString() === estudianteBDD._id.toString());
-        if (estudianteEnCurso) {
-            return res.status(400).json({ error: 'El estudiante ya está asignado a este curso' });
-        }
         // Asignar el nuevo curso al estudiante
         if (cursoAnterior) {
             await cursoAnterior.eliminarEstudiante(estudianteBDD._id);
@@ -522,12 +519,12 @@ const registroAsistenciaEstudiantes = async (req, res) => {
 const justificacionesEstudiantes = async (req, res) => {
     //Paso 1: Obtener los datos
     const { fecha, justificacion } = req.body;
-    const { estudianteBDD } = req;
+    const { asistenciaBDD } = req;
     //Paso 2: Manipular la BDD
     try {
-        const justificar = await estudianteBDD.justificarInasistencia(fecha, justificacion);
+        const justificar = await asistenciaBDD.justificarInasistencia(fecha, justificacion);
         if (justificar?.error) return res.status(400).json({ error: justificar.error });
-        await estudianteBDD.save();
+        await asistenciaBDD.save();
         res.status(200).json({ msg: 'Justificación registrada correctamente' });
     } catch (error) {
         res.status(500).json({ error: 'Error al registrar justificación' });
