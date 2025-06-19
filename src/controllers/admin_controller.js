@@ -140,7 +140,7 @@ const registrarRepresentante = async (req, res) => {
         const token = await nuevoRepresentante.generarToken();
         await envioCredenciales(nombre, apellido, email, password, token);
         await nuevoRepresentante.save();
-        res.status(201).json({ msg: 'Representante registrado correctamente' });
+        res.status(201).json({ msg: 'Representante registrado correctamente, ahora puede asignar un estudiante' });
     } catch (error) {
         res.status(500).json({ error: 'Error al registrar representante' });
     }
