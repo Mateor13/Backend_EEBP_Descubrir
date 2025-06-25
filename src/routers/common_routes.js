@@ -3,7 +3,6 @@ import Router from 'express'; // Importa el enrutador de Express
 import {
     cambiarDatos,
     cambiarPassword,
-    comprobarTokenPassword,
     confirmarCuenta,
     listarAniosLectivos,
     login,
@@ -20,7 +19,6 @@ import {
     confirmarCuentaValidator,
     loginValidator,
     recuperarPasswordValidator,
-    comprobarTokenPasswordValidator,
     nuevaContrasenaValidator,
     perfilValidator,
     cambiarPasswordValidator,
@@ -37,7 +35,6 @@ router.post('/login', upload.none(), loginValidator, login); // Iniciar sesión
 router.get('/listar-anios', upload.none(), listarAniosLectivos); // Listar años lectivos
 router.get('/confirmar-cuenta/:token', upload.none(), confirmarCuentaValidator, confirmarCuenta); // Confirmar cuenta mediante un token
 router.post('/recuperar-password', upload.none(), recuperarPasswordValidator, recuperarPassword); // Solicitar recuperación de contraseña
-router.get('/confirmar-token/:token', upload.none(), comprobarTokenPasswordValidator, comprobarTokenPassword); // Comprobar token para recuperación de contraseña
 router.patch('/nuevo-password/:token', upload.none(), nuevaContrasenaValidator, nuevaContrasena); // Establecer una nueva contraseña
 
 // Rutas privadas

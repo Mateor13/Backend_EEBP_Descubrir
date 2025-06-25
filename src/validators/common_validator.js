@@ -78,20 +78,6 @@ const recuperarPasswordValidator = [
     }
 ]
 
-// Validador para comprobar token de recuperación de contraseña
-const comprobarTokenPasswordValidator = [
-    check('token')
-        .custom((_, { req }) => {
-            if (!req.params.token) throw new Error('El token es obligatorio');
-            return true;
-        }),
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
-        next();
-    }
-]
-
 // Validador para verificar que el usuario está autenticado y cargado en req.userBDD
 const perfilValidator = [
     check('userBDD').custom(async (_, { req }) => {
@@ -189,7 +175,6 @@ export {
     loginValidator,
     confirmarCuentaValidator,
     recuperarPasswordValidator,
-    comprobarTokenPasswordValidator,
     perfilValidator,
     nuevaContrasenaValidator,
     cambiarPasswordValidator,

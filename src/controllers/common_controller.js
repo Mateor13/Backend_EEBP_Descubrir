@@ -61,18 +61,6 @@ const recuperarPassword = async (req, res) => {
     return res.status(400).json({ error: 'No se ha encontrado el email ingresado' })
 }
 
-// Verifica si el token de recuperación de contraseña es válido
-const comprobarTokenPassword = async (req, res) => {
-    const { token } = req.params
-    for (const { model } of roles) {
-        const userBDD = await model.findOne({ token: token });
-        if (userBDD) {
-            return res.status(200).json({ mensaje: 'Este token es válido' });
-        }
-    }
-    return res.status(400).json({ error: 'Este token no es válido' });
-}
-
 // Devuelve el perfil del usuario autenticado (sin datos sensibles)
 const perfil = async (req, res) => {
     const { id } = req.userBDD
@@ -152,7 +140,6 @@ export {
     listarAniosLectivos,
     confirmarCuenta,
     recuperarPassword,
-    comprobarTokenPassword,
     nuevaContrasena,
     cambiarPassword,
     cambiarDatos,
