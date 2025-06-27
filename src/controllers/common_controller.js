@@ -65,8 +65,17 @@ const recuperarPassword = async (req, res) => {
 const perfil = async (req, res) => {
     const { id } = req.userBDD
     for (const { model, selected } of roles) {
-        const userBDD = await model.findById(id).select(selected);
-        if (userBDD) {
+        const usuarioBDD = await model.findById(id).select(selected);
+        if (usuarioBDD) {
+            const userBDD = {
+                _id: usuarioBDD._id,
+                nombre: usuarioBDD.nombre,
+                apellido: usuarioBDD.apellido,
+                email: usuarioBDD.email,
+                telefono: usuarioBDD.telefono,
+                direccion: usuarioBDD.direccion,
+                rol: req.userBDD.rol
+            }
             return res.status(200).json(userBDD);
         }
     }
