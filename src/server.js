@@ -187,13 +187,10 @@ app.get('/', (req, res) => {
                 
                 <div class="info-grid">
                     <div class="info-card">
-                        <h3>API Base</h3>
-                        <p>/api</p>
+                        <h3>Plataformas</h3>
+                        <p>Web, Aplicación Móvil</p>
                     </div>
-                    <div class="info-card">
-                        <h3>Versión</h3>
-                        <p>v1.0.0</p>
-                    </div>
+                    
                     <div class="info-card">
                         <h3>Estado</h3>
                         <p>Activo</p>
