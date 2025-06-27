@@ -57,6 +57,8 @@ app.get('/', (req, res) => {
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Sistema de Gestión Académica - Escuela Descubrir</title>
+            <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23667eea'/><text x='50' y='60' font-family='Arial,sans-serif' font-size='32' font-weight='bold' fill='white' text-anchor='middle'>🎓</text></svg>">
+            <link rel="alternate icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA5klEQVRYhe2XsQ3CMBBFn4EFGIERmIAJmIANGIEJmIAR2IANmIAJmIANGIEJQIqLZVk2dhI7kZBS/pNsy3fv/vmdHUII/jNbA2sLtAVaA1VtDVDV1gBVbQ1Q1dYAVW0NUNU/ATwCa+DOzJaS7iU9mNnazB4lvUs6N7M3SZdm9irpWdKVmT1KupL0ZGaXkq4lPZjZRtK9pA9JT5KcLtJdtAZaqwHqAPACnAMnSg7AGXBsZu+S7sxsI+ld0qWZvUh6kvQo6VrSo6QrM3uU9CzpRdKTpDcze5f0IelJ0o2kW0l3ku7N7EnShaRrSdeS7iXdSrqTdGdm75LuJd1KupV0K+lW0o2kW0k3km4l3Uq6lXQr6VbSraRbSbeS/sEAAAAASUVORK5CYII=">
             <style>
                 * {
                     margin: 0;
