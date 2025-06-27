@@ -24,23 +24,21 @@ import {
     cambiarPasswordValidator,
     cambiarDatosValidator
 } from '../validators/common_validator.js'; // Importa los validadores
-import multer from 'multer'; // Importa multer para manejar archivos
-const upload = multer(); // Configura multer para manejar archivos, aunque no se usará en estas rutas
 
 const router = Router();
 
 // Rutas públicas
 // Estas rutas no requieren autenticación
-router.post('/login', upload.none(), loginValidator, login); // Iniciar sesión
-router.get('/listar-anios', upload.none(), listarAniosLectivos); // Listar años lectivos
-router.get('/confirmar-cuenta/:token', upload.none(), confirmarCuentaValidator, confirmarCuenta); // Confirmar cuenta mediante un token
-router.post('/recuperar-password', upload.none(), recuperarPasswordValidator, recuperarPassword); // Solicitar recuperación de contraseña
-router.patch('/nuevo-password/:token', upload.none(), nuevaContrasenaValidator, nuevaContrasena); // Establecer una nueva contraseña
+router.post('/login', loginValidator, login); // Iniciar sesión
+router.get('/listar-anios', listarAniosLectivos); // Listar años lectivos
+router.get('/confirmar-cuenta/:token', confirmarCuentaValidator, confirmarCuenta); // Confirmar cuenta mediante un token
+router.post('/recuperar-password', recuperarPasswordValidator, recuperarPassword); // Solicitar recuperación de contraseña
+router.patch('/nuevo-password/:token', nuevaContrasenaValidator, nuevaContrasena); // Establecer una nueva contraseña
 
 // Rutas privadas
 // Estas rutas requieren autenticación
-router.get('/perfil', upload.none(), verificarAutenticacion, perfilValidator, perfil); // Ver perfil del usuario autenticado
-router.patch('/cambiar-password', upload.none(), verificarAutenticacion, cambiarPasswordValidator, cambiarPassword); // Cambiar contraseña del usuario autenticado
-router.patch('/cambiar-datos', upload.none(), verificarAutenticacion, cambiarDatosValidator, cambiarDatos); // Cambiar datos del usuario autenticado
+router.get('/perfil', verificarAutenticacion, perfilValidator, perfil); // Ver perfil del usuario autenticado
+router.patch('/cambiar-password', verificarAutenticacion, cambiarPasswordValidator, cambiarPassword); // Cambiar contraseña del usuario autenticado
+router.patch('/cambiar-datos', verificarAutenticacion, cambiarDatosValidator, cambiarDatos); // Cambiar datos del usuario autenticado
 
 export default router;

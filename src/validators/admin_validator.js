@@ -887,6 +887,9 @@ const eliminarEstAdminValidator = [
                     if (await model.countDocuments({ estado: true }) === 1) {
                         throw new Error('No se puede eliminar el último administrador');
                     }
+                    if (id.toString() === req.userBDD.id.toString()) {
+                        throw new Error('No se puede eliminar a sí mismo');
+                    }
                 }
                 const usuarioBDD = await model.findById(id);
                 if (usuarioBDD) {
@@ -902,6 +905,7 @@ const eliminarEstAdminValidator = [
     (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
+            console.log(res)
             return res.status(400).json({ error: errors.array()[0].msg });
         }
         next();

@@ -27,25 +27,25 @@ const verificarAutenticacion = async (req, res, next) => {
 // Middleware para verificar si el usuario es profesor
 const verificarRolProfesor = (req, res, next) => {
     if (req.userBDD.rol === "profesor") next()
-    else return res.status(404).json({ error: "Lo sentimos, no tienes permisos de profesor para realizar esta acción" })
+    else return res.status(401).json({ error: "Lo sentimos, no tienes permisos de profesor para realizar esta acción" })
 }
 
 // Middleware para verificar si el usuario es administrador
 const verificarRolAdmin = (req, res, next) => {
     if (req.userBDD.rol === "administrador") next()
-    else return res.status(404).json({ error: "Lo sentimos, no tienes permisos de administrador para realizar esta acción" })
+    else return res.status(401).json({ error: "Lo sentimos, no tienes permisos de administrador para realizar esta acción" })
 }
 
 // Middleware para verificar si el usuario es representante
 const verificarRolRepresentante = (req, res, next) => {
     if (req.userBDD.rol === "representante") next()
-    else return res.status(404).json({ error: "Lo sentimos, no tienes permisos para realizar esta acción" })
+    else return res.status(401).json({ error: "Lo sentimos, no tienes permisos para realizar esta acción" })
 }
 
 // Middleware para verificar que el año lectivo esté activo
 const verificarAnioLectivo = (req, res, next) => {
     const { anio } = req.userBDD
-    if (!anio) return res.status(404).json({ error: "Lo sentimos, el periodo lectivo actual ya ha finalizado" })
+    if (!anio) return res.status(400).json({ error: "Lo sentimos, el periodo lectivo actual ya ha finalizado" })
     next()
 }
 
