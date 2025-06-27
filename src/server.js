@@ -173,10 +173,10 @@ app.get('/', (req, res) => {
         </head>
         <body>
             <div class="container">
-                <div class="logo">ED</div>
+                <div class="logo">EEBPD</div>
                 <h1>Sistema de Gestión Académica</h1>
                 <p class="subtitle">
-                    Plataforma integral para la gestión de notas, asistencias y procesos académicos de la Escuela Descubrir
+                    Plataforma integral para la gestión de notas, asistencias y procesos académicos de la Escuela de Educación Básica Particular "Descubrir"
                 </p>
                 
                 <div class="status">
@@ -210,11 +210,11 @@ app.get('/', (req, res) => {
                         box-shadow: 0 4px 12px rgba(102,126,234,0.15);
                         transition: background 0.2s;
                     " onmouseover="this.style.background='#764ba2'" onmouseout="this.style.background='linear-gradient(135deg, #667eea 0%, #764ba2 100%)'">
-                        Ir a la Plataforma
+                        Ir a la Página Web
                     </a>
                 </div>
                 <div class="footer">
-                    <p>© ${new Date().getFullYear()} Escuela Descubrir - Sistema desarrollado para la gestión académica</p>
+                    <p>© ${new Date().getFullYear()} Escuela de Educación Básica Particular "Descubrir" - Sistema desarrollado para la gestión académica</p>
                 </div>
             </div>
         </body>
