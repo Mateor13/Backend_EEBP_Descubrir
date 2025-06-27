@@ -27,8 +27,8 @@ app.use((req, res, next) => {
     } else {
         upload.none()(req, res, (err) => {
             if (err) {
-                return res.status(400).json({ 
-                    error: 'Error en el formato de los datos enviados.' 
+                return res.status(400).json({
+                    error: 'Error en el formato de los datos enviados.'
                 });
             }
             next();
@@ -176,7 +176,7 @@ app.get('/', (req, res) => {
                 </p>
                 
                 <div class="status">
-                    🟢 Servidor en línea
+                    Servidor en línea
                 </div>
                 
                 <div class="info-grid">
@@ -193,7 +193,22 @@ app.get('/', (req, res) => {
                         <p>Activo</p>
                     </div>
                 </div>
-                
+                <div style="margin-top:2rem;">
+                    <a href="${process.env.URL_PRODUCTION}" target="_blank" rel="noopener" style="
+                        display: inline-block;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        padding: 12px 32px;
+                        border-radius: 50px;
+                        text-decoration: none;
+                        font-weight: 600;
+                        font-size: 1.1rem;
+                        box-shadow: 0 4px 12px rgba(102,126,234,0.15);
+                        transition: background 0.2s;
+                    " onmouseover="this.style.background='#764ba2'" onmouseout="this.style.background='linear-gradient(135deg, #667eea 0%, #764ba2 100%)'">
+                        Ir a la Plataforma
+                    </a>
+                </div>
                 <div class="footer">
                     <p>© ${new Date().getFullYear()} Escuela Descubrir - Sistema desarrollado para la gestión académica</p>
                 </div>
@@ -206,56 +221,56 @@ app.get('/', (req, res) => {
 
 // Middleware para manejar rutas no encontradas
 app.use('/api/*', (req, res, next) => {
-    res.status(404).json({error: 'La ruta solicitada no existe'});
+    res.status(404).json({ error: 'La ruta solicitada no existe' });
 });
 
 // Middleware global de manejo de errores
 app.use((err, req, res, next) => {
     // Error de multer (upload.none())
     if (err.code === 'LIMIT_UNEXPECTED_FILE' || err.message.includes('Unexpected end of form')) {
-        return res.status(400).json({ 
-            error: 'Error en el formato de los datos. Verifica el Content-Type y el método HTTP.' 
+        return res.status(400).json({
+            error: 'Error en el formato de los datos. Verifica el Content-Type y el método HTTP.'
         });
     }
-    
+
     // Error de JSON malformado
     if (err.type === 'entity.parse.failed') {
-        return res.status(400).json({ 
-            error: 'Error en el formato JSON enviado.' 
+        return res.status(400).json({
+            error: 'Error en el formato JSON enviado.'
         });
     }
-    
+
     // Error de validación de express-validator
     if (err.array && typeof err.array === 'function') {
-        return res.status(400).json({ 
-            error: err.array()[0].msg 
+        return res.status(400).json({
+            error: err.array()[0].msg
         });
     }
-    
+
     // Error de JWT
     if (err.name === 'JsonWebTokenError') {
-        return res.status(401).json({ 
-            error: 'Token inválido.' 
+        return res.status(401).json({
+            error: 'Token inválido.'
         });
     }
-    
+
     // Error de JWT expirado
     if (err.name === 'TokenExpiredError') {
-        return res.status(401).json({ 
-            error: 'Token expirado.' 
+        return res.status(401).json({
+            error: 'Token expirado.'
         });
     }
-    
+
     // Error de conexión a base de datos
     if (err.name === 'MongoError' || err.name === 'MongooseError') {
-        return res.status(500).json({ 
-            error: 'Error de conexión a la base de datos.' 
+        return res.status(500).json({
+            error: 'Error de conexión a la base de datos.'
         });
     }
-    
+
     // Error genérico
-    res.status(500).json({ 
-        error: 'Error interno del servidor.' 
+    res.status(500).json({
+        error: 'Error interno del servidor.'
     });
 });
 
