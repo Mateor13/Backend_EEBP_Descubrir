@@ -31,7 +31,9 @@ import {
 } from '../validators/profesor_validator.js'; // Importa los validadores
 
 const router = Router();
-const upload = multer({ storage: multer.memoryStorage() });
+// Configuración de multer para Multer 2.x
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 // Rutas privadas para profesores
 // Estas rutas requieren autenticación y el rol de profesor
 

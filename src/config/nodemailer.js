@@ -1,6 +1,10 @@
 import nodemailer from "nodemailer"
 import dotenv from 'dotenv'
+// Suprimir logs de dotenv temporalmente
+const originalLog = console.log;
+console.log = () => {};
 dotenv.config()
+console.log = originalLog;
 
 // Configuración del transporter de nodemailer para envío de correos
 let transporter = nodemailer.createTransport({

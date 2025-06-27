@@ -1,7 +1,11 @@
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv'
 
+// Suprimir logs de dotenv temporalmente
+const originalLog = console.log;
+console.log = () => {};
 dotenv.config()
+console.log = originalLog;
 
 // Genera un JWT con id, rol y año lectivo, válido por 1 hora
 const generarJWT = (id, rol, anio) => {

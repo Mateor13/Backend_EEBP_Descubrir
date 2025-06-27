@@ -9,7 +9,11 @@ import multer from 'multer'
 
 // Inicializadores de la aplicación
 const app = express()
-dotenv.config()
+// Suprimir logs de dotenv temporalmente
+const originalLog = console.log;
+console.log = () => {};
+dotenv.config({ debug: false })
+console.log = originalLog;
 
 // Configuración de multer para manejar archivos
 const upload = multer()
