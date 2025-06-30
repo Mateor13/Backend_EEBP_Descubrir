@@ -834,9 +834,11 @@ const eliminarCursoValidator = [
         .custom(async (id, { req }) => {
             const cursoBDD = await Curso.findById(id);
             if (!cursoBDD) throw new Error('El curso no está registrado');
-            const cursoAsignadoBDD = await CursoAsignado.findOne({ curso: id, anioLectivo: req.userBDD.anio }).populate('curso', 'nivel paralelo');
+            const cursoAsignadoBDD = await CursoAsignado.findOne({ curso: id, anioLectivo: req.userBDD.anio }).populate('curso', 'nivel paralelo').populate('estudiantes', 'estado');
             if (!cursoAsignadoBDD) throw new Error('El curso no está asignado en este año lectivo');
-            if (cursoAsignadoBDD.estudiantes.length > 0) throw new Error('No se puede eliminar el curso porque tiene estudiantes asignados');
+            // Verificar que no tenga estudiantes activos
+            const estudiantesActivos = cursoAsignadoBDD.estudiantes.filter(estudiante => estudiante.estado === true);
+            if (estudiantesActivos.length > 0) throw new Error('No se puede eliminar el curso porque tiene estudiantes activos asignados');
             if (cursoAsignadoBDD.estado === false) throw new Error('El curso ya está eliminado');
             req.cursoBDD = cursoAsignadoBDD;
             return true;
