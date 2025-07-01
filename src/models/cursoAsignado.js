@@ -192,14 +192,34 @@ cursoAsignadoSchema.statics.promoverEstudiantesPorNivel = async function (anioLe
                 curso: cursoActual._id, anioLectivo: anioLectivoNuevoId, estudiantes: []
             });
 
-            // Copiar materias solo si no es último nivel
-            if (!esUltimoNivel) {
-                const cursoAnteriorCompleto = await this.findById(cursoAnterior._id).populate('materias');
-                const materiasAnt = cursoAnteriorCompleto.materias;
+            // Obtener materias del curso anterior completo
+            const cursoAnteriorCompleto = await this.findById(cursoAnterior._id).populate('materias');
+            const materiasAnt = cursoAnteriorCompleto.materias;
 
-                const nuevasMaterias = await crearMateriasDelCursoAnterior(materiasAnt, anioLectivoNuevoId, Materia);
-                cursoAsignadoDestino.materias = nuevasMaterias;
-                await cursoAsignadoDestino.save();
+            // Copiar materias al curso actual (mismo nivel) en el nuevo año lectivo
+            if (!cursoAsignadoActual.materias || cursoAsignadoActual.materias.length === 0) {
+                const nuevasMateriasActual = await crearMateriasDelCursoAnterior(materiasAnt, anioLectivoNuevoId, Materia);
+                cursoAsignadoActual.materias = nuevasMateriasActual;
+                await cursoAsignadoActual.save();
+            }
+
+            // Copiar materias al curso destino SOLO si ya existía en el año anterior
+            if (!esUltimoNivel) {
+                // Verificar si el curso destino ya existía en el año anterior
+                const cursoDestinoAnterior = await this.findOne({ 
+                    curso: cursoDestino._id, 
+                    anioLectivo: anioLectivoAnteriorId 
+                }).populate('materias');
+
+                // Solo copiar materias si el curso destino ya existía Y tenía materias
+                if (cursoDestinoAnterior && cursoDestinoAnterior.materias && cursoDestinoAnterior.materias.length > 0) {
+                    if (!cursoAsignadoDestino.materias || cursoAsignadoDestino.materias.length === 0) {
+                        const materiasDestino = await crearMateriasDelCursoAnterior(cursoDestinoAnterior.materias, anioLectivoNuevoId, Materia);
+                        cursoAsignadoDestino.materias = materiasDestino;
+                        await cursoAsignadoDestino.save();
+                    }
+                }
+                // Si no existía, el curso destino queda sin materias
             }
 
             const { estudiantesARepetir, estudiantesAPromover, observacionesBulk, asistenciasBulk } =
@@ -207,16 +227,6 @@ cursoAsignadoSchema.statics.promoverEstudiantesPorNivel = async function (anioLe
 
             if (estudiantesARepetir.length) {
                 cursoAsignadoActual.estudiantes.push(...estudiantesARepetir);
-
-                // Si el curso actual no tiene materias todavía, clonarlas también
-                if (!cursoAsignadoActual.materias || cursoAsignadoActual.materias.length === 0) {
-                    const cursoAnteriorCompleto = await this.findById(cursoAnterior._id).populate('materias');
-                    const materiasAnt = cursoAnteriorCompleto.materias;
-
-                    const nuevasMaterias = await crearMateriasDelCursoAnterior(materiasAnt, anioLectivoNuevoId, Materia);
-                    cursoAsignadoActual.materias = nuevasMaterias;
-                }
-
                 await cursoAsignadoActual.save();
             }
 
@@ -235,6 +245,5 @@ cursoAsignadoSchema.statics.promoverEstudiantesPorNivel = async function (anioLe
         return { error: error.message };
     }
 };
-
 
 export default model('CursoAsignado', cursoAsignadoSchema)
