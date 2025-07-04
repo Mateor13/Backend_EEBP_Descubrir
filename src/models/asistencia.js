@@ -43,7 +43,9 @@ const asistenciaSchema = new Schema({
 // Método para marcar la asistencia de un estudiante en la fecha actual
 asistenciaSchema.methods.marcarAsistencia = async function (asistencia) {
     const fechaActual = new Date();
-    const fechaSinHora = (`${fechaActual.getFullYear()}/${fechaActual.getMonth() + 1}/${fechaActual.getDate()}`);
+    // Convertir a zona horaria de Ecuador (UTC-5)
+    const fechaEcuador = new Date(fechaActual.toLocaleString("en-US", {timeZone: "America/Guayaquil"}));
+    const fechaSinHora = (`${fechaEcuador.getFullYear()}/${fechaEcuador.getMonth() + 1}/${fechaEcuador.getDate()}`);
     // Verifica si ya existe un registro de asistencia para la fecha
     const index = this.asistencia.findIndex(asis => asis.fecha === fechaSinHora)
     if (index !== -1) return { error: 'Ya se ha registrado la asistencia' }
@@ -56,9 +58,10 @@ asistenciaSchema.methods.marcarAsistencia = async function (asistencia) {
 
 // Método para justificar una inasistencia en una fecha específica
 asistenciaSchema.methods.justificarInasistencia = async function (fecha, justificacion) {
-    // Normaliza la fecha al formato "YYYY/M/D"
+    // Normaliza la fecha al formato "YYYY/M/D" usando zona horaria de Ecuador
     const dateObj = new Date(fecha)
-    const normalizedFecha = `${dateObj.getFullYear()}/${dateObj.getMonth() + 1}/${dateObj.getDate()}`
+    const fechaEcuador = new Date(dateObj.toLocaleString("en-US", {timeZone: "America/Guayaquil"}));
+    const normalizedFecha = `${fechaEcuador.getFullYear()}/${fechaEcuador.getMonth() + 1}/${fechaEcuador.getDate()}`
     // Busca el registro de asistencia por fecha
     const index = this.asistencia.findIndex(asistencia => asistencia.fecha === normalizedFecha)
     if (index === -1) return { error: 'La fecha no está registrada' }
