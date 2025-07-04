@@ -807,10 +807,12 @@ const eliminarRepresentanteValidator = [
         .isMongoId()
         .withMessage('El id del representante debe ser válido')
         .custom(async (id, { req }) => {
-            const representanteBDD = await Representante.findById(id);
+            const representanteBDD = await Representante.findById(id).populate('estudiantes', 'estado');
             if (!representanteBDD) throw new Error('El representante no está registrado');
             if (representanteBDD.estado === false) throw new Error('El representante ya está eliminado');
-            if (representanteBDD.estudiantes.length > 0) throw new Error('No se puede eliminar el representante porque está asociado a un estudiante');
+            // Verificar que no tenga estudiantes activos
+            const estudiantesActivos = representanteBDD.estudiantes.filter(estudiante => estudiante.estado === true);
+            if (estudiantesActivos.length > 0) throw new Error('No se puede eliminar el representante porque tiene estudiantes activos asignados');
             req.representanteBDD = representanteBDD;
             return true;
         }),
