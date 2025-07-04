@@ -28,7 +28,7 @@ const registrarAdmin = async (req, res) => {
         nuevoAdmin.token = token;
         await sendMailToUser(email, token, password);
         await nuevoAdmin.save();
-        res.status(201).json({ msg: 'Administrador registrado, verifique el email para confirmar su cuenta' });
+        res.status(201).json({ msg: 'Administrador registrado, verifique el email para confirmar su cuenta', administrador: nuevoAdmin._id });
     } catch (error) {
         res.status(500).json({ error: 'Error al registrar administrador' });
     }
@@ -84,7 +84,7 @@ const registrarProfesor = async (req, res) => {
         const token = await nuevoProfesor.generarToken();
         await sendMailToProfesor(email, token, password);
         await nuevoProfesor.save();
-        res.status(201).json({ msg: 'Profesor registrado, verifique el email para confirmar su cuenta' });
+        res.status(201).json({ msg: 'Profesor registrado, verifique el email para confirmar su cuenta', profesor: nuevoProfesor._id });
     } catch (error) {
         res.status(500).json({ error: 'Error al registrar profesor' });
     }
@@ -140,7 +140,7 @@ const registrarRepresentante = async (req, res) => {
         const token = await nuevoRepresentante.generarToken();
         await envioCredenciales(nombre, apellido, email, password, token);
         await nuevoRepresentante.save();
-        res.status(201).json({ msg: 'Representante registrado correctamente, ahora puede asignar un estudiante' });
+        res.status(201).json({ msg: 'Representante registrado correctamente, ahora puede asignar un estudiante', representante: nuevoRepresentante._id });
     } catch (error) {
         res.status(500).json({ error: 'Error al registrar representante' });
     }
@@ -238,7 +238,7 @@ const registrarCurso = async (req, res) => {
         // 3. Crear la asignación del curso para el año lectivo activo
         const nuevoCursoAsignado = new CursoAsignado({ curso: curso._id, anioLectivo: req.anioLectivoBDD._id });
         await nuevoCursoAsignado.save();
-        res.status(201).json({ msg: 'Curso registrado correctamente y asignado al año lectivo activo' });
+        res.status(201).json({ msg: 'Curso registrado correctamente y asignado al año lectivo activo', curso: curso._id });
     } catch (error) {
         res.status(500).json({ error: 'Error al registrar curso' });
     }
@@ -292,7 +292,7 @@ const registrarMaterias = async (req, res) => {
         await cursoAsignadoBDD.agregarMaterias(nuevaMateria._id);
         await nuevaMateria.save();
         await cursoAsignadoBDD.save();
-        res.status(201).json({ msg: 'Materia registrada correctamente' });
+        res.status(201).json({ msg: 'Materia registrada correctamente', materia: nuevaMateria._id });
     } catch (error) {
         res.status(500).json({ error: 'Error al registrar materia' });
     }
@@ -401,7 +401,7 @@ const registrarEstudiantes = async (req, res) => {
         await nuevoEstudiante.save();
         await nuevaAsistencia.save();
         await nuevaObservacion.save();
-        res.status(201).json({ msg: 'Estudiante registrado correctamente' });
+        res.status(201).json({ msg: 'Estudiante registrado correctamente', estudiante: nuevoEstudiante._id });
     } catch (error) {
         console.error('Error al registrar estudiante:', error);
         res.status(500).json({ error: 'Error al registrar estudiante' });
