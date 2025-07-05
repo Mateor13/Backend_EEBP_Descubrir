@@ -58,11 +58,17 @@ asistenciaSchema.methods.marcarAsistencia = async function (asistencia) {
 
 // Método para justificar una inasistencia en una fecha específica
 asistenciaSchema.methods.justificarInasistencia = async function (fecha, justificacion) {
-    // Normaliza la fecha al formato "YYYY/M/D" usando zona horaria de Ecuador
-    const dateObj = new Date(fecha)
-    const fechaEcuador = new Date(dateObj.toLocaleString("en-US", {timeZone: "America/Guayaquil"}));
-    const normalizedFecha = `${fechaEcuador.getFullYear()}/${fechaEcuador.getMonth() + 1}/${fechaEcuador.getDate()}`
-    // Busca el registro de asistencia por fecha
+    // Si la fecha ya está en formato "YYYY/M/D", usarla directamente
+    let normalizedFecha;
+    if (typeof fecha === 'string' && fecha.match(/^\d{4}\/\d{1,2}\/\d{1,2}$/)) {
+        // La fecha ya está en el formato correcto
+        normalizedFecha = fecha;
+    } else {
+        // Normaliza la fecha al formato "YYYY/M/D" usando zona horaria de Ecuador
+        const dateObj = new Date(fecha)
+        const fechaEcuador = new Date(dateObj.toLocaleString("en-US", {timeZone: "America/Guayaquil"}));
+        normalizedFecha = `${fechaEcuador.getFullYear()}/${fechaEcuador.getMonth() + 1}/${fechaEcuador.getDate()}`;
+    }
     const index = this.asistencia.findIndex(asistencia => asistencia.fecha === normalizedFecha)
     if (index === -1) return { error: 'La fecha no está registrada' }
     if (this.asistencia[index].justificacion !== "") return { error: 'El estudiante ya está justificado' }
