@@ -26,7 +26,6 @@ import {
     visualizarEstudiantesPorTipoValidator,
     visualizarMateriasAsignadasValidator,
     visualizarTiposNotasEstudiantesValidator,
-    subirEvidenciaImgur,
     subirEvidenciasEstudiantesValidator
 } from '../validators/profesor_validator.js'; // Importa los validadores
 
@@ -40,7 +39,7 @@ const upload = multer({ storage });
 // Gestión de notas
 router.post('/registro-nota/:materiaId', verificarAutenticacion, verificarRolProfesor, subirNotasEstudiantesValidator, subirNotasEstudiantes); // Registrar notas de estudiantes
 router.patch('/actualizar-nota/:materiaId', verificarAutenticacion, verificarRolProfesor, modificarNotasEstudiantesValidator, modificarNotasEstudiantes); // Modificar notas de estudiantes
-router.post('/subir-evidencia/:materiaId/:cursoId', verificarAutenticacion, verificarRolProfesor, upload.single('imagen'), subirEvidenciaImgur, subirEvidenciasEstudiantesValidator, subirFotoEvidencia); // Subir evidencia de notas de estudiantes
+router.post('/subir-evidencia/:materiaId/:cursoId', verificarAutenticacion, verificarRolProfesor, upload.single('imagen'), subirEvidenciasEstudiantesValidator, subirFotoEvidencia); // Subir evidencia de notas de estudiantes
 
 // Observaciones
 router.post('/observacion-estudiante', verificarAutenticacion, verificarRolProfesor, observacionesEstudiantesValidator, observacionesEstudiantes); // Registrar observaciones para estudiantes

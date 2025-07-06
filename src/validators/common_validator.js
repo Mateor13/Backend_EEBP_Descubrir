@@ -13,37 +13,8 @@ const loginValidator = [
         .isEmail()
         .withMessage('El email no es válido'),
     check('password')
-        .custom(async (value, { req }) => {
-            const { email } = req.body;
-            const roles = [
-                { model: representante, rol: 'representante' },
-                { model: profesor, rol: 'profesor' },
-                { model: administradores, rol: 'administrador' }
-            ];
-
-            // Ejecutar todas las consultas en paralelo
-            const resultados = await Promise.all(
-                roles.map(async ({ model, rol }) => {
-                    return model.findOne(
-                        { email },
-                        { email: 1, confirmEmail: 1, estado: 1, password: 1 }
-                    ).then(userBDD => userBDD ? { userBDD, rol } : null);
-                })
-            );
-            const resultado = resultados.find(res => res !== null);
-            if (!resultado) throw new Error('Credenciales incorrectas');
-
-            const { userBDD, rol } = resultado;
-            if (!userBDD.confirmEmail) throw new Error('Por favor confirme su cuenta');
-            if (!userBDD.estado) throw new Error('Su cuenta ha sido desactivada, por favor contacte al administrador');
-
-            const verificarPassword = await userBDD.compararPassword(value);
-            if (!verificarPassword) throw new Error('Credenciales incorrectas');
-
-            req.usuarioBDD = userBDD;
-            req.rol = rol;
-            return true;
-        }),
+        .notEmpty()
+        .withMessage('La contraseña es obligatoria'),
     check('anioLectivo')
         .notEmpty()
         .withMessage('El año lectivo es obligatorio')

@@ -4,7 +4,6 @@ import Cursos from '../models/cursos.js';
 import Materias from '../models/materias.js';
 import Estudiantes from '../models/estudiantes.js';
 import Observaciones from '../models/observaciones.js';
-import axios from 'axios';
 import CursosAsignados from '../models/cursoAsignado.js';
 import anioLectivo from '../models/anioLectivo.js';
 
@@ -96,36 +95,12 @@ const modificarNotasEstudiantesValidator = [
     }
 ]
 
-const subirEvidenciaImgur = async (req, res, next) => {
-    try {
-        const imagen = req.file;
-        if (!imagen) {
-            return res.status(400).json({ error: 'No se envió ninguna imagen' });
-        }
-        const response = await axios.post(
-            'https://api.imgur.com/3/image',
-            {
-                image: imagen.buffer.toString('base64'),
-                type: 'base64'
-            },
-            {
-                headers: {
-                    Authorization: `Client-ID ${process.env.IMGUR_CLIENT_ID}`
-                }
-            }
-        );
-        req.urlImgur = response.data.data.link;
-        next();
-    } catch (error) {
-        res.status(500).json({ error: 'Error subiendo la imagen' });
-    }
-};
-
 // Validador para subir evidencias de estudiantes
 const subirEvidenciasEstudiantesValidator = [
     check('cursoId')
         .notEmpty()
         .withMessage('El curso es obligatorio')
+        .bail()
         .isMongoId()
         .withMessage('El id del curso debe tener un formato válido')
         .custom(async (cursoId, { req }) => {
@@ -154,6 +129,23 @@ const subirEvidenciasEstudiantesValidator = [
         .notEmpty()
         .withMessage('El tipo de evaluación es obligatorio')
         .isIn(['deberes', 'talleres', 'examenes', 'pruebas']),
+    check('imagen')
+    .custom((_, { req }) => {
+        if (!req.file) {
+            throw new Error('La imagen es obligatoria');
+        }
+        // Validar el tipo de archivo
+        const mimeTypesValidos = ['image/jpeg', 'image/png', 'image/gif'];
+        if (!mimeTypesValidos.includes(req.file.mimetype)) {
+            throw new Error('El formato de la imagen no es válido. Solo se permiten JPEG, PNG o GIF');
+        }
+        // Validar el tamaño del archivo
+        const maxSize = 20 * 1024 * 1024; // 20 MB
+        if (req.file.size > maxSize) {
+            throw new Error('El tamaño de la imagen excede el límite de 20 MB');
+        }
+        return true;
+    }),
     (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
@@ -333,6 +325,5 @@ export {
     visualizarEstudiantesPorMateriaValidator,
     visualizarTiposNotasEstudiantesValidator,
     visualizarEstudiantesPorTipoValidator,
-    subirEvidenciaImgur,
     subirEvidenciasEstudiantesValidator
 };

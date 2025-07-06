@@ -15,134 +15,207 @@ const roles = [
 // Devuelve el modelo correspondiente al rol recibido
 const rolActual = (rol) => {
     const rolModelo = roles.find(r => r.rol === rol)
-    return rolModelo.model
+    return rolModelo
 }
 
 // Controlador para login: genera token y responde con datos básicos
 const login = async (req, res) => {
-    const { usuarioBDD, rol, anioLectivoBDD } = req;
-    const token = generarJWT(usuarioBDD._id, rol, anioLectivoBDD._id)
-    return res.status(200).json({ rol, token })
+    const { email, password } = req.body;
+    const { anioLectivoBDD } = req;
+    const resultados = await Promise.all(
+        roles.map(async ({ model, rol }) => {
+            return model.findOne(
+                { email },
+                { email: 1, confirmEmail: 1, estado: 1, password: 1 }
+            ).then(userBDD => userBDD ? { userBDD, rol } : null);
+        })
+    );
+    const resultado = resultados.find(res => res !== null);
+    if (!resultado) throw new Error('Credenciales incorrectas');
+    const { userBDD, rol: userRol } = resultado;
+    if (!userBDD.confirmEmail) throw new Error('Por favor confirme su cuenta');
+    if (!userBDD.estado) throw new Error('Su cuenta ha sido desactivada, por favor contacte al administrador');
+    const verificarPassword = await userBDD.compararPassword(password);
+    if (!verificarPassword) throw new Error('Credenciales incorrectas');
+    const token = generarJWT(userBDD._id, userRol, anioLectivoBDD._id);
+    return res.status(200).json({ rol: userRol, token });
 }
 
 // Lista todos los años lectivos registrados
 const listarAniosLectivos = async (req, res) => {
-    const anios = await aniosLectivo.find({}).select('-__v -createdAt -updatedAt -ponderaciones -fechaInicio')
+    const anios = await aniosLectivo.find().select('-__v -createdAt -updatedAt -ponderaciones -fechaInicio')
     if (!anios || anios.length === 0) return res.status(404).json({ error: 'No se encontraron años lectivos' });
     return res.status(200).json(anios)
-}
+};
 
 // Confirma la cuenta de usuario a partir del token recibido
 const confirmarCuenta = async (req, res) => {
     const { token } = req.params;
-    for (const { model } of roles) {
-        const userBDD = await model.findOne({ token });
-        if (userBDD) {
-            userBDD.confirmEmail = true;
-            await userBDD.save();
-            return res.status(200).json({ mensaje: 'Su cuenta se ha confirmado exitosamente, ya puede iniciar sesión' });
+    try {
+        // Buscar el usuario en paralelo en todos los modelos
+        const resultados = await Promise.all(
+            roles.map(({ model }) => model.findOne({ token }))
+        );
+        // Filtrar el resultado para encontrar el usuario
+        const usuarioBDD = resultados.find(user => user !== null);
+        if (!usuarioBDD) {
+            return res.status(400).json({ error: 'El token no es válido' });
         }
+        // Confirmar el email y guardar los cambios
+        usuarioBDD.confirmEmail = true;
+        await usuarioBDD.save();
+        return res.status(200).json({ mensaje: 'Su cuenta se ha confirmado exitosamente, ya puede iniciar sesión' });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Error interno al procesar la solicitud' });
     }
-    return res.status(400).json({ error: 'El token no es válido' });
-}
+};
 
 // Envía correo de recuperación de contraseña según el rol
 const recuperarPassword = async (req, res) => {
-    const { email } = req.body
-    for (const { model, correo } of roles) {
-        const userBDD = await model.findOne({ email });
-        if (userBDD) {
-            const token = await userBDD.generarToken();
-            await correo(email, token);
-            await userBDD.save();
-            return res.status(200).json({ mensaje: 'Para recuperar su contraseña, se le ha enviado un correo' });
+    const { email } = req.body;
+    try {
+        console.log(email);
+        // Buscar el usuario en paralelo en todos los modelos
+        const resultados = await Promise.all(
+            roles.map(({ model }) => model.findOne({ email }))
+        );
+        // Filtrar el resultado para encontrar el usuario
+        const usuarioBDD = resultados.find(user => user !== null);
+        if (!usuarioBDD) {
+            return res.status(400).json({ error: 'No se ha encontrado el email ingresado' });
         }
+        // Generar el token y enviar el correo
+        const token = await usuarioBDD.generarToken();
+        const rolModelo = roles.find(r => r.model === usuarioBDD.constructor);
+        await rolModelo.correo(email, token);
+        // Guardar el usuario con el nuevo token
+        await usuarioBDD.save();
+        return res.status(200).json({ mensaje: 'Para recuperar su contraseña, se le ha enviado un correo' });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Error interno al procesar la solicitud' });
     }
-    return res.status(400).json({ error: 'No se ha encontrado el email ingresado' })
-}
+};
 
 // Devuelve el perfil del usuario autenticado (sin datos sensibles)
 const perfil = async (req, res) => {
-    const { id } = req.userBDD
-    for (const { model, selected } of roles) {
-        const usuarioBDD = await model.findById(id).select(selected);
-        if (usuarioBDD) {
-            const userBDD = {
-                _id: usuarioBDD._id,
-                nombre: usuarioBDD.nombre,
-                apellido: usuarioBDD.apellido,
-                email: usuarioBDD.email,
-                telefono: usuarioBDD.telefono,
-                direccion: usuarioBDD.direccion,
-                rol: req.userBDD.rol
-            }
-            return res.status(200).json(userBDD);
+        const { id, rol } = req.userBDD;
+    try {
+        const rolModelo = rolActual(rol);
+        // Realizar la consulta directamente en el modelo correspondiente
+        const usuarioBDD = await rolModelo.model.findById(id).select(rolModelo.selected);
+        if (!usuarioBDD) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
         }
+        // Construir la respuesta con los datos necesarios
+        const userBDD = {
+            _id: usuarioBDD._id,
+            nombre: usuarioBDD.nombre,
+            apellido: usuarioBDD.apellido,
+            email: usuarioBDD.email,
+            telefono: usuarioBDD.telefono,
+            direccion: usuarioBDD.direccion,
+            rol
+        };
+        return res.status(200).json(userBDD);
+    } catch (error) {
+        return res.status(500).json({ error: 'Error al cargar el perfil' });
     }
-    return res.status(400).json({ error: 'Fallo en la carga de datos' });
 }
 
 // Permite establecer una nueva contraseña usando un token válido
 const nuevaContrasena = async (req, res) => {
-    const { password } = req.body
-    const { token } = req.params
-    for (const { model } of roles) {
-        const userBDD = await model.findOne({ token });
-        if (userBDD) {
-            userBDD.token = null
-            await userBDD.encriptarPassword(password)
-            await userBDD.save()
-            return res.status(200).json({ mensaje: 'Contraseña actualizada' });
+    const { password } = req.body;
+    const { token } = req.params;
+    try {
+        // Buscar el usuario en paralelo en todos los modelos
+        const usuarioBDD = await Promise.any(
+            roles.map(({ model }) => model.findOne({ token }))
+        );
+        if (!usuarioBDD) {
+            return res.status(400).json({ error: 'El token no es válido' });
         }
+        // Actualizar la contraseña y eliminar el token
+        usuarioBDD.token = null;
+        await usuarioBDD.encriptarPassword(password);
+        await usuarioBDD.save();
+        return res.status(200).json({ mensaje: 'Contraseña ha sido actualizada exitosamente' });
+    } catch (error) {
+        return res.status(400).json({ error: 'El token no es válido' });
     }
-    return res.status(400).json({ error: 'El token no es válido' })
 }
 
 // Permite cambiar la contraseña desde el perfil autenticado
 const cambiarPassword = async (req, res) => {
     const { password, newPassword } = req.body
     const { id, rol } = req.userBDD
-    const model = rolActual(rol)
-    const userBDD = await model.findById(id);
+    const rolModelo = rolActual(rol)
+    const userBDD = await rolModelo.model.findById(id);
     if (userBDD) {
         const verificarPassword = await userBDD.compararPassword(password);
-        if (!verificarPassword) return res.status(400).json({ error: 'La Contraseña actual es incorrecta' });
+        if (!verificarPassword) return res.status(400).json({ error: 'La contraseña actual es incorrecta' });
         await userBDD.encriptarPassword(newPassword);
         await userBDD.save();
-        return res.status(200).json({ mensaje: 'Contraseña actualizada' });
+        return res.status(200).json({ mensaje: 'Contraseña ha sido actualizada exitosamente' });
     }
     return res.status(400).json({ error: 'Error al actualizar el usuario' });
 }
 
 // Permite cambiar los datos personales del usuario autenticado
 const cambiarDatos = async (req, res) => {
-    const { nombre, apellido, email, telefono, direccion } = req.body
-    const { id, rol } = req.userBDD
-    const model = rolActual(rol)
-    const userBDD = await model.findById(id)
-    if (userBDD) {
+    const { nombre, apellido, email, telefono, direccion } = req.body;
+    const { id, rol } = req.userBDD;
+    const rolModelo = rolActual(rol);
+    try {
+        // Buscar el usuario actual
+        const userBDD = await rolModelo.model.findById(id);
+        if (!userBDD) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        const promesas = [];
+        // Verificar si el email ha cambiado
         if (userBDD.email !== email) {
-            for (const { model } of roles) {
-                const existeEmail = await model.findOne({ email })
-                if (existeEmail) return res.status(400).json({ error: 'El email ya está registrado' })
-            }
-            await sendMailToChangeEmail(userBDD.email, email)
+            promesas.push(
+                Promise.all(
+                    roles.map(({ model }) => model.findOne({ email }).select('_id'))
+                ).then(resultados => {
+                    const existeEmail = resultados.some(res => res !== null);
+                    if (existeEmail) {
+                        throw new Error('El email ya está registrado');
+                    }
+                })
+            );
+            promesas.push(sendMailToChangeEmail(userBDD.email, email));
         }
+        // Verificar si el teléfono ha cambiado
         if (userBDD.telefono !== telefono) {
-            for (const { model } of roles) {
-                const existeTelefono = await model.findOne({ telefono })
-                if (existeTelefono) return res.status(400).json({ error: 'El teléfono ya está registrado' })
-            }
+            promesas.push(
+                Promise.all(
+                    roles.map(({ model }) => model.findOne({ telefono }).select('_id'))
+                ).then(resultados => {
+                    const existeTelefono = resultados.some(res => res !== null);
+                    if (existeTelefono) {
+                        throw new Error('El teléfono ya está registrado');
+                    }
+                })
+            );
         }
-        userBDD.telefono = telefono
-        userBDD.direccion = direccion
-        userBDD.nombre = nombre
-        userBDD.apellido = apellido
-        userBDD.email = email
-        await userBDD.save()
-        return res.status(200).json({ mensaje: 'Los datos se han actualizado correctamente' })
+        // Actualizar los datos del usuario
+        userBDD.telefono = telefono;
+        userBDD.direccion = direccion;
+        userBDD.nombre = nombre;
+        userBDD.apellido = apellido;
+        userBDD.email = email;
+        // Ejecutar todas las promesas en paralelo
+        await Promise.all(promesas);
+        await userBDD.save();
+        return res.status(200).json({ mensaje: 'Los datos se han actualizado correctamente' });
+    } catch (error) {
+        console.error(error);
+        return res.status(400).json({ error: error.message });
     }
-}
+};
 
 export {
     login,

@@ -1,13 +1,13 @@
 import cursoAsignado from "../models/cursoAsignado.js";
 import materias from "../models/materias.js";
 import Notas from "../models/notas.js";
+import axios from 'axios';
 
 // Subir una imagen a Imgur y devolver la URL
 const subirFotoEvidencia = async (req, res) => {
     const { tipo } = req.body;
     const { materiaBDD, cursoBDD } = req;
     const anioLectivo = req.userBDD.anio;
-    const url = req.urlImgur; // URL de la imagen subida a Imgur
     const tipoMap = {
         deberes: 'Deber',
         talleres: 'Taller',
@@ -15,38 +15,75 @@ const subirFotoEvidencia = async (req, res) => {
         examenes: 'Examen'
     };
     try {
-        // 1. Obtener el mayor número de evidencias del tipo para todos los estudiantes del curso
-        let maxCantidad = 0;
-        for (const estudianteId of cursoBDD.estudiantes) {
-            let notasEstudiante = await Notas.findOne({ estudiante: estudianteId, materia: materiaBDD._id, anioLectivo });
-            const cantidad = (notasEstudiante?.evaluaciones?.[tipo]?.length || 0);
-            if (cantidad > maxCantidad) maxCantidad = cantidad;
-        }
-        const descripcion = `${tipoMap[tipo] || tipo} ${maxCantidad + 1}`;
-        const errores = [];
-
-        // 2. Subir la evidencia de forma asíncrona para cada estudiante
-        const tareas = cursoBDD.estudiantes.map(async (estudianteId) => {
-            let notasEstudiante = await Notas.findOne({ estudiante: estudianteId, materia: materiaBDD._id, anioLectivo });
-            if (!notasEstudiante) {
-                notasEstudiante = new Notas({ estudiante: estudianteId, materia: materiaBDD._id, anioLectivo });
+        const imagen = req.file;
+        // Subir la imagen a Imgur
+        const response = await axios.post(
+            'https://api.imgur.com/3/image',
+            {
+                image: imagen.buffer.toString('base64'),
+                type: 'base64'
+            },
+            {
+                headers: {
+                    Authorization: `Client-ID ${process.env.IMGUR_CLIENT_ID}`
+                }
             }
-            const resultado = await notasEstudiante.guardarEvidencia(tipo, descripcion, url);
-            if (resultado?.error) {
-                errores.push(`Error en estudiante ${estudianteId}: ${resultado.error}`);
+        );
+        const url = response.data.data.link;
+        // Obtener todas las notas de los estudiantes en una sola consulta
+        const notasEstudiantes = await Notas.find({
+            estudiante: { $in: cursoBDD.estudiantes },
+            materia: materiaBDD._id,
+            anioLectivo
+        });
+        // Calcular el máximo número de evaluaciones
+        const maxCantidad = notasEstudiantes.reduce((max, nota) => {
+            const cantidad = (nota.evaluaciones?.[tipo]?.length || 0);
+            return Math.max(max, cantidad);
+        }, 0);
+        const descripcion = `${tipoMap[tipo] || tipo} ${maxCantidad + 1}`;
+        const bulkOps = [];
+        const fecha = new Date();
+        const formatoFecha = `${fecha.getDate()}/${fecha.getMonth() + 1}/${fecha.getFullYear()}`;
+        // Subir la evidencia para cada estudiante
+        cursoBDD.estudiantes.forEach(estudianteId => {
+            const notaEstudiante = notasEstudiantes.find(n => n.estudiante.toString() === estudianteId.toString());
+            if (notaEstudiante) {
+                // Usar el método guardarEvidencia del modelo
+                const existe = notaEstudiante.evaluaciones[tipo]?.find(e => e.descripcion === descripcion);
+                if (!existe) {
+                    bulkOps.push({
+                        updateOne: {
+                            filter: { _id: notaEstudiante._id },
+                            update: {
+                                $push: {
+                                    [`evaluaciones.${tipo}`]: { descripcion, evidenciaUrl: url, fecha: formatoFecha }
+                                }
+                            }
+                        }
+                    });
+                }
             } else {
-                await notasEstudiante.save();
+                // Crear nueva nota si no existe
+                bulkOps.push({
+                    insertOne: {
+                        document: {
+                            estudiante: estudianteId,
+                            materia: materiaBDD._id,
+                            anioLectivo,
+                            evaluaciones: {
+                                [tipo]: [{ descripcion, evidenciaUrl: url, fecha: formatoFecha }]
+                            }
+                        }
+                    }
+                });
             }
         });
-
-        // Ejecutar todas las tareas de forma paralela
-        await Promise.all(tareas);
-
-        if (errores.length > 0) {
-            return res.status(400).json({ error: errores.join(', ') });
-        }
+        // Ejecutar operaciones bulk
+        await Notas.bulkWrite(bulkOps);
         res.status(200).json({ msg: 'Foto de evidencia registrada correctamente', descripcion });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'Error al registrar la foto de evidencia' });
     }
 };
@@ -235,7 +272,7 @@ const visualizarEstudiantesDescripcion = async (req, res) => {
             notaEstudiante.evaluaciones[tipo] &&
             notaEstudiante.evaluaciones[tipo].some(e => e.descripcion === descripcion && e.nota !== undefined && e.nota !== null)
         );
-        
+
         if (estadoEstudiante === true || tieneNota) {
             let estudianteInfo = {
                 id: estudianteId,
