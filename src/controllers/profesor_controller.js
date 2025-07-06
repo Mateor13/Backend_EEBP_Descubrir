@@ -7,7 +7,7 @@ const subirFotoEvidencia = async (req, res) => {
     const { tipo } = req.body;
     const { materiaBDD, cursoBDD } = req;
     const anioLectivo = req.userBDD.anio;
-    const url = req.urlImgur;
+    const url = req.urlImgur; // URL de la imagen subida a Imgur
     const tipoMap = {
         deberes: 'Deber',
         talleres: 'Taller',
@@ -22,11 +22,11 @@ const subirFotoEvidencia = async (req, res) => {
             const cantidad = (notasEstudiante?.evaluaciones?.[tipo]?.length || 0);
             if (cantidad > maxCantidad) maxCantidad = cantidad;
         }
-        // El número de evidencia será +1
         const descripcion = `${tipoMap[tipo] || tipo} ${maxCantidad + 1}`;
         const errores = [];
-        // 2. Guardar la evidencia para todos los estudiantes del curso
-        for (const estudianteId of cursoBDD.estudiantes) {
+
+        // 2. Subir la evidencia de forma asíncrona para cada estudiante
+        const tareas = cursoBDD.estudiantes.map(async (estudianteId) => {
             let notasEstudiante = await Notas.findOne({ estudiante: estudianteId, materia: materiaBDD._id, anioLectivo });
             if (!notasEstudiante) {
                 notasEstudiante = new Notas({ estudiante: estudianteId, materia: materiaBDD._id, anioLectivo });
@@ -34,10 +34,14 @@ const subirFotoEvidencia = async (req, res) => {
             const resultado = await notasEstudiante.guardarEvidencia(tipo, descripcion, url);
             if (resultado?.error) {
                 errores.push(`Error en estudiante ${estudianteId}: ${resultado.error}`);
-                continue;
+            } else {
+                await notasEstudiante.save();
             }
-            await notasEstudiante.save();
-        }
+        });
+
+        // Ejecutar todas las tareas de forma paralela
+        await Promise.all(tareas);
+
         if (errores.length > 0) {
             return res.status(400).json({ error: errores.join(', ') });
         }

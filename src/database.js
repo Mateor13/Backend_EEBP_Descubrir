@@ -8,10 +8,15 @@ mongoose.set('strictQuery', true)
 // Función para conectar a la base de datos MongoDB
 const connection = async () => {
   try {
+    if (mongoose.connection.readyState === 1 || mongoose.connection.readyState === 2) {
+      console.log('Usando conexión existente a MongoDB');
+      return;
+    }
     // Obtiene la URI de conexión desde las variables de entorno
     const uri = process.env.MONGODB_URI_PRODUCTION
     // Realiza la conexión a MongoDB
-    const { connection } = await mongoose.connect(uri)
+    const { connection } = await mongoose.connect(uri);
+    // Muestra información de conexión en consola
     console.log(`Conectado a la base de datos: ${connection.host} - ${connection.port}`)
     // Inicializa el administrador principal si no existe
     await admin.inicializarAdmin()
