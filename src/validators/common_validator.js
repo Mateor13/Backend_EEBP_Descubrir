@@ -1,8 +1,5 @@
 import { check, validationResult } from "express-validator";
 import aniosLectivo from "../models/anioLectivo.js";
-import representante from "../models/representante.js";
-import profesor from "../models/profesor.js";
-import administradores from "../models/administradores.js";
 
 // Validador para login de cualquier usuario (admin, profesor, representante)
 const loginValidator = [
