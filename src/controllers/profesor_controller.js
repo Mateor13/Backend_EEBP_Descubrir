@@ -203,18 +203,22 @@ const visualizarCursosAsociados = async (req, res) => {
 const visualizarMateriasAsignadas = async (req, res) => {
     const { cursoAsignadoBDD } = req;
     const { id } = req.userBDD;
-    const materiasAsignadas = cursoAsignadoBDD.materias.filter(materia =>
-        materia.profesor._id.toString() === id.toString()
-    );
-    if (!materiasAsignadas.length) {
-        return res.status(404).json({ error: 'No hay materias asignadas a este curso' });
+    try {
+        const materiasAsignadas = cursoAsignadoBDD.materias.filter(materia =>
+            materia.profesor._id.toString() === id.toString()
+        );
+        if (!materiasAsignadas.length) {
+            return res.status(404).json({ error: 'No hay materias asignadas a este curso' });
+        }
+        res.status(200).json({
+            materias: materiasAsignadas.map(materia => ({
+                id: materia._id,
+                nombre: materia.nombre
+            }))
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Error interno al procesar la solicitud' });
     }
-    res.status(200).json({
-        materias: materiasAsignadas.map(materia => ({
-            id: materia._id,
-            nombre: materia.nombre
-        }))
-    });
 }
 
 // Ver los solo por tipos de evaluaciones
