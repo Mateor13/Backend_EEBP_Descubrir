@@ -66,7 +66,6 @@ const confirmarCuenta = async (req, res) => {
         await usuarioBDD.save();
         return res.status(200).json({ mensaje: 'Su cuenta se ha confirmado exitosamente, ya puede iniciar sesión' });
     } catch (error) {
-        console.error(error);
         return res.status(500).json({ error: 'Error interno al procesar la solicitud' });
     }
 };
@@ -75,7 +74,6 @@ const confirmarCuenta = async (req, res) => {
 const recuperarPassword = async (req, res) => {
     const { email } = req.body;
     try {
-        console.log(email);
         // Buscar el usuario en paralelo en todos los modelos
         const resultados = await Promise.all(
             roles.map(({ model }) => model.findOne({ email }))
@@ -93,7 +91,6 @@ const recuperarPassword = async (req, res) => {
         await usuarioBDD.save();
         return res.status(200).json({ mensaje: 'Para recuperar su contraseña, se le ha enviado un correo' });
     } catch (error) {
-        console.error(error);
         return res.status(500).json({ error: 'Error interno al procesar la solicitud' });
     }
 };
