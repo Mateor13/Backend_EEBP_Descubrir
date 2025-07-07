@@ -56,8 +56,8 @@ Plataforma integral para la gestión de notas, asistencias y procesos académico
 
 ### **1. Clonar el repositorio**
 ```bash
-git clone https://github.com/Mateor13/Proyect_Fullstack.git
-cd ProyectoFull
+git clone https://github.com/Mateor13/Backend_EEBP_Descubrir.git
+cd Backend_EEBP_Descubrir
 ```
 
 ### **2. Instalar dependencias**
