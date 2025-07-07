@@ -22,6 +22,7 @@ import Notas from '../models/notas.js'
 const registrarAdmin = async (req, res) => {
     const { nombre, apellido, email, direccion, telefono, cedula } = req.body;
     try {
+        email = email.toLowerCase().trim();
         const nuevoAdmin = new Administrador({ nombre, apellido, email, direccion, telefono, cedula });
         const password = await nuevoAdmin.generarPassword();
         const token = await nuevoAdmin.generarToken();
@@ -47,6 +48,7 @@ const listarAdministradores = async (req, res) => {
 const modificarAdministrador = async (req, res) => {
     const { usuarioBDD } = req;
     const { nombre, apellido, email, direccion, telefono, cedula } = req.body;
+    email = email.toLowerCase().trim();
     try {
         usuarioBDD.nombre = nombre;
         usuarioBDD.apellido = apellido;
@@ -79,6 +81,7 @@ const eliminarAdministrador = async (req, res) => {
 const registrarProfesor = async (req, res) => {
     const { nombre, apellido, email, direccion, telefono, cedula } = req.body;
     try {
+        email = email.toLowerCase().trim();
         const nuevoProfesor = new Profesor({ nombre, apellido, email, direccion, telefono, cedula, admin: req.userBDD.id });
         const password = await nuevoProfesor.generarPassword();
         const token = await nuevoProfesor.generarToken();
@@ -104,6 +107,7 @@ const modificarProfesor = async (req, res) => {
     const { usuarioBDD } = req;
     const { nombre, apellido, email, direccion, telefono, cedula } = req.body;
     try {
+        email = email.toLowerCase().trim();
         usuarioBDD.nombre = nombre;
         usuarioBDD.apellido = apellido;
         usuarioBDD.email = email;
@@ -135,6 +139,7 @@ const eliminarProfesor = async (req, res) => {
 const registrarRepresentante = async (req, res) => {
     const { nombre, apellido, email, direccion, telefono, cedula } = req.body;
     try {
+        email = email.toLowerCase().trim();
         const nuevoRepresentante = new Representante({ nombre, apellido, email, telefono, cedula, direccion });
         const password = await nuevoRepresentante.generarPassword();
         const token = await nuevoRepresentante.generarToken();
@@ -192,6 +197,7 @@ const modificarRepresentante = async (req, res) => {
     const { usuarioBDD } = req;
     const { nombre, apellido, email, direccion, telefono, cedula } = req.body;
     try {
+        email = email.toLowerCase().trim();
         usuarioBDD.nombre = nombre;
         usuarioBDD.apellido = apellido;
         usuarioBDD.email = email;
@@ -470,6 +476,9 @@ const reasignarCursoEstudiante = async (req, res) => {
     try {
         // Verificar si el estudiante ya está en el curso
         const estudianteEnCurso = cursoAsignadoBDD.estudiantes.find(est => est._id.toString() === estudianteBDD._id.toString());
+        if (!estudianteEnCurso) {
+            return res.status(400).json({ error: 'El estudiante no está asignado a este curso' });
+        }
         // Asignar el nuevo curso al estudiante
         if (cursoAnterior) {
             await cursoAnterior.eliminarEstudiante(estudianteBDD._id);

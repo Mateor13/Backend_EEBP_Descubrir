@@ -22,6 +22,7 @@ const rolActual = (rol) => {
 const login = async (req, res) => {
     const { email, password } = req.body;
     const { anioLectivoBDD } = req;
+    email = email.toLowerCase().trim();
     const resultados = await Promise.all(
         roles.map(async ({ model, rol }) => {
             return model.findOne(
@@ -73,6 +74,7 @@ const confirmarCuenta = async (req, res) => {
 // Envía correo de recuperación de contraseña según el rol
 const recuperarPassword = async (req, res) => {
     const { email } = req.body;
+    email = email.toLowerCase().trim();
     try {
         // Buscar el usuario en paralelo en todos los modelos
         const resultados = await Promise.all(
@@ -173,6 +175,7 @@ const cambiarDatos = async (req, res) => {
         const promesas = [];
         // Verificar si el email ha cambiado
         if (userBDD.email !== email) {
+            email = email.toLowerCase().trim();
             promesas.push(
                 Promise.all(
                     roles.map(({ model }) => model.findOne({ email }).select('_id'))

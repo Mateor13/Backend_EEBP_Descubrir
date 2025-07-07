@@ -51,6 +51,7 @@ const registroAdminValidator = [
         .isEmail()
         .withMessage('El email no es válido')
         .custom(async (email) => {
+            email = email.toLowerCase().trim();
             for (const { model } of todosRolesSinEstudiantes) {
                 const usuarioBDD = await model.findOne({ email });
                 if (usuarioBDD) throw new Error('El email ya está registrado');
@@ -118,6 +119,7 @@ const registroProfesorValidator = [
         .isEmail()
         .withMessage('El email no es válido')
         .custom(async (email) => {
+            email = email.toLowerCase().trim();
             for (const { model } of todosRolesSinEstudiantes) {
                 const usuarioBDD = await model.findOne({ email });
                 if (usuarioBDD) throw new Error('El email ya está registrado');
@@ -184,6 +186,7 @@ const registroRepresentanteValidator = [
         .isEmail()
         .withMessage('El email no es válido')
         .custom(async (email) => {
+            email = email.toLowerCase().trim();
             for (const { model } of todosRolesSinEstudiantes) {
                 const usuarioBDD = await model.findOne({ email });
                 if (usuarioBDD) throw new Error('El email ya está registrado');
@@ -248,7 +251,7 @@ const registroCursoValidator = [
     check('paralelo')
         .isIn(['A', 'B', 'C', 'D', 'E']).withMessage('El paralelo debe ser una letra entre A y E'),
     // Validación personalizada
-    check('paralelo').custom(async (value, { req }) => {
+    check('paralelo').custom(async (_, { req }) => {
         const anioLectivoBDD = await AnioLectivo.findOne({ estado: true });
         if (!anioLectivoBDD) throw new Error('No hay un año lectivo activo');
         req.anioLectivoBDD = anioLectivoBDD;
@@ -557,6 +560,7 @@ const modificarUsuarioValidator = [
         .isEmail()
         .withMessage('El email no es válido')
         .custom(async (email, { req }) => {
+            email = email.toLowerCase().trim();
             // Si el email no cambió, permitir
             if (req.usuarioBDD.email === email) return true;
             // Verificar si el email ya está registrado en otros usuarios
