@@ -20,7 +20,8 @@ const rolActual = (rol) => {
 
 // Controlador para login: genera token y responde con datos básicos
 const login = async (req, res) => {
-    const { email, password } = req.body;
+    let { email } = req.body;
+    const { password } = req.body;
     const { anioLectivoBDD } = req;
     email = email.toLowerCase().trim();
     const resultados = await Promise.all(
@@ -73,7 +74,7 @@ const confirmarCuenta = async (req, res) => {
 
 // Envía correo de recuperación de contraseña según el rol
 const recuperarPassword = async (req, res) => {
-    const { email } = req.body;
+    let { email } = req.body;
     email = email.toLowerCase().trim();
     try {
         // Buscar el usuario en paralelo en todos los modelos
@@ -163,7 +164,8 @@ const cambiarPassword = async (req, res) => {
 
 // Permite cambiar los datos personales del usuario autenticado
 const cambiarDatos = async (req, res) => {
-    const { nombre, apellido, email, telefono, direccion } = req.body;
+    const { nombre, apellido, telefono, direccion } = req.body;
+    let { email } = req.body;
     const { id, rol } = req.userBDD;
     const rolModelo = rolActual(rol);
     try {

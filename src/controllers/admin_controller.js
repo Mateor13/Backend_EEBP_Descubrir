@@ -20,7 +20,8 @@ import Notas from '../models/notas.js'
 
 // Registra un nuevo administrador y envía credenciales por correo
 const registrarAdmin = async (req, res) => {
-    const { nombre, apellido, email, direccion, telefono, cedula } = req.body;
+    const { nombre, apellido, direccion, telefono, cedula } = req.body;
+    let { email} = req.body;
     try {
         email = email.toLowerCase().trim();
         const nuevoAdmin = new Administrador({ nombre, apellido, email, direccion, telefono, cedula });
@@ -47,7 +48,8 @@ const listarAdministradores = async (req, res) => {
 // Modifica los datos de un administrador existente
 const modificarAdministrador = async (req, res) => {
     const { usuarioBDD } = req;
-    const { nombre, apellido, email, direccion, telefono, cedula } = req.body;
+    const { nombre, apellido, direccion, telefono, cedula } = req.body;
+    let { email } = req.body;
     email = email.toLowerCase().trim();
     try {
         usuarioBDD.nombre = nombre;
@@ -79,7 +81,8 @@ const eliminarAdministrador = async (req, res) => {
 
 // Registra un nuevo profesor y envía credenciales por correo
 const registrarProfesor = async (req, res) => {
-    const { nombre, apellido, email, direccion, telefono, cedula } = req.body;
+    const { nombre, apellido, direccion, telefono, cedula } = req.body;
+    let { email } = req.body;
     try {
         email = email.toLowerCase().trim();
         const nuevoProfesor = new Profesor({ nombre, apellido, email, direccion, telefono, cedula, admin: req.userBDD.id });
@@ -105,7 +108,8 @@ const listarProfesores = async (req, res) => {
 // Modifica los datos de un profesor existente
 const modificarProfesor = async (req, res) => {
     const { usuarioBDD } = req;
-    const { nombre, apellido, email, direccion, telefono, cedula } = req.body;
+    const { nombre, apellido, direccion, telefono, cedula } = req.body;
+    let { email } = req.body;
     try {
         email = email.toLowerCase().trim();
         usuarioBDD.nombre = nombre;
@@ -137,7 +141,8 @@ const eliminarProfesor = async (req, res) => {
 
 // Registra un nuevo representante y envía credenciales por correo
 const registrarRepresentante = async (req, res) => {
-    const { nombre, apellido, email, direccion, telefono, cedula } = req.body;
+    const { nombre, apellido, direccion, telefono, cedula } = req.body;
+    let { email } = req.body;
     try {
         email = email.toLowerCase().trim();
         const nuevoRepresentante = new Representante({ nombre, apellido, email, telefono, cedula, direccion });
@@ -195,7 +200,8 @@ const listarRepresentantes = async (req, res) => {
 // Modifica los datos de un representante existente
 const modificarRepresentante = async (req, res) => {
     const { usuarioBDD } = req;
-    const { nombre, apellido, email, direccion, telefono, cedula } = req.body;
+    const { nombre, apellido, direccion, telefono, cedula } = req.body;
+    let { email } = req.body;
     try {
         email = email.toLowerCase().trim();
         usuarioBDD.nombre = nombre;
