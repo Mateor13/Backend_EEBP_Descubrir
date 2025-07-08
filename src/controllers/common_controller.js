@@ -20,6 +20,7 @@ const rolActual = (rol) => {
 
 // Controlador para login: genera token y responde con datos básicos
 const login = async (req, res) => {
+    try{
     let { email } = req.body;
     const { password } = req.body;
     const { anioLectivoBDD } = req;
@@ -33,14 +34,17 @@ const login = async (req, res) => {
         })
     );
     const resultado = resultados.find(res => res !== null);
-    if (!resultado) throw new Error('Credenciales incorrectas');
+    if (!resultado) return res.status(400).json({ error: 'Credenciales incorrectas' });
     const { userBDD, rol: userRol } = resultado;
-    if (!userBDD.confirmEmail) throw new Error('Por favor confirme su cuenta');
-    if (!userBDD.estado) throw new Error('Su cuenta ha sido desactivada, por favor contacte al administrador');
+    if (!userBDD.confirmEmail) return res.status(400).json({ error: 'Por favor confirme su cuenta' });
+    if (!userBDD.estado) return res.status(400).json({ error: 'Su cuenta ha sido desactivada, por favor contacte al administrador' });
     const verificarPassword = await userBDD.compararPassword(password);
-    if (!verificarPassword) throw new Error('Credenciales incorrectas');
+    if (!verificarPassword) return res.status(400).json({ error: 'Credenciales incorrectas' });
     const token = generarJWT(userBDD._id, userRol, anioLectivoBDD._id);
     return res.status(200).json({ rol: userRol, token });
+    } catch (error) {
+        return res.status(400).json({ error: error.message });
+    }
 }
 
 // Lista todos los años lectivos registrados
