@@ -578,14 +578,20 @@ const terminarAnioLectivo = async (req, res) => {
 const comenzarAnioLectivo = async (req, res) => {
     try {
         const ultimoAnioLectivo = await AnioLectivo.findOne().sort({ fechaFin: -1 });
-        let anio;
+        const anio = await AnioLectivo.iniciarPeriodo();
+
         if (ultimoAnioLectivo && ultimoAnioLectivo.estado === false) {
-            anio = await AnioLectivo.iniciarPeriodo();
             await CursoAsignado.promoverEstudiantesPorNivel(ultimoAnioLectivo._id, anio._id);
-        } else {
-            anio = await AnioLectivo.iniciarPeriodo();
         }
-        res.status(201).json({ msg: "Año Lectivo iniciado correctamente", anio });
+        res.status(201).json({
+            msg: "Año Lectivo iniciado correctamente",
+            anio: {
+                _id: anio._id,
+                fechaInicio: anio.fechaInicio,
+                periodo: anio.periodo,
+                estado: anio.estado
+            }
+        });
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
