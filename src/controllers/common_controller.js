@@ -50,7 +50,7 @@ const login = async (req, res) => {
 // Lista todos los años lectivos registrados
 const listarAniosLectivos = async (req, res) => {
     const anios = await aniosLectivo.find().select('-__v -createdAt -updatedAt -ponderaciones -fechaInicio')
-    if (!anios || anios.length === 0) return res.status(404).json({ error: 'No se encontraron años lectivos' });
+    if (!anios || anios.length === 0) return res.status(204).json({ error: 'No se encontraron años lectivos' });
     return res.status(200).json(anios)
 };
 
@@ -70,7 +70,7 @@ const confirmarCuenta = async (req, res) => {
         // Confirmar el email y guardar los cambios
         usuarioBDD.confirmEmail = true;
         await usuarioBDD.save();
-        return res.status(200).json({ mensaje: 'Su cuenta se ha confirmado exitosamente, ya puede iniciar sesión' });
+        return res.status(200).json({ mensaje: 'La cuenta se ha confirmado exitosamente, ya puede iniciar sesión' });
     } catch (error) {
         return res.status(500).json({ error: 'Error interno al procesar la solicitud' });
     }
@@ -144,7 +144,7 @@ const nuevaContrasena = async (req, res) => {
         usuarioBDD.token = null;
         await usuarioBDD.encriptarPassword(password);
         await usuarioBDD.save();
-        return res.status(200).json({ mensaje: 'Contraseña ha sido actualizada exitosamente' });
+        return res.status(200).json({ mensaje: 'La contraseña ha sido actualizada exitosamente' });
     } catch (error) {
         return res.status(400).json({ error: 'El token no es válido' });
     }
@@ -161,7 +161,7 @@ const cambiarPassword = async (req, res) => {
         if (!verificarPassword) return res.status(400).json({ error: 'La contraseña actual es incorrecta' });
         await userBDD.encriptarPassword(newPassword);
         await userBDD.save();
-        return res.status(200).json({ mensaje: 'Contraseña ha sido actualizada exitosamente' });
+        return res.status(200).json({ mensaje: 'La contraseña ha sido actualizada exitosamente' });
     }
     return res.status(400).json({ error: 'Error al actualizar el usuario' });
 }

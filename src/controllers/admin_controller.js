@@ -39,9 +39,9 @@ const registrarAdmin = async (req, res) => {
 // Lista todos los administradores registrados
 const listarAdministradores = async (req, res) => {
     const administradoresBDD = await Administrador.find().select('-__v -createdAt -updatedAt -token -password -confirmEmail');
-    if (!administradoresBDD) return res.status(400).json({ error: 'No hay administradores registrados' });
+    if (!administradoresBDD) return res.status(204).json({ error: 'No hay administradores registrados' });
     const administradores = administradoresBDD.filter(admin => admin.estado === true);
-    if (administradores.length === 0) return res.status(400).json({ error: 'No hay administradores activos' });
+    if (administradores.length === 0) return res.status(204).json({ error: 'No hay administradores activos' });
     res.status(200).json(administradores);
 };
 
@@ -99,9 +99,9 @@ const registrarProfesor = async (req, res) => {
 // Lista todos los profesores registrados
 const listarProfesores = async (req, res) => {
     const profesoresBDD = await Profesor.find().select('-__v -createdAt -updatedAt -token -password -confirmEmail -admin');
-    if (!profesoresBDD) return res.status(400).json({ error: 'No hay profesores registrados' });
+    if (!profesoresBDD) return res.status(204).json({ error: 'No hay profesores registrados' });
     const profesores = profesoresBDD.filter(profesor => profesor.estado === true);
-    if (profesores.length === 0) return res.status(400).json({ error: 'No hay profesores activos' });
+    if (profesores.length === 0) return res.status(204).json({ error: 'No hay profesores activos' });
     res.status(200).json(profesores);
 };
 
@@ -178,7 +178,7 @@ const listarRepresentantes = async (req, res) => {
             .populate('estudiantes', '_id nombre apellido cedula estado')
             .select('-__v -createdAt -updatedAt -token -password -confirmEmail');
         if (!representantes.length) {
-            return res.status(404).json({ error: 'No hay representantes asociados a este curso' });
+            return res.status(204).json({ error: 'No hay representantes asociados a este curso' });
         }
         // Filtrar los estudiantes de cada representante para que solo estén los del curso
         representantes = representantes.map(rep => {
@@ -284,6 +284,8 @@ const listarCursos = async (req, res) => {
             paralelo: curso.curso.paralelo,
         }));
 
+        if (cursosBDD.length === 0) res.status(204).json({ error: 'No hay cursos registrados' });
+
         res.status(200).json(cursosBDD);
     } catch (error) {
         res.status(500).json({ error: 'Error al listar los cursos' });
@@ -345,7 +347,7 @@ const listarMaterias = async (req, res) => {
         });
     if (!cursoAsignadoBDD) return res.status(400).json({ error: 'El curso no esta registrado' });
     const materias = cursoAsignadoBDD.materias.filter(materia => materia.estado === true);
-    if (materias.length === 0) return res.status(400).json({ error: 'No hay materias registradas' });
+    if (materias.length === 0) return res.status(204).json({ error: 'No hay materias registradas' });
     res.status(200).json(materias);
 };
 
@@ -446,9 +448,9 @@ const listarEstudiantesXCurso = async (req, res) => {
     if (!cursoAsignadoBDD) return res.status(400).json({ error: 'El curso no esta registrado' });
     // Filtrar solo estudiantes activos
     const estudiantesActivos = (cursoAsignadoBDD.estudiantes || []).filter(estudiante => estudiante.estado !== false);
-    if (estudiantesActivos.length === 0) return res.status(400).json({ error: 'No hay estudiantes registrados' });
+    if (estudiantesActivos.length === 0) return res.status(204).json({ error: 'No hay estudiantes registrados' });
     res.status(200).json(estudiantesActivos);
-}
+};
 
 // Elimina (desactiva) un estudiante y lo remueve del curso
 const eliminarEstudiante = async (req, res) => {
