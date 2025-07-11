@@ -50,7 +50,7 @@ const login = async (req, res) => {
 // Lista todos los años lectivos registrados
 const listarAniosLectivos = async (req, res) => {
     const anios = await aniosLectivo.find().select('-__v -createdAt -updatedAt -ponderaciones -fechaInicio')
-    if (!anios || anios.length === 0) return res.status(204).json({ error: 'No se encontraron años lectivos' });
+    if (!anios || anios.length === 0) return res.status(200).json({ error: 'No se encontraron años lectivos' });
     return res.status(200).json(anios)
 };
 
