@@ -133,10 +133,12 @@ const nuevaContrasena = async (req, res) => {
     const { password } = req.body;
     const { token } = req.params;
     try {
-        // Buscar el usuario en paralelo en todos los modelos
-        const usuarioBDD = await Promise.any(
+        // Buscar el usuario en paralelo en todos los modelos (igual que en confirmarCuenta)
+        const resultados = await Promise.all(
             roles.map(({ model }) => model.findOne({ token }))
         );
+        // Filtrar el resultado para encontrar el usuario
+        const usuarioBDD = resultados.find(user => user !== null);
         if (!usuarioBDD) {
             return res.status(400).json({ error: 'El token no es válido' });
         }
