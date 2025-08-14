@@ -97,6 +97,16 @@ const registroAdminValidator = [
             if (/^\d+$/.test(value)) throw new Error('La dirección no puede ser solo números');
             return true;
         }),
+    // Validar el año lectivo
+    check('anioLectivo')
+        .custom(async (_, { req }) => {
+            const anioLectivo = req.userBDD.anio;
+            const anioLectivoBDD = await AnioLectivo.findById(anioLectivo);
+            if (!anioLectivoBDD) throw new Error('El año lectivo no está registrado');
+            if (anioLectivoBDD.estado !== true) throw new Error('El año lectivo no está activo');
+            req.anioLectivoBDD = anioLectivoBDD;
+            return true;
+        }),
     // Manejo de errores
     (req, res, next) => {
         const errors = validationResult(req);
@@ -163,6 +173,16 @@ const registroProfesorValidator = [
             if (/^(\d)\1{4,}$/.test(value)) throw new Error('La dirección no puede ser solo números repetidos');
             if (/^([a-zA-Z])\1{4,}$/.test(value)) throw new Error('La dirección no puede ser un solo carácter repetido');
             if (/^\d+$/.test(value)) throw new Error('La dirección no puede ser solo números');
+            return true;
+        }),
+    // Validar el año lectivo
+    check('anioLectivo')
+        .custom(async (_, { req }) => {
+            const anioLectivo = req.userBDD.anio;
+            const anioLectivoBDD = await AnioLectivo.findById(anioLectivo);
+            if (!anioLectivoBDD) throw new Error('El año lectivo no está registrado');
+            if (anioLectivoBDD.estado !== true) throw new Error('El año lectivo no está activo');
+            req.anioLectivoBDD = anioLectivoBDD;
             return true;
         }),
     // Manejo de errores
@@ -232,6 +252,16 @@ const registroRepresentanteValidator = [
             if (/^\d+$/.test(value)) throw new Error('La dirección no puede ser solo números');
             return true;
         }),
+    // Validar el año lectivo
+    check('anioLectivo')
+        .custom(async (_, { req }) => {
+            const anioLectivo = req.userBDD.anio;
+            const anioLectivoBDD = await AnioLectivo.findById(anioLectivo);
+            if (!anioLectivoBDD) throw new Error('El año lectivo no está registrado');
+            if (anioLectivoBDD.estado !== true) throw new Error('El año lectivo no está activo');
+            req.anioLectivoBDD = anioLectivoBDD;
+            return true;
+        }),
     // Manejo de errores
     (req, res, next) => {
         const errors = validationResult(req);
@@ -251,16 +281,17 @@ const registroCursoValidator = [
     check('paralelo')
         .isIn(['A', 'B', 'C', 'D', 'E']).withMessage('El paralelo debe ser una letra entre A y E'),
     // Validación personalizada
-    check('paralelo').custom(async (_, { req }) => {
+    check('anioLectivo').custom(async (_, { req }) => {
         const anioLectivoBDD = await AnioLectivo.findOne({ estado: true });
         if (!anioLectivoBDD) throw new Error('No hay un año lectivo activo');
         req.anioLectivoBDD = anioLectivoBDD;
         return true;
     }),
+
     (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
+            return res.status(400).json({ msg: errors.array()[0].msg });
         }
         next();
     }
@@ -303,6 +334,16 @@ const registroMateriaValidator = [
             const profesorBDD = await Profesor.findOne({ cedula: cedulaProfesor });
             if (!profesorBDD) throw new Error('El profesor no está registrado');
             req.profesorBDD = profesorBDD;
+            return true;
+        }),
+    // Validación de año lectivo
+    check('anioLectivo')
+        .custom(async (_, { req }) => {
+            const anioLectivo = req.userBDD.anio;
+            const anioLectivoBDD = await AnioLectivo.findById(anioLectivo);
+            if (!anioLectivoBDD) throw new Error('El año lectivo no está registrado');
+            if (anioLectivoBDD.estado !== true) throw new Error('El año lectivo no está activo');
+            req.anioLectivoBDD = anioLectivoBDD;
             return true;
         }),
     // Manejo de errores
@@ -359,6 +400,15 @@ const registroEstudianteValidator = [
             req.representanteBDD = representanteBDD;
             return true;
         }),
+    check('anioLectivo')
+        .custom(async (_, { req }) => {
+            const anioLectivo = req.userBDD.anio;
+            const anioLectivoBDD = await AnioLectivo.findById(anioLectivo);
+            if (!anioLectivoBDD) throw new Error('El año lectivo no está registrado');
+            if (anioLectivoBDD.estado !== true) throw new Error('El año lectivo no está activo');
+            req.anioLectivoBDD = anioLectivoBDD;
+            return true;
+        }),
     // Manejo de errores
     (req, res, next) => {
         const errors = validationResult(req);
@@ -393,6 +443,16 @@ const asignarRepresentanteValidator = [
             const representanteBDD = await Representante.findOne({ cedula: cedulaRepresentante });
             if (!representanteBDD) throw new Error('El representante no está registrado');
             req.representanteBDD = representanteBDD;
+            return true;
+        }),
+    // Validación de año lectivo activo
+    check('anioLectivo')
+        .custom(async (_, { req }) => {
+            const anioLectivo = req.userBDD.anio;
+            const anioLectivoBDD = await AnioLectivo.findById(anioLectivo);
+            if (!anioLectivoBDD) throw new Error('El año lectivo no está registrado');
+            if (anioLectivoBDD.estado !== true) throw new Error('El año lectivo no está activo');
+            req.anioLectivoBDD = anioLectivoBDD;
             return true;
         }),
     // Manejo de errores
@@ -521,6 +581,16 @@ const registroAsistenciaEstudiantesValidator = [
             if (!asistencias || typeof asistencias !== 'object') throw new Error('Especificar las asistencias');
             return true;
         }),
+    // Validación de año lectivo
+    check('anioLectivo')
+        .custom(async (_, { req }) => {
+            const anioLectivo = req.userBDD.anio;
+            const anioLectivoBDD = await AnioLectivo.findById(anioLectivo);
+            if (!anioLectivoBDD) throw new Error('El año lectivo no está registrado');
+            if (anioLectivoBDD.estado !== true) throw new Error('El año lectivo no está activo');
+            req.anioLectivoBDD = anioLectivoBDD;
+            return true;
+        }),
     // Manejo de errores
     (req, res, next) => {
         const errors = validationResult(req);
@@ -612,6 +682,18 @@ const modificarUsuarioValidator = [
             if (/^\d+$/.test(value)) throw new Error('La dirección no puede ser solo números');
             return true;
         }),
+    // Validación de id del año lectivo
+    check('anioLectivo')
+        .isMongoId()
+        .withMessage('El id del año lectivo no es válido')
+        .custom(async (_, { req }) => {
+            const anioLectivo = req.userBDD.anio;
+            const anioLectivoBDD = await AnioLectivo.findById(anioLectivo);
+            if (!anioLectivoBDD) throw new Error('El año lectivo no está registrado');
+            if (anioLectivoBDD.estado !== true) throw new Error('El año lectivo no está activo');
+            req.anioLectivoBDD = anioLectivoBDD;
+            return true;
+        }),
     // Manejo de errores
     (req, res, next) => {
         const errors = validationResult(req);
@@ -649,6 +731,16 @@ const modificarEstudianteValidator = [
                 }
             }
             req.estudianteBDD = usuarioBDD;
+            return true;
+        }),
+    // Validación de año lectivo activo
+    check('anioLectivo')
+        .custom(async (_, { req }) => {
+            const anioLectivo = req.userBDD.anio;
+            const anioLectivoBDD = await AnioLectivo.findById(anioLectivo);
+            if (!anioLectivoBDD) throw new Error('El año lectivo no está registrado');
+            if (anioLectivoBDD.estado !== true) throw new Error('El año lectivo no está activo');
+            req.anioLectivoBDD = anioLectivoBDD;
             return true;
         }),
     // Manejo de errores
@@ -792,6 +884,16 @@ const eliminarProfesorValidator = [
             req.profesorBDD = profesorBDD;
             return true;
         }),
+    // Validación de año lectivo activo
+    check('anioLectivo')
+        .custom(async (_, { req }) => {
+            const anioLectivo = req.userBDD.anio;
+            const anioLectivoBDD = await AnioLectivo.findById(anioLectivo);
+            if (!anioLectivoBDD) throw new Error('El año lectivo no está registrado');
+            if (anioLectivoBDD.estado !== true) throw new Error('El año lectivo no está activo');
+            req.anioLectivoBDD = anioLectivoBDD;
+            return true;
+        }),
     // Manejo de errores
     (req, res, next) => {
         const errors = validationResult(req);
@@ -818,6 +920,16 @@ const eliminarRepresentanteValidator = [
             const estudiantesActivos = representanteBDD.estudiantes.filter(estudiante => estudiante.estado === true);
             if (estudiantesActivos.length > 0) throw new Error('No se puede eliminar el representante porque tiene estudiantes activos asignados');
             req.representanteBDD = representanteBDD;
+            return true;
+        }),
+    // Validación de año lectivo activo
+    check('anioLectivo')
+        .custom(async (_, { req }) => {
+            const anioLectivo = req.userBDD.anio;
+            const anioLectivoBDD = await AnioLectivo.findById(anioLectivo);
+            if (!anioLectivoBDD) throw new Error('El año lectivo no está registrado');
+            if (anioLectivoBDD.estado !== true) throw new Error('El año lectivo no está activo');
+            req.anioLectivoBDD = anioLectivoBDD;
             return true;
         }),
     // Manejo de errores
@@ -849,6 +961,16 @@ const eliminarCursoValidator = [
             req.cursoBDD = cursoAsignadoBDD;
             return true;
         }),
+    // Validación de año lectivo activo
+    check('anioLectivo')
+        .custom(async (_, { req }) => {
+            const anioLectivo = req.userBDD.anio;
+            const anioLectivoBDD = await AnioLectivo.findById(anioLectivo);
+            if (!anioLectivoBDD) throw new Error('El año lectivo no está registrado');
+            if (anioLectivoBDD.estado !== true) throw new Error('El año lectivo no está activo');
+            req.anioLectivoBDD = anioLectivoBDD;
+            return true;
+        }),
     // Manejo de errores
     (req, res, next) => {
         const errors = validationResult(req);
@@ -872,6 +994,16 @@ const eliminarMateriaValidator = [
             if (!materiaBDD) throw new Error('La materia no está registrada');
             if (materiaBDD.estado === false) throw new Error('La materia ya está eliminada');
             req.materiaBDD = materiaBDD;
+            return true;
+        }),
+    // Validación de año lectivo activo
+    check('anioLectivo')
+        .custom(async (_, { req }) => {
+            const anioLectivo = req.userBDD.anio;
+            const anioLectivoBDD = await AnioLectivo.findById(anioLectivo);
+            if (!anioLectivoBDD) throw new Error('El año lectivo no está registrado');
+            if (anioLectivoBDD.estado !== true) throw new Error('El año lectivo no está activo');
+            req.anioLectivoBDD = anioLectivoBDD;
             return true;
         }),
     // Manejo de errores
@@ -909,6 +1041,15 @@ const eliminarEstAdminValidator = [
                 }
             }
             throw new Error('El usuario no está registrado');
+        }),
+    check('anioLectivo')
+        .custom(async (_, { req }) => {
+            const anioLectivo = req.userBDD.anio;
+            const anioLectivoBDD = await AnioLectivo.findById(anioLectivo);
+            if (!anioLectivoBDD) throw new Error('El año lectivo no está registrado');
+            if (anioLectivoBDD.estado !== true) throw new Error('El año lectivo no está activo');
+            req.anioLectivoBDD = anioLectivoBDD;
+            return true;
         }),
     (req, res, next) => {
         const errors = validationResult(req);
@@ -969,6 +1110,16 @@ const modificarMateriaValidator = [
             req.nuevoProfesorBDD = nuevoProfesorBDD;
             return true;
         }),
+    // Validación de año lectivo activo
+    check('anioLectivo')
+        .custom(async (_, { req }) => {
+            const anioLectivo = req.userBDD.anio;
+            const anioLectivoBDD = await AnioLectivo.findById(anioLectivo);
+            if (!anioLectivoBDD) throw new Error('El año lectivo no está registrado');
+            if (anioLectivoBDD.estado !== true) throw new Error('El año lectivo no está activo');
+            req.anioLectivoBDD = anioLectivoBDD;
+            return true;
+        }),
     // Manejo de errores
     (req, res, next) => {
         const errors = validationResult(req);
@@ -1016,6 +1167,16 @@ const reasignarCursoEstudianteValidator = [
                 throw new Error('El estudiante ya está asignado a este curso');
             }
             req.cursoAsignadoBDD = cursoAsignadoBDD;
+            return true;
+        }),
+    // Validación de año lectivo activo
+    check('anioLectivo')
+        .custom(async (_, { req }) => {
+            const anioLectivo = req.userBDD.anio;
+            const anioLectivoBDD = await AnioLectivo.findById(anioLectivo);
+            if (!anioLectivoBDD) throw new Error('El año lectivo no está registrado');
+            if (anioLectivoBDD.estado !== true) throw new Error('El año lectivo no está activo');
+            req.anioLectivoBDD = anioLectivoBDD;
             return true;
         }),
     // Manejo de errores

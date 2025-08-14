@@ -176,7 +176,7 @@ const cambiarDatos = async (req, res) => {
         // Buscar el usuario actual
         const userBDD = await rolModelo.model.findById(id);
         if (!userBDD) {
-            return res.status(404).json({ error: 'Usuario no encontrado' });
+                return res.status(404).json({ error: 'Usuario no encontrado' });
         }
         const promesas = [];
         // Verificar si el email ha cambiado
