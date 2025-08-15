@@ -291,7 +291,7 @@ const registroCursoValidator = [
     (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ msg: errors.array()[0].msg });
+            return res.status(400).json({ error: errors.array()[0].msg });
         }
         next();
     }
@@ -684,8 +684,6 @@ const modificarUsuarioValidator = [
         }),
     // Validación de id del año lectivo
     check('anioLectivo')
-        .isMongoId()
-        .withMessage('El id del año lectivo no es válido')
         .custom(async (_, { req }) => {
             const anioLectivo = req.userBDD.anio;
             const anioLectivoBDD = await AnioLectivo.findById(anioLectivo);

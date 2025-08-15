@@ -483,14 +483,15 @@ const reasignarCursoEstudiante = async (req, res) => {
     const { estudianteBDD, cursoAnterior, cursoAsignadoBDD } = req;
     try {
         // Verificar si el estudiante ya está en el curso
-        const estudianteEnCurso = cursoAsignadoBDD.estudiantes.find(est => est._id.toString() === estudianteBDD._id.toString());
-        if (!estudianteEnCurso) {
-            return res.status(400).json({ error: 'El estudiante no está asignado a este curso' });
+        const estudianteYaEnCursoNuevo = cursoAsignadoBDD.estudiantes.find(est => est._id.toString() === estudianteBDD._id.toString());
+        if (estudianteYaEnCursoNuevo) {
+            return res.status(400).json({ error: 'El estudiante ya está asignado a este curso' });
         }
-        // Asignar el nuevo curso al estudiante
+        // Remover del curso anterior si existe
         if (cursoAnterior) {
             await cursoAnterior.eliminarEstudiante(estudianteBDD._id);
         }
+        // Asignar al nuevo curso
         await cursoAsignadoBDD.agregarEstudiante(estudianteBDD._id);
         res.status(200).json({ msg: 'Curso asignado correctamente' });
     } catch (error) {

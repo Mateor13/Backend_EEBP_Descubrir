@@ -120,6 +120,7 @@ const perfil = async (req, res) => {
             email: usuarioBDD.email,
             telefono: usuarioBDD.telefono,
             direccion: usuarioBDD.direccion,
+            cedula: usuarioBDD.cedula,
             rol
         };
         return res.status(200).json(userBDD);
