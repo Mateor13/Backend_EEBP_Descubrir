@@ -4,6 +4,8 @@ Base: `/api/v2`. Todas las rutas, salvo `/salud` y `/auth/{login,activar,recuper
 
 **Periodo por defecto:** las consultas aceptan `?periodo=<id>` para ver años anteriores; si no se indica, se usa el periodo activo. Solo se puede escribir en un periodo que no esté cerrado.
 
+**Formularios públicos:** `login`, `activar`, `recuperar` y `restablecer` aceptan el campo trampa `sitioWeb` del frontend; si llega con contenido (bot) se responde 400 y cuenta para el límite de intentos.
+
 **Errores:** siempre con la forma `{ "error": "mensaje", "detalles"?: [...] }`.
 
 | Código | Significado |
