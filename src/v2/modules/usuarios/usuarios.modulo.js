@@ -11,7 +11,7 @@ const datosUsuario = {
     direccion: z.string().trim().min(5, 'La dirección debe tener entre 5 y 120 caracteres').max(120),
     roles: z.array(z.enum(TODOS_LOS_ROLES)).min(1, 'Debe indicar al menos un rol').transform(r => [...new Set(r)])
 }
-const esquemas = {
+export const esquemas = {
     crear: z.strictObject(datosUsuario),
     actualizar: z.strictObject(datosUsuario).partial(),
     listar: z.object({ rol: z.enum(TODOS_LOS_ROLES).optional(), activo: z.enum(['true', 'false']).default('true').transform(v => v === 'true') })

@@ -18,6 +18,8 @@ El repositorio incluye una **API v2** (`/api/v2`) rediseñada desde cero, que co
 - **Transacciones**, validación con zod, pruebas automáticas y lint.
 - **Script de migración** v1 → v2 idempotente, que no modifica la BDD v1.
 
+📚 **Documentación interactiva (Swagger UI):** `/api/docs` en el servidor (p. ej. https://escuela-descubrir.vercel.app/api/docs). Especificación OpenAPI 3.1 en `/api/docs/openapi.json`; se regenera con `npm run docs:generar`.
+
 📖 Documentación: [Arquitectura](docs/v2/ARQUITECTURA.md) · [Endpoints](docs/v2/API.md) · [Plan de migración](docs/v2/MIGRACION.md) · [Mantenimiento de la v1](docs/v1/MANTENIMIENTO.md)
 
 ```bash

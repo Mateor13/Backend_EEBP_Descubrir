@@ -1,5 +1,7 @@
 # API v2: referencia de endpoints
 
+> La referencia completa e interactiva de **v1 y v2** está en **Swagger UI**: `/api/docs` (especificación OpenAPI 3.1 en `/api/docs/openapi.json`). Este documento resume la v2.
+
 Base: `/api/v2`. Todas las rutas, salvo `/salud` y `/auth/{login,activar,recuperar,restablecer}`, requieren el header `Authorization: Bearer <token>`.
 
 **Periodo por defecto:** las consultas aceptan `?periodo=<id>` para ver años anteriores; si no se indica, se usa el periodo activo. Solo se puede escribir en un periodo que no esté cerrado.

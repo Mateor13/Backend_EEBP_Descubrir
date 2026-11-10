@@ -6,7 +6,7 @@ import { autorizar } from '../../shared/middlewares/autenticacion.js'
 import { ROLES } from '../../shared/roles.js'
 import { idMongo, paramsId } from '../../shared/esquemas.js'
 
-const esquemas = {
+export const esquemas = {
     crear: z.strictObject({ texto: z.string().trim().min(5, 'La observación debe tener al menos 5 caracteres').max(1000) }),
     periodo: z.object({ periodo: idMongo.optional() })
 }
