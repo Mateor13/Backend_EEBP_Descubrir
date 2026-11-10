@@ -570,7 +570,8 @@ const registroAsistenciaEstudiantesValidator = [
         .custom(async (curso, { req }) => {
             const cursoBDD = await Curso.findById(curso);
             if (!cursoBDD) throw new Error('El curso no está registrado');
-            const cursoAsignadoBDD = await CursoAsignado.findOne({ curso: cursoBDD._id, anioLectivo: req.userBDD.anio });
+            // Se cargan los nombres para que los mensajes de error identifiquen al estudiante
+            const cursoAsignadoBDD = await CursoAsignado.findOne({ curso: cursoBDD._id, anioLectivo: req.userBDD.anio }).populate('estudiantes', 'nombre apellido');
             if (!cursoAsignadoBDD) throw new Error('El curso no está asignado a un año lectivo');
             req.cursoAsignadoBDD = cursoAsignadoBDD;
             return true;

@@ -605,7 +605,7 @@
     "paso": "registrar asistencia repetida",
     "status": 400,
     "cuerpo": {
-      "error": "Ya se ha registrado la asistencia del estudiante undefined undefined, Ya se ha registrado la asistencia del estudiante undefined undefined"
+      "error": "Ya se ha registrado la asistencia del estudiante Pedro Paz, Ya se ha registrado la asistencia del estudiante Juan Luna Sol"
     }
   },
   {

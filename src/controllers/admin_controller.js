@@ -288,12 +288,13 @@ const listarCursos = async (req, res) => {
             estado: true
         }).populate('curso');
 
-        const cursosBDD = cursos.map(curso => ({
+        // Ordenados por nivel y paralelo (antes el orden dependía de cómo se insertaron)
+        const cursosBDD = cursos.filter(curso => curso.curso).map(curso => ({
             _id: curso.curso._id,
             nombre: curso.curso.nombre,
             nivel: curso.curso.nivel,
             paralelo: curso.curso.paralelo,
-        }));
+        })).sort((a, b) => a.nivel - b.nivel || a.paralelo.localeCompare(b.paralelo));
 
         if (cursosBDD.length === 0) return res.status(404).json({ error: 'No hay cursos registrados' });
 

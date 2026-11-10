@@ -1,5 +1,5 @@
 // Importaciones necesarias
-import Router from 'express'; // Importa el enrutador de Express
+import { Router } from 'express' // Router de Express (antes se importaba la aplicación completa)
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit'; // Limita peticiones repetidas
 import {
     cambiarDatos,

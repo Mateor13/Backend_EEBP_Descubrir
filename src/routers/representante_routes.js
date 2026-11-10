@@ -1,4 +1,4 @@
-import Router from 'express'
+import { Router } from 'express' // Router de Express (antes se importaba la aplicación completa)
 import { verAsistenciaEstudiante, verEstudiantes, verMateriasEstudiante, verNotasEstudiante, verObservacionesEstudiante } from '../controllers/representante_controller.js'
 import { verificarAutenticacion, verificarRolRepresentante } from '../middlewares/JWT.js'
 import { validarIdEstudiante, validarIdEstudianteIdMateria } from '../validators/representante_validator.js'
