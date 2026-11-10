@@ -6,6 +6,7 @@ import profesorRouter from './routers/profesor_routes.js'
 import representanteRouter from './routers/representante_routes.js'
 import comunRouter from './routers/common_routes.js'
 import multer from 'multer'
+import { crearApiV2 } from './v2/app.js'
 
 // Inicializadores de la aplicación
 const app = express()
@@ -16,13 +17,16 @@ const upload = multer()
 // Configuración del puerto y middlewares globales
 app.set('port', process.env.PORT || 3000)
 app.set('trust proxy', 1) // Necesario detrás del proxy de Vercel para que el límite de intentos use la IP real
-app.use(cors()) // Habilita CORS para todas las rutas
+// CORS: si CORS_ORIGINS está definido (lista separada por comas), solo esos dominios pueden llamar a la API.
+// Si no está definido se mantiene el comportamiento anterior (cualquier origen).
+const origenesPermitidos = process.env.CORS_ORIGINS?.split(',').map(o => o.trim()).filter(Boolean)
+app.use(cors(origenesPermitidos?.length ? { origin: origenesPermitidos } : undefined))
 app.use(express.json()) // Para parsear JSON en las peticiones
 
 // Aplicar upload.none() globalmente a todas las rutas
 app.use((req, res, next) => {
-    // Excluir la ruta específica de subir evidencia
-    if (req.path.includes('/subir-evidencia/')) {
+    // Excluir la subida de evidencia (v1) y toda la API v2, que maneja sus propios archivos
+    if (req.path.includes('/subir-evidencia/') || req.path.startsWith('/api/v2')) {
         next(); // No aplicar upload.none()
     } else {
         upload.none()(req, res, (err) => {
@@ -36,7 +40,10 @@ app.use((req, res, next) => {
     }
 });
 
-// Rutas públicas y comunes 
+// API v2 (nueva arquitectura). Se monta antes que la v1 para que sus rutas no choquen.
+app.use('/api/v2', crearApiV2())
+
+// Rutas públicas y comunes (v1)
 app.use('/api/', comunRouter)
 
 // Rutas privadas (requieren autenticación y roles específicos)
