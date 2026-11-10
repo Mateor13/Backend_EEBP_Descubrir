@@ -15,7 +15,13 @@ const base = (titulo, contenido) => `
 const boton = (url, texto) => `<p style="text-align: center; margin: 24px 0;">
   <a href="${url}" style="background-color: ${COLOR}; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">${texto}</a></p>`
 
-const urlFront = (ruta) => `${(process.env.URL_PRODUCTION || '').replace(/\/$/, '')}/${ruta}`
+// Frontend de la v2. URL_FRONTEND_V2 permite que los correos de la v2 enlacen al frontend nuevo mientras
+// la v1 (URL_PRODUCTION) sigue enlazando al antiguo. Sin URL_FRONTEND_V2 se usa URL_PRODUCTION.
+export const urlFrontendV2 = () => {
+    const base = (process.env.URL_FRONTEND_V2 || process.env.URL_PRODUCTION || '').trim().replace(/\/+$/, '')
+    return base && !/^https?:\/\//i.test(base) ? `https://${base}` : base
+}
+const urlFront = (ruta) => `${urlFrontendV2()}/${ruta}`
 
 // Ya no se envían contraseñas por correo: la persona crea la suya con el enlace
 export const bienvenida = ({ nombre, token }) => ({
