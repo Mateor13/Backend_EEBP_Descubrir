@@ -35,7 +35,11 @@ const crearControlador = (servicio) => ({
 // ---------- Rutas ----------
 export const crearRutasAuth = ({ authServicio, autenticar }) => {
     const c = crearControlador(authServicio)
-    const limite = rateLimit({ windowMs: 15 * 60 * 1000, limit: Number(process.env.AUTH_LIMITE_INTENTOS) || 10, standardHeaders: 'draft-7', legacyHeaders: false,
+    // Clave IP + email y solo intentos fallidos: en la escuela muchos usuarios comparten la misma IP pública
+    const limite = rateLimit({
+        windowMs: 15 * 60 * 1000, limit: Number(process.env.AUTH_LIMITE_INTENTOS) || 10, standardHeaders: 'draft-7', legacyHeaders: false,
+        skipSuccessfulRequests: true,
+        keyGenerator: (req) => `${req.ip}|${String(req.body?.email ?? '').toLowerCase().trim()}`,
         message: { error: 'Demasiados intentos, intente de nuevo en 15 minutos' } })
     const router = Router()
     router.post('/login', limite, validar({ body: esquemas.login }), ruta(c.login))
