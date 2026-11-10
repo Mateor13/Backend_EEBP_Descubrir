@@ -1,15 +1,18 @@
 import nodemailer from "nodemailer"
 
 // Configuración del transporter de nodemailer para envío de correos
-let transporter = nodemailer.createTransport({
-    service: 'gmail',
-    host: process.env.HOST_MAILTRAP,
-    port: process.env.PORT_MAILTRAP,
-    auth: {
-        user: process.env.USER_MAILTRAP,
-        pass: process.env.PASS_MAILTRAP,
-    }
-});
+// En pruebas (NODE_ENV=test) los correos no se envían: se generan en memoria (jsonTransport)
+let transporter = process.env.NODE_ENV === 'test'
+    ? nodemailer.createTransport({ jsonTransport: true })
+    : nodemailer.createTransport({
+        service: 'gmail',
+        host: process.env.HOST_MAILTRAP,
+        port: process.env.PORT_MAILTRAP,
+        auth: {
+            user: process.env.USER_MAILTRAP,
+            pass: process.env.PASS_MAILTRAP,
+        }
+    });
 
 // Envía correo de verificación de cuenta a un usuario (admin)
 const sendMailToUser = async (userMail, token, password) => {

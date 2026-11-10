@@ -1,0 +1,1010 @@
+[
+  {
+    "paso": "listar años",
+    "status": 200,
+    "cuerpo": [
+      {
+        "_id": "<id1>",
+        "estado": true,
+        "periodo": "<periodo-actual>"
+      }
+    ]
+  },
+  {
+    "paso": "login credenciales incorrectas",
+    "status": 400,
+    "cuerpo": {
+      "error": "Credenciales incorrectas"
+    }
+  },
+  {
+    "paso": "login sin año lectivo",
+    "status": 400,
+    "cuerpo": {
+      "error": "El año lectivo es obligatorio"
+    }
+  },
+  {
+    "paso": "login admin",
+    "status": 200,
+    "cuerpo": {
+      "rol": "administrador",
+      "token": "<jwt>"
+    }
+  },
+  {
+    "paso": "perfil admin",
+    "status": 200,
+    "cuerpo": {
+      "apellido": "Admin",
+      "cedula": "1700000001",
+      "direccion": "Av. Principal 100",
+      "email": "admin@escuela.test",
+      "nombre": "Ana",
+      "rol": "administrador",
+      "telefono": "0990000001"
+    }
+  },
+  {
+    "paso": "perfil sin token",
+    "status": 401,
+    "cuerpo": {
+      "error": "Lo sentimos, debes proporcionar un token"
+    }
+  },
+  {
+    "paso": "perfil token inválido",
+    "status": 401,
+    "cuerpo": {
+      "error": "Formato del token no válido"
+    }
+  },
+  {
+    "paso": "ruta inexistente",
+    "status": 404,
+    "cuerpo": {
+      "error": "La ruta solicitada no existe"
+    }
+  },
+  {
+    "paso": "página de inicio",
+    "status": 200,
+    "cuerpo": "\n        <!DOCTYPE html>\n        <html lang=\"es\">\n        <head>\n            <me"
+  },
+  {
+    "paso": "registrar admin",
+    "status": 201,
+    "cuerpo": {
+      "administrador": "<id2>",
+      "msg": "Administrador registrado, verifique el email para confirmar su cuenta"
+    }
+  },
+  {
+    "paso": "registrar admin duplicado",
+    "status": 400,
+    "cuerpo": {
+      "error": "El email ya está registrado"
+    }
+  },
+  {
+    "paso": "registrar admin inválido",
+    "status": 400,
+    "cuerpo": {
+      "error": "El email no es válido"
+    }
+  },
+  {
+    "paso": "listar administradores",
+    "status": 200,
+    "cuerpo": [
+      {
+        "_id": "<id3>",
+        "apellido": "Admin",
+        "cedula": "1700000001",
+        "direccion": "Av. Principal 100",
+        "email": "admin@escuela.test",
+        "estado": true,
+        "nombre": "Ana",
+        "telefono": "0990000001",
+        "tokenExpira": null
+      },
+      {
+        "_id": "<id2>",
+        "apellido": "Apellido",
+        "cedula": "1700000002",
+        "direccion": "Calle Falsa 123",
+        "email": "u2@escuela.test",
+        "estado": true,
+        "nombre": "Nombre",
+        "telefono": "0990000002",
+        "tokenExpira": null
+      }
+    ]
+  },
+  {
+    "paso": "modificar administrador",
+    "status": 200,
+    "cuerpo": {
+      "msg": "Administrador modificado correctamente"
+    }
+  },
+  {
+    "paso": "registrar profesor 1",
+    "status": 201,
+    "cuerpo": {
+      "msg": "Profesor registrado, verifique el email para confirmar su cuenta",
+      "profesor": "<id4>"
+    }
+  },
+  {
+    "paso": "registrar profesor 2",
+    "status": 201,
+    "cuerpo": {
+      "msg": "Profesor registrado, verifique el email para confirmar su cuenta",
+      "profesor": "<id5>"
+    }
+  },
+  {
+    "paso": "listar profesores",
+    "status": 200,
+    "cuerpo": [
+      {
+        "_id": "<id4>",
+        "apellido": "Apellido",
+        "cedula": "1700000004",
+        "direccion": "Calle Falsa 123",
+        "email": "carla@escuela.test",
+        "estado": true,
+        "nombre": "Carla",
+        "telefono": "0990000004",
+        "tokenExpira": null
+      },
+      {
+        "_id": "<id5>",
+        "apellido": "Apellido",
+        "cedula": "1700000005",
+        "direccion": "Calle Falsa 123",
+        "email": "diego@escuela.test",
+        "estado": true,
+        "nombre": "Diego",
+        "telefono": "0990000005",
+        "tokenExpira": null
+      }
+    ]
+  },
+  {
+    "paso": "modificar profesor",
+    "status": 200,
+    "cuerpo": {
+      "msg": "Profesor modificado correctamente"
+    }
+  },
+  {
+    "paso": "registrar representante 1",
+    "status": 201,
+    "cuerpo": {
+      "msg": "Representante registrado correctamente, ahora puede asignar un estudiante",
+      "representante": "<id6>"
+    }
+  },
+  {
+    "paso": "registrar representante 2",
+    "status": 201,
+    "cuerpo": {
+      "msg": "Representante registrado correctamente, ahora puede asignar un estudiante",
+      "representante": "<id7>"
+    }
+  },
+  {
+    "paso": "registrar curso 5A",
+    "status": 201,
+    "cuerpo": {
+      "curso": "<id8>",
+      "msg": "Curso registrado correctamente y asignado al año lectivo activo"
+    }
+  },
+  {
+    "paso": "registrar curso 6A",
+    "status": 201,
+    "cuerpo": {
+      "curso": "<id9>",
+      "msg": "Curso registrado correctamente y asignado al año lectivo activo"
+    }
+  },
+  {
+    "paso": "registrar curso duplicado",
+    "status": 400,
+    "cuerpo": {
+      "error": "El curso ya está registrado en el año lectivo activo"
+    }
+  },
+  {
+    "paso": "listar cursos",
+    "status": 200,
+    "cuerpo": [
+      {
+        "_id": "<id8>",
+        "nivel": 5,
+        "nombre": "Quinto A",
+        "paralelo": "A"
+      },
+      {
+        "_id": "<id9>",
+        "nivel": 6,
+        "nombre": "Sexto A",
+        "paralelo": "A"
+      }
+    ]
+  },
+  {
+    "paso": "registrar materia",
+    "status": 201,
+    "cuerpo": {
+      "materia": "<id10>",
+      "msg": "Materia registrada correctamente"
+    }
+  },
+  {
+    "paso": "registrar materia 2",
+    "status": 201,
+    "cuerpo": {
+      "materia": "<id11>",
+      "msg": "Materia registrada correctamente"
+    }
+  },
+  {
+    "paso": "listar materias del curso",
+    "status": 200,
+    "cuerpo": [
+      {
+        "_id": "<id10>",
+        "estado": true,
+        "nombre": "Matemáticas",
+        "profesor": {
+          "_id": "<id4>",
+          "apellido": "Apellido",
+          "nombre": "Carla"
+        }
+      },
+      {
+        "_id": "<id11>",
+        "estado": true,
+        "nombre": "Lengua",
+        "profesor": {
+          "_id": "<id4>",
+          "apellido": "Apellido",
+          "nombre": "Carla"
+        }
+      }
+    ]
+  },
+  {
+    "paso": "asignar ponderaciones que no suman 100",
+    "status": 400,
+    "cuerpo": {
+      "error": "La suma de las ponderaciones debe ser igual a 100"
+    }
+  },
+  {
+    "paso": "asignar ponderaciones",
+    "status": 200,
+    "cuerpo": {
+      "msg": "Ponderaciones registradas correctamente"
+    }
+  },
+  {
+    "paso": "registrar estudiante 1",
+    "status": 201,
+    "cuerpo": {
+      "estudiante": "<id12>",
+      "msg": "Estudiante registrado correctamente"
+    }
+  },
+  {
+    "paso": "registrar estudiante 2",
+    "status": 201,
+    "cuerpo": {
+      "estudiante": "<id13>",
+      "msg": "Estudiante registrado correctamente"
+    }
+  },
+  {
+    "paso": "registrar estudiante sin curso válido",
+    "status": 400,
+    "cuerpo": {
+      "error": "El id del curso debe ser un identificador de MongoDB válido"
+    }
+  },
+  {
+    "paso": "listar estudiantes del curso",
+    "status": 200,
+    "cuerpo": [
+      {
+        "_id": "<id12>",
+        "apellido": "Paz",
+        "cedula": "1750000001",
+        "estado": true,
+        "nombre": "Pedro"
+      },
+      {
+        "_id": "<id13>",
+        "apellido": "Luna",
+        "cedula": "1750000002",
+        "estado": true,
+        "nombre": "Juan"
+      }
+    ]
+  },
+  {
+    "paso": "listar representantes del curso",
+    "status": 200,
+    "cuerpo": [
+      {
+        "_id": "<id6>",
+        "apellido": "Apellido",
+        "cedula": "1700000006",
+        "direccion": "Calle Falsa 123",
+        "email": "elena@correo.test",
+        "estado": true,
+        "estudiantes": [
+          {
+            "_id": "<id12>",
+            "apellido": "Paz",
+            "cedula": "1750000001",
+            "estado": true,
+            "nombre": "Pedro"
+          }
+        ],
+        "nombre": "Elena",
+        "telefono": "0990000006",
+        "tokenExpira": null
+      },
+      {
+        "_id": "<id7>",
+        "apellido": "Apellido",
+        "cedula": "1700000007",
+        "direccion": "Calle Falsa 123",
+        "email": "fabio@correo.test",
+        "estado": true,
+        "estudiantes": [
+          {
+            "_id": "<id13>",
+            "apellido": "Luna",
+            "cedula": "1750000002",
+            "estado": true,
+            "nombre": "Juan"
+          }
+        ],
+        "nombre": "Fabio",
+        "telefono": "0990000007",
+        "tokenExpira": null
+      }
+    ]
+  },
+  {
+    "paso": "asignar representante",
+    "status": 200,
+    "cuerpo": {
+      "msg": "Representante asignado correctamente"
+    }
+  },
+  {
+    "paso": "modificar estudiante",
+    "status": 200,
+    "cuerpo": {
+      "msg": "Estudiante modificado correctamente"
+    }
+  },
+  {
+    "paso": "reasignar materia a otro profesor y volver",
+    "status": 200,
+    "cuerpo": {
+      "msg": "Materia modificada correctamente"
+    }
+  },
+  {
+    "paso": "confirmar cuenta carla@escuela.test",
+    "status": 200,
+    "cuerpo": {
+      "mensaje": "La cuenta se ha confirmado exitosamente, ya puede iniciar sesión"
+    }
+  },
+  {
+    "paso": "crear contraseña carla@escuela.test",
+    "status": 200,
+    "cuerpo": {
+      "mensaje": "La contraseña ha sido actualizada exitosamente"
+    }
+  },
+  {
+    "paso": "login profesor",
+    "status": 200,
+    "cuerpo": {
+      "rol": "profesor",
+      "token": "<jwt>"
+    }
+  },
+  {
+    "paso": "profesor: perfil",
+    "status": 200,
+    "cuerpo": {
+      "apellido": "Apellido",
+      "cedula": "1700000004",
+      "direccion": "Calle Falsa 123",
+      "email": "carla@escuela.test",
+      "nombre": "Carla",
+      "rol": "profesor",
+      "telefono": "0990000004"
+    }
+  },
+  {
+    "paso": "profesor: rol sin permiso",
+    "status": 403,
+    "cuerpo": {
+      "error": "Lo sentimos, no tienes permisos de administrador para realizar esta acción"
+    }
+  },
+  {
+    "paso": "profesor: cursos",
+    "status": 200,
+    "cuerpo": {
+      "cursosAsociados": [
+        {
+          "id": "<id8>",
+          "nombre": "Quinto A"
+        }
+      ]
+    }
+  },
+  {
+    "paso": "profesor: materias del curso",
+    "status": 200,
+    "cuerpo": {
+      "materias": [
+        {
+          "id": "<id10>",
+          "nombre": "Matemáticas"
+        }
+      ]
+    }
+  },
+  {
+    "paso": "profesor: estudiantes del curso",
+    "status": 200,
+    "cuerpo": {
+      "estudiantes": [
+        {
+          "_id": "<id12>",
+          "apellido": "Paz",
+          "cedula": "1750000001",
+          "estado": true,
+          "nombre": "Pedro"
+        },
+        {
+          "_id": "<id13>",
+          "apellido": "Luna Sol",
+          "cedula": "1750000002",
+          "estado": true,
+          "nombre": "Juan"
+        }
+      ]
+    }
+  },
+  {
+    "paso": "profesor: subir evidencia",
+    "status": 200,
+    "cuerpo": {
+      "descripcion": "Deber 1",
+      "msg": "Foto de evidencia registrada correctamente"
+    }
+  },
+  {
+    "paso": "profesor: registrar notas",
+    "status": 200,
+    "cuerpo": {
+      "descripcion": "Deber 1",
+      "msg": "Notas registradas correctamente"
+    }
+  },
+  {
+    "paso": "profesor: registrar notas de examen",
+    "status": 200,
+    "cuerpo": {
+      "descripcion": "Examen 1",
+      "msg": "Notas registradas correctamente"
+    }
+  },
+  {
+    "paso": "profesor: nota fuera de rango",
+    "status": 400,
+    "cuerpo": {
+      "error": "La nota de Pedro debe ser un número entre 0 y 10"
+    }
+  },
+  {
+    "paso": "profesor: materia ajena",
+    "status": 400,
+    "cuerpo": {
+      "error": "La materia no existe o no está asignada a usted"
+    }
+  },
+  {
+    "paso": "profesor: tipos de evaluación",
+    "status": 200,
+    "cuerpo": {
+      "descripciones": [
+        "Deber 1"
+      ]
+    }
+  },
+  {
+    "paso": "profesor: estudiantes por descripción",
+    "status": 200,
+    "cuerpo": {
+      "estudiantes": [
+        {
+          "apellido": "Paz",
+          "cedula": "1750000001",
+          "id": "<id12>",
+          "nombre": "Pedro",
+          "nota": 9
+        },
+        {
+          "apellido": "Luna Sol",
+          "cedula": "1750000002",
+          "id": "<id13>",
+          "nombre": "Juan",
+          "nota": 4
+        }
+      ]
+    }
+  },
+  {
+    "paso": "profesor: actualizar notas",
+    "status": 200,
+    "cuerpo": {
+      "msg": "Notas actualizadas correctamente"
+    }
+  },
+  {
+    "paso": "profesor: observación",
+    "status": 200,
+    "cuerpo": {
+      "msg": "Observación registrada correctamente"
+    }
+  },
+  {
+    "paso": "profesor: cambiar datos",
+    "status": 200,
+    "cuerpo": {
+      "mensaje": "Los datos se han actualizado correctamente"
+    }
+  },
+  {
+    "paso": "profesor: cambiar contraseña incorrecta",
+    "status": 400,
+    "cuerpo": {
+      "error": "La contraseña actual es incorrecta"
+    }
+  },
+  {
+    "paso": "profesor: cambiar contraseña",
+    "status": 200,
+    "cuerpo": {
+      "mensaje": "La contraseña ha sido actualizada exitosamente"
+    }
+  },
+  {
+    "paso": "registrar asistencia",
+    "status": 200,
+    "cuerpo": {
+      "msg": "Asistencia registrada correctamente"
+    }
+  },
+  {
+    "paso": "registrar asistencia repetida",
+    "status": 400,
+    "cuerpo": {
+      "error": "Ya se ha registrado la asistencia del estudiante undefined undefined, Ya se ha registrado la asistencia del estudiante undefined undefined"
+    }
+  },
+  {
+    "paso": "justificar inasistencia",
+    "status": 200,
+    "cuerpo": {
+      "msg": "Justificación registrada correctamente"
+    }
+  },
+  {
+    "paso": "confirmar cuenta elena@correo.test",
+    "status": 200,
+    "cuerpo": {
+      "mensaje": "La cuenta se ha confirmado exitosamente, ya puede iniciar sesión"
+    }
+  },
+  {
+    "paso": "crear contraseña elena@correo.test",
+    "status": 200,
+    "cuerpo": {
+      "mensaje": "La contraseña ha sido actualizada exitosamente"
+    }
+  },
+  {
+    "paso": "login representante",
+    "status": 200,
+    "cuerpo": {
+      "rol": "representante",
+      "token": "<jwt>"
+    }
+  },
+  {
+    "paso": "representante: estudiantes",
+    "status": 200,
+    "cuerpo": {
+      "apellido": "Apellido",
+      "estudiantes": [
+        {
+          "apellido": "Paz",
+          "cedula": "1750000001",
+          "curso": "Quinto A",
+          "estado": true,
+          "id": "<id12>",
+          "nombre": "Pedro"
+        },
+        {
+          "apellido": "Luna Sol",
+          "cedula": "1750000002",
+          "curso": "Quinto A",
+          "estado": true,
+          "id": "<id13>",
+          "nombre": "Juan"
+        }
+      ],
+      "id": "<id6>",
+      "nombre": "Elena"
+    }
+  },
+  {
+    "paso": "representante: materias",
+    "status": 200,
+    "cuerpo": [
+      {
+        "id": "<id10>",
+        "nombre": "Matemáticas"
+      },
+      {
+        "id": "<id11>",
+        "nombre": "Lengua y Literatura"
+      }
+    ]
+  },
+  {
+    "paso": "representante: notas",
+    "status": 200,
+    "cuerpo": {
+      "anioLectivo": "<periodo-actual>",
+      "estudiante": {
+        "apellido": "Paz",
+        "cedula": "1750000001",
+        "id": "<id12>",
+        "nombre": "Pedro"
+      },
+      "evaluaciones": [
+        {
+          "descripcion": "Deber 1",
+          "evidenciaUrl": "https://i.imgur.com/prueba.png",
+          "fecha": "<fecha-dma>",
+          "nota": 10,
+          "tipo": "deber"
+        },
+        {
+          "descripcion": "Examen 1",
+          "evidenciaUrl": null,
+          "fecha": "<fecha-dma>",
+          "nota": 8,
+          "tipo": "examen"
+        }
+      ],
+      "materia": {
+        "id": "<id10>",
+        "nombre": "Matemáticas"
+      }
+    }
+  },
+  {
+    "paso": "representante: observaciones",
+    "status": 200,
+    "cuerpo": {
+      "anioLectivo": "<id1>",
+      "estudiante": {
+        "apellido": "Paz",
+        "cedula": "1750000001",
+        "id": "<id12>",
+        "nombre": "Pedro"
+      },
+      "numeroObservaciones": 1,
+      "observaciones": [
+        {
+          "fecha": "<fecha-dma>",
+          "observacion": "Participa mucho en clase",
+          "profesor": {
+            "apellido": "Mora",
+            "id": "<id4>",
+            "nombre": "Carla"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "paso": "representante: asistencia",
+    "status": 200,
+    "cuerpo": {
+      "anioLectivo": "<periodo-actual>",
+      "estudiante": {
+        "apellido": "Paz",
+        "cedula": "1750000001",
+        "id": "<id12>",
+        "nombre": "Pedro"
+      },
+      "registrosAsistencia": [
+        {
+          "fecha": "<fecha-amd>",
+          "justificacion": "Cita médica",
+          "presente": true
+        }
+      ],
+      "totalFaltas": 0
+    }
+  },
+  {
+    "paso": "confirmar cuenta fabio@correo.test",
+    "status": 200,
+    "cuerpo": {
+      "mensaje": "La cuenta se ha confirmado exitosamente, ya puede iniciar sesión"
+    }
+  },
+  {
+    "paso": "crear contraseña fabio@correo.test",
+    "status": 200,
+    "cuerpo": {
+      "mensaje": "La contraseña ha sido actualizada exitosamente"
+    }
+  },
+  {
+    "paso": "representante ajeno: notas de otro alumno",
+    "status": 400,
+    "cuerpo": {
+      "error": "El estudiante no existe o no está asociado a usted"
+    }
+  },
+  {
+    "paso": "recuperar contraseña",
+    "status": 200,
+    "cuerpo": {
+      "mensaje": "Para recuperar su contraseña, se le ha enviado un correo"
+    }
+  },
+  {
+    "paso": "recuperar contraseña email inexistente",
+    "status": 400,
+    "cuerpo": {
+      "error": "No se ha encontrado el email ingresado"
+    }
+  },
+  {
+    "paso": "reasignar curso",
+    "status": 200,
+    "cuerpo": {
+      "msg": "Curso asignado correctamente"
+    }
+  },
+  {
+    "paso": "reasignar curso de vuelta",
+    "status": 200,
+    "cuerpo": {
+      "msg": "Curso asignado correctamente"
+    }
+  },
+  {
+    "paso": "registrar fecha fin",
+    "status": 200,
+    "cuerpo": {
+      "msg": "Fecha de fin registrada correctamente"
+    }
+  },
+  {
+    "paso": "iniciar periodo con uno activo",
+    "status": 400,
+    "cuerpo": {
+      "error": "Ya hay un año lectivo activo"
+    }
+  },
+  {
+    "paso": "terminar periodo",
+    "status": 200,
+    "cuerpo": {
+      "msg": "Año lectivo finalizado correctamente"
+    }
+  },
+  {
+    "paso": "iniciar periodo (promoción)",
+    "status": 201,
+    "cuerpo": {
+      "anio": {
+        "_id": "<id14>",
+        "estado": true,
+        "fechaInicio": "<fecha-iso>",
+        "periodo": "<periodo-actual>"
+      },
+      "msg": "Año Lectivo iniciado correctamente"
+    }
+  },
+  {
+    "paso": "listar años tras promoción",
+    "status": 200,
+    "cuerpo": [
+      {
+        "_id": "<id1>",
+        "estado": false,
+        "fechaFin": "<fecha-iso>",
+        "periodo": "<periodo-actual>"
+      },
+      {
+        "_id": "<id14>",
+        "estado": true,
+        "periodo": "<periodo-actual>"
+      }
+    ]
+  },
+  {
+    "paso": "nuevo año: cursos",
+    "status": 200,
+    "cuerpo": [
+      {
+        "_id": "<id-nuevo>",
+        "nivel": 1,
+        "nombre": "Primero A",
+        "paralelo": "A"
+      },
+      {
+        "_id": "<id-nuevo>",
+        "nivel": 1,
+        "nombre": "Primero B",
+        "paralelo": "B"
+      },
+      {
+        "_id": "<id-nuevo>",
+        "nivel": 1,
+        "nombre": "Primero C",
+        "paralelo": "C"
+      },
+      {
+        "_id": "<id-nuevo>",
+        "nivel": 1,
+        "nombre": "Primero D",
+        "paralelo": "D"
+      },
+      {
+        "_id": "<id-nuevo>",
+        "nivel": 1,
+        "nombre": "Primero E",
+        "paralelo": "E"
+      },
+      {
+        "_id": "<id8>",
+        "nivel": 5,
+        "nombre": "Quinto A",
+        "paralelo": "A"
+      },
+      {
+        "_id": "<id9>",
+        "nivel": 6,
+        "nombre": "Sexto A",
+        "paralelo": "A"
+      }
+    ]
+  },
+  {
+    "paso": "nuevo año: estudiantes 5A (repiten)",
+    "status": 200,
+    "cuerpo": [
+      {
+        "_id": "<id12>",
+        "apellido": "Paz",
+        "cedula": "1750000001",
+        "estado": true,
+        "nombre": "Pedro"
+      },
+      {
+        "_id": "<id13>",
+        "apellido": "Luna Sol",
+        "cedula": "1750000002",
+        "estado": true,
+        "nombre": "Juan"
+      }
+    ]
+  },
+  {
+    "paso": "nuevo año: estudiantes 6A (promovidos)",
+    "status": 404,
+    "cuerpo": {
+      "error": "No hay estudiantes registrados"
+    }
+  },
+  {
+    "paso": "nuevo año: materias 5A copiadas",
+    "status": 200,
+    "cuerpo": [
+      {
+        "_id": "<id15>",
+        "estado": true,
+        "nombre": "Matemáticas",
+        "profesor": {
+          "_id": "<id4>",
+          "apellido": "Mora",
+          "nombre": "Carla"
+        }
+      },
+      {
+        "_id": "<id16>",
+        "estado": true,
+        "nombre": "Lengua y Literatura",
+        "profesor": {
+          "_id": "<id5>",
+          "apellido": "Ruiz",
+          "nombre": "Diego"
+        }
+      }
+    ]
+  },
+  {
+    "paso": "eliminar materia",
+    "status": 200,
+    "cuerpo": {
+      "msg": "Materia eliminada correctamente"
+    }
+  },
+  {
+    "paso": "eliminar estudiante",
+    "status": 200,
+    "cuerpo": {
+      "msg": "Estudiante eliminado correctamente"
+    }
+  },
+  {
+    "paso": "eliminar representante",
+    "status": 200,
+    "cuerpo": {
+      "msg": "Representante eliminado correctamente"
+    }
+  },
+  {
+    "paso": "eliminar profesor",
+    "status": 400,
+    "cuerpo": {
+      "error": "No se puede eliminar el profesor porque está asociado a un curso, asigne otro profesor primero"
+    }
+  },
+  {
+    "paso": "eliminar curso con estudiantes",
+    "status": 200,
+    "cuerpo": {
+      "msg": "Curso eliminado correctamente"
+    }
+  },
+  {
+    "paso": "eliminar administrador",
+    "status": 200,
+    "cuerpo": {
+      "msg": "Administrador eliminado correctamente"
+    }
+  },
+  {
+    "paso": "eliminar id inválido",
+    "status": 400,
+    "cuerpo": {
+      "error": "El id del profesor debe ser válido"
+    }
+  }
+]
