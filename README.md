@@ -1,6 +1,6 @@
 # 🎓 Sistema de Gestión Académica - Escuela Descubrir
 
-![Node.js](https://img.shields.io/badge/Node.js-v20.19+-339933?style=flat&logo=node.js&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-v24-339933?style=flat&logo=node.js&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-v5-000000?style=flat&logo=express&logoColor=white)
 ![Mongoose](https://img.shields.io/badge/Mongoose-v9-47A248?style=flat&logo=mongodb&logoColor=white)
 
@@ -69,7 +69,7 @@ npm run migrar:v2        # copia los datos de la v1 al modelo v2
 ## 🛠️ Instalación y Configuración
 
 ### **Prerrequisitos**
-- Node.js (v20.19 o superior)
+- Node.js 24 (LTS)
 - MongoDB Atlas o MongoDB local
 - Cuenta de Gmail para envío de correos
 
