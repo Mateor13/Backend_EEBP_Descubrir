@@ -3,6 +3,7 @@ import { z } from 'zod'
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit'
 import { ruta } from '../../shared/middlewares/ruta.js'
 import { validar } from '../../shared/middlewares/validar.js'
+import { rechazarBots } from '../../shared/middlewares/antiSpam.js'
 import { email, password, nombrePropio, telefono } from '../../shared/esquemas.js'
 
 // ---------- Esquemas (solo forma de los datos) ----------
@@ -42,10 +43,10 @@ export const crearRutasAuth = ({ authServicio, autenticar }) => {
         keyGenerator: (req) => `${ipKeyGenerator(req.ip)}|${String(req.body?.email ?? '').toLowerCase().trim()}`,
         message: { error: 'Demasiados intentos, intente de nuevo en 15 minutos' } })
     const router = Router()
-    router.post('/login', limite, validar({ body: esquemas.login }), ruta(c.login))
-    router.post('/activar', limite, validar({ body: esquemas.tokenYPassword }), ruta(c.activar))
-    router.post('/recuperar', limite, validar({ body: esquemas.recuperar }), ruta(c.recuperar))
-    router.post('/restablecer', limite, validar({ body: esquemas.tokenYPassword }), ruta(c.restablecer))
+    router.post('/login', limite, rechazarBots, validar({ body: esquemas.login }), ruta(c.login))
+    router.post('/activar', limite, rechazarBots, validar({ body: esquemas.tokenYPassword }), ruta(c.activar))
+    router.post('/recuperar', limite, rechazarBots, validar({ body: esquemas.recuperar }), ruta(c.recuperar))
+    router.post('/restablecer', limite, rechazarBots, validar({ body: esquemas.tokenYPassword }), ruta(c.restablecer))
     router.get('/perfil', autenticar, ruta(c.perfil))
     router.patch('/perfil', autenticar, validar({ body: esquemas.perfil }), ruta(c.actualizarPerfil))
     router.patch('/password', autenticar, validar({ body: esquemas.cambiarPassword }), ruta(c.cambiarPassword))
