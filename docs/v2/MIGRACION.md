@@ -37,6 +37,7 @@ La v1 (`/api/...`) y la v2 (`/api/v2/...`) **conviven en el mismo servidor** y u
 |---|---|---|
 | `MONGODB_DB_V2` | Nombre de la BDD de la v2 (solo el nombre: sin puntos, barras ni la URI) | `descubrir_v2` |
 | `MONGODB_DB_V1` | BDD de origen para la migración | La de `MONGODB_URI_PRODUCTION` |
+| `URL_FRONTEND_V2` | Frontend al que enlazan los correos de la v2 (activar cuenta, restablecer contraseña) | `URL_PRODUCTION` |
 | `CORS_ORIGINS` | Dominios permitidos, separados por comas | Cualquiera |
 | `JWT_EXPIRES_IN` | Duración de la sesión v2 | `8h` |
 | `PROMOCION_PRESUPUESTO_MS` | Tiempo de trabajo por petición en la promoción por partes (debe quedar bajo el límite de tu plan en Vercel) | `7000` |
