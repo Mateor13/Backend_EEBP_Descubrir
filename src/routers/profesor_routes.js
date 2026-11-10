@@ -32,7 +32,8 @@ import {
 const router = Router();
 // Configuración de multer para Multer 2.x
 const storage = multer.memoryStorage();
-const upload = multer({ storage });
+// Límite de 20 MB aplicado por multer: antes el archivo se cargaba completo en memoria y luego se validaba
+const upload = multer({ storage, limits: { fileSize: 20 * 1024 * 1024 } });
 // Rutas privadas para profesores
 // Estas rutas requieren autenticación y el rol de profesor
 

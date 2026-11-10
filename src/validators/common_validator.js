@@ -15,7 +15,13 @@ const loginValidator = [
     check('anioLectivo')
         .notEmpty()
         .withMessage('El año lectivo es obligatorio')
+        .bail()
+        .isMongoId()
+        .withMessage('El año lectivo no es válido')
+        .bail()
         .custom(async (value, { req }) => {
+            // Cierra el periodo activo si ya pasó su fecha de fin (antes nunca se cerraba solo)
+            await aniosLectivo.terminarFechaFin();
             const anioLectivoBDD = await aniosLectivo.findOne({ _id: value });
             if (!anioLectivoBDD) throw new Error('El año lectivo no existe');
             req.anioLectivoBDD = anioLectivoBDD;

@@ -1,5 +1,5 @@
+import './config/env.js' // Carga las variables de entorno antes que cualquier otro módulo
 import express from 'express'
-import dotenv from 'dotenv'
 import cors from 'cors'
 import adminRouter from './routers/admin_routes.js'
 import profesorRouter from './routers/profesor_routes.js'
@@ -9,17 +9,13 @@ import multer from 'multer'
 
 // Inicializadores de la aplicación
 const app = express()
-// Suprimir logs de dotenv temporalmente
-const originalLog = console.log;
-console.log = () => {};
-dotenv.config({ debug: false })
-console.log = originalLog;
 
 // Configuración de multer para manejar archivos
 const upload = multer()
 
 // Configuración del puerto y middlewares globales
 app.set('port', process.env.PORT || 3000)
+app.set('trust proxy', 1) // Necesario detrás del proxy de Vercel para que el límite de intentos use la IP real
 app.use(cors()) // Habilita CORS para todas las rutas
 app.use(express.json()) // Para parsear JSON en las peticiones
 
@@ -230,7 +226,10 @@ app.use('/api/*', (req, res, next) => {
 // Middleware global de manejo de errores
 app.use((err, req, res, next) => {
     // Error de multer (upload.none())
-    if (err.code === 'LIMIT_UNEXPECTED_FILE' || err.message.includes('Unexpected end of form')) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ error: 'El tamaño de la imagen excede el límite de 20 MB' });
+    }
+    if (err.code === 'LIMIT_UNEXPECTED_FILE' || err.message?.includes('Unexpected end of form')) {
         return res.status(400).json({
             error: 'Error en el formato de los datos. Verifica el Content-Type y el método HTTP.'
         });

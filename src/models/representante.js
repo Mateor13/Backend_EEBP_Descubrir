@@ -1,5 +1,6 @@
 import { Schema, model } from 'mongoose'
 import bcrypt from 'bcryptjs'
+import { generarTokenSeguro, generarPasswordTemporal } from '../utils/seguridad.js'
 
 // Esquema para el modelo de Representante
 const representanteSchema = new Schema({
@@ -46,6 +47,11 @@ const representanteSchema = new Schema({
         trim: true,
         default: null
     },
+    // Fecha de expiración del token de recuperación (null = sin expiración, p. ej. confirmación de cuenta)
+    tokenExpira: {
+        type: Date,
+        default: null
+    },
     // Indica si el email fue confirmado
     confirmEmail: {
         type: Boolean,
@@ -75,17 +81,17 @@ const representanteSchema = new Schema({
 
 // Método para generar un token aleatorio y asignarlo al representante
 representanteSchema.methods.generarToken = async function () {
-    const token = Math.random().toString(36).slice(2)
+    const token = generarTokenSeguro()
     this.token = token
     return token
 }
 
 // Método para generar y encriptar una contraseña aleatoria
 representanteSchema.methods.generarPassword = async function () {
-    const password = Math.random().toString(36).slice(2, 7)
+    const password = generarPasswordTemporal('eebpd')
     const salt = await bcrypt.genSalt(10)
-    this.password = await bcrypt.hash('eebpd-' + password, salt)
-    return 'eebpd-' + password
+    this.password = await bcrypt.hash(password, salt)
+    return password
 };
 
 // Método para comparar una contraseña ingresada con la almacenada

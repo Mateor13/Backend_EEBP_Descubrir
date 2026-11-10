@@ -71,21 +71,23 @@ anioLectivoSchema.methods.establecerFechaFin = async function (fechaFin) {
     await this.save();
 };
 
-// Método estático para terminar el periodo si la fecha de fin coincide con la actual
-anioLectivoSchema.statics.terminarFechaFin = async function (res) {
-    const anioLectivoActivo = await this.findOne({ estado: true });
-    const fechaActual = new Date()
-    if (anioLectivoActivo?.fechaFin === fechaActual) {
-        await anioLectivoActivo.terminarPeriodo();
-        return res.status(200).json("Periodo terminado");
-    }
-}
+// Devuelve las ponderaciones como objeto. En la BDD se guardan como array de un elemento,
+// pero el código las leía como objeto (ponderaciones['deberes'] === undefined).
+anioLectivoSchema.methods.obtenerPonderaciones = function () {
+    const p = Array.isArray(this.ponderaciones) ? this.ponderaciones[0] : this.ponderaciones;
+    if (!p) return null;
+    return { deberes: p.deberes, talleres: p.talleres, examenes: p.examenes, pruebas: p.pruebas };
+};
 
-// Método para comprobar si el periodo está activo antes de realizar cambios
-anioLectivoSchema.methods.comprobarAnio = async function (res) {
-    if (!this.estado) {
-        return res.status(400).json({ error: 'El periodo ya ha terminado, no se puede hacer ningún cambio' });
+// Termina el periodo activo si su fecha de fin ya pasó.
+// Antes comparaba dos Date con === (compara referencias, nunca es true) y usaba un "res" inexistente.
+anioLectivoSchema.statics.terminarFechaFin = async function () {
+    const anioLectivoActivo = await this.findOne({ estado: true });
+    if (anioLectivoActivo?.fechaFin && anioLectivoActivo.fechaFin.getTime() <= Date.now()) {
+        await anioLectivoActivo.terminarPeriodo();
+        return true;
     }
-}
+    return false;
+};
 
 export default model('AnioLectivo', anioLectivoSchema)

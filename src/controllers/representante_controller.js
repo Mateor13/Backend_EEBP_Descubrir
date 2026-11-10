@@ -39,7 +39,7 @@ const verEstudiantes = async (req, res) => {
             apellido: est.apellido,
             cedula: est.cedula,
             estado: est.estado,
-            curso: est.curso.nombre || null // Nombre del curso o null si no tiene
+            curso: est.curso?.nombre ?? null // Nombre del curso o null si no tiene
         }))
     });
 }
@@ -110,7 +110,7 @@ const verNotasEstudiante = async (req, res) => {
                 id: notas.materia._id,
                 nombre: notas.materia.nombre
             },
-            anioLectivo: anioLectivoBDD.periodo,
+            anioLectivo: anioLectivoBDD?.periodo ?? null,
             evaluaciones
         });
     } catch (error) {
@@ -174,7 +174,7 @@ const verAsistenciaEstudiante = async (req, res) => {
                 apellido: asistencia.estudiante.apellido,
                 cedula: asistencia.estudiante.cedula
             },
-            anioLectivo: anioLectivoBDD.periodo,
+            anioLectivo: anioLectivoBDD?.periodo ?? null,
             totalFaltas: asistencia.faltas,
             registrosAsistencia: asistencia.asistencia.map(a => ({
                 fecha: a.fecha,
