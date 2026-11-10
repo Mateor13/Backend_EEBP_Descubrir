@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs'
-import { ConflictoError, NoEncontradoError, SolicitudInvalidaError } from '../../shared/errores.js'
+import { AppError, ConflictoError, NoEncontradoError, SolicitudInvalidaError } from '../../shared/errores.js'
 import { generarTokenUnUso, generarPasswordTemporal } from '../../shared/utils/tokens.js'
 import { ROLES } from '../../shared/roles.js'
 import * as plantillas from '../../infra/mail/plantillas.js'
@@ -22,7 +22,13 @@ export const crearUsuariosServicio = ({ usuariosRepo, mailer }) => {
     const enviarActivacion = async (usuario) => {
         const { token, registro } = generarTokenUnUso(DURACION_ACTIVACION_MS)
         await usuariosRepo.actualizar(usuario._id, { tokenConfirmacion: registro })
-        await mailer.enviar({ para: usuario.email, ...plantillas.bienvenida({ nombre: usuario.nombre, token }) })
+        try {
+            await mailer.enviar({ para: usuario.email, ...plantillas.bienvenida({ nombre: usuario.nombre, token }) })
+        } catch (error) {
+            // El detalle técnico (credenciales SMTP, red) queda en el log; al cliente, un mensaje que se pueda actuar
+            console.error('[v2] No se pudo enviar el correo de activación:', error.message)
+            throw new AppError('No se pudo enviar el correo de activación. Revise la configuración del correo del servidor e inténtelo de nuevo.', 502)
+        }
     }
 
     return {
