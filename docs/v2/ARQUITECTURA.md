@@ -130,6 +130,8 @@ Qué se cambió y por qué:
 | API de punta a punta (año escolar completo y permisos) | `tests/v2/api.integracion.test.js` | MongoDB replica set |
 | Migración v1 → v2 | `tests/v2/migracion.integracion.test.js` | MongoDB replica set |
 | Promoción ante cortes y peticiones simultáneas | `tests/v2/promocion.integracion.test.js` | MongoDB replica set |
+| Contrato de la **v1** con el frontend | `tests/v1/contrato.integracion.test.js` | MongoDB replica set |
+| Reglas de la v1 | `tests/v1/reglas.test.js` | Nada |
 
 ```bash
 npm test                     # sin MongoDB, las de integración se omiten
