@@ -16,6 +16,20 @@ import AnioLectivo from '../models/anioLectivo.js';
 import CursoAsignado from '../models/cursoAsignado.js';
 import Notas from '../models/notas.js'
 
+// Guarda el usuario y DESPUÉS envía el correo con sus credenciales.
+// Antes se enviaba el correo primero: si el guardado fallaba (p. ej. email duplicado),
+// la persona recibía credenciales de una cuenta inexistente. Si el correo falla,
+// se elimina el registro para no dejar una cuenta a la que nadie puede acceder.
+const guardarYNotificar = async (documento, enviarCorreo) => {
+    await documento.save();
+    try {
+        await enviarCorreo();
+    } catch (error) {
+        await documento.deleteOne();
+        throw error;
+    }
+};
+
 // ==================== ADMINISTRADOR ====================
 
 // Registra un nuevo administrador y envía credenciales por correo
@@ -27,9 +41,7 @@ const registrarAdmin = async (req, res) => {
         const nuevoAdmin = new Administrador({ nombre, apellido, email, direccion, telefono, cedula });
         const password = await nuevoAdmin.generarPassword();
         const token = await nuevoAdmin.generarToken();
-        nuevoAdmin.token = token;
-        await sendMailToUser(email, token, password);
-        await nuevoAdmin.save();
+        await guardarYNotificar(nuevoAdmin, () => sendMailToUser(email, token, password));
         res.status(201).json({ msg: 'Administrador registrado, verifique el email para confirmar su cuenta', administrador: nuevoAdmin._id });
     } catch (error) {
         res.status(500).json({ error: 'Error al registrar administrador' });
@@ -88,8 +100,7 @@ const registrarProfesor = async (req, res) => {
         const nuevoProfesor = new Profesor({ nombre, apellido, email, direccion, telefono, cedula, admin: req.userBDD.id });
         const password = await nuevoProfesor.generarPassword();
         const token = await nuevoProfesor.generarToken();
-        await sendMailToProfesor(email, token, password);
-        await nuevoProfesor.save();
+        await guardarYNotificar(nuevoProfesor, () => sendMailToProfesor(email, token, password));
         res.status(201).json({ msg: 'Profesor registrado, verifique el email para confirmar su cuenta', profesor: nuevoProfesor._id });
     } catch (error) {
         res.status(500).json({ error: 'Error al registrar profesor' });
@@ -148,8 +159,7 @@ const registrarRepresentante = async (req, res) => {
         const nuevoRepresentante = new Representante({ nombre, apellido, email, telefono, cedula, direccion });
         const password = await nuevoRepresentante.generarPassword();
         const token = await nuevoRepresentante.generarToken();
-        await envioCredenciales(nombre, apellido, email, password, token);
-        await nuevoRepresentante.save();
+        await guardarYNotificar(nuevoRepresentante, () => envioCredenciales(nombre, apellido, email, password, token));
         res.status(201).json({ msg: 'Representante registrado correctamente, ahora puede asignar un estudiante', representante: nuevoRepresentante._id });
     } catch (error) {
         res.status(500).json({ error: 'Error al registrar representante' });
@@ -284,7 +294,7 @@ const listarCursos = async (req, res) => {
             paralelo: curso.curso.paralelo,
         }));
 
-        if (cursosBDD.length === 0) res.status(404).json({ error: 'No hay cursos registrados' });
+        if (cursosBDD.length === 0) return res.status(404).json({ error: 'No hay cursos registrados' });
 
         res.status(200).json(cursosBDD);
     } catch (error) {
@@ -302,10 +312,11 @@ const registrarMaterias = async (req, res) => {
     const anioLectivo = req.userBDD.anio;
     //Paso 2: Manipular la BDD
     try {
+        // Primero se guarda la materia y luego se referencia en el curso
+        // (antes el curso guardaba la referencia a una materia que aún no existía)
         const nuevaMateria = new Materia({ nombre, profesor: profesorBDD._id, anioLectivo });
-        await cursoAsignadoBDD.agregarMaterias(nuevaMateria._id);
         await nuevaMateria.save();
-        await cursoAsignadoBDD.save();
+        await cursoAsignadoBDD.agregarMaterias(nuevaMateria._id);
         res.status(201).json({ msg: 'Materia registrada correctamente', materia: nuevaMateria._id });
     } catch (error) {
         res.status(500).json({ error: 'Error al registrar materia' });
@@ -375,50 +386,51 @@ const modificarMateria = async (req, res) => {
 const registrarEstudiantes = async (req, res) => {
     const { nombre, apellido, cedula } = req.body;
     const { representanteBDD, cursoAsignadoBDD } = req;
+    const anioLectivo = req.userBDD.anio;
+    // Orden: primero se crea el estudiante y sus documentos, luego se enlaza con
+    // representante/curso y al final se envía el correo. Antes el representante y el curso
+    // apuntaban a un estudiante que todavía no existía, y el correo salía aunque algo fallara.
+    // (Lo ideal sería una transacción de MongoDB con session.withTransaction.)
+    const nuevoEstudiante = new Estudiante({ nombre, apellido, cedula });
     try {
-        // Crear instancia del estudiante
-        const nuevoEstudiante = new Estudiante({ nombre, apellido, cedula });
-        // Asignar al representante
-        const asignarRepresentante = await representanteBDD.asignarEstudiante(nuevoEstudiante._id);
-        if (asignarRepresentante?.error) {
-            return res.status(400).json({ error: asignarRepresentante.error });
-        }
-        // Enviar correo al representante con los datos del estudiante
-        await estudianteRegistrado(representanteBDD.email, cedula, nombre, apellido);
-        // Asignar al curso
-        await cursoAsignadoBDD.agregarEstudiante(nuevoEstudiante._id);
-        // Crear documentos de asistencia y observación
-        const anioLectivo = req.userBDD.anio;
-        const nuevaAsistencia = new Asistencia({ estudiante: nuevoEstudiante._id, anioLectivo });
-        const nuevaObservacion = new Observacion({ estudiante: nuevoEstudiante._id, anioLectivo });
+        await nuevoEstudiante.save();
+        await Asistencia.create({ estudiante: nuevoEstudiante._id, anioLectivo });
+        await Observacion.create({ estudiante: nuevoEstudiante._id, anioLectivo });
         for (const materia of cursoAsignadoBDD.materias) {
-            const nuevaNota = new Notas({
-                estudiante: nuevoEstudiante._id,
-                materia: materia._id,
-                anioLectivo
-            });
-            // Copiar los deberes ya asignados a una materia
+            const nuevaNota = new Notas({ estudiante: nuevoEstudiante._id, materia: materia._id, anioLectivo });
+            // Copiar las evaluaciones ya creadas en la materia para el resto del curso
             const evaluacionesPorTipo = await Notas.copiarEvaluacionesDeCurso({
                 materiaId: materia._id,
                 anioLectivo,
                 estudiantes: cursoAsignadoBDD.estudiantes
             });
-            if (Object.keys(evaluacionesPorTipo).length > 0) {
-                nuevaNota.evaluaciones = {};
-                for (const tipo of Object.keys(evaluacionesPorTipo)) {
-                    nuevaNota.evaluaciones[tipo] = evaluacionesPorTipo[tipo];
-                }
+            for (const tipo of Object.keys(evaluacionesPorTipo)) {
+                nuevaNota.evaluaciones[tipo] = evaluacionesPorTipo[tipo];
             }
             await nuevaNota.save();
         }
-        // Guardar estudiante y documentos asociados
-        await nuevoEstudiante.save();
-        await nuevaAsistencia.save();
-        await nuevaObservacion.save();
-        res.status(201).json({ msg: 'Estudiante registrado correctamente', estudiante: nuevoEstudiante._id });
+        const asignarRepresentante = await representanteBDD.asignarEstudiante(nuevoEstudiante._id);
+        if (asignarRepresentante?.error) throw new Error(asignarRepresentante.error);
+        await cursoAsignadoBDD.agregarEstudiante(nuevoEstudiante._id);
     } catch (error) {
-        res.status(500).json({ error: 'Error al registrar estudiante' });
+        // Deshacer lo creado para no dejar datos huérfanos
+        await Promise.allSettled([
+            Estudiante.deleteOne({ _id: nuevoEstudiante._id }),
+            Asistencia.deleteMany({ estudiante: nuevoEstudiante._id }),
+            Observacion.deleteMany({ estudiante: nuevoEstudiante._id }),
+            Notas.deleteMany({ estudiante: nuevoEstudiante._id }),
+            Representante.updateOne({ _id: representanteBDD._id }, { $pull: { estudiantes: nuevoEstudiante._id } }),
+            CursoAsignado.updateOne({ _id: cursoAsignadoBDD._id }, { $pull: { estudiantes: nuevoEstudiante._id } })
+        ]);
+        return res.status(500).json({ error: 'Error al registrar estudiante' });
     }
+    try {
+        await estudianteRegistrado(representanteBDD.email, cedula, nombre, apellido);
+    } catch (error) {
+        // El estudiante ya quedó registrado; solo falló la notificación
+        return res.status(201).json({ msg: 'Estudiante registrado correctamente, pero no se pudo enviar el correo al representante', estudiante: nuevoEstudiante._id });
+    }
+    res.status(201).json({ msg: 'Estudiante registrado correctamente', estudiante: nuevoEstudiante._id });
 };
 
 

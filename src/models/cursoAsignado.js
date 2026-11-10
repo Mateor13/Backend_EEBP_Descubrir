@@ -108,7 +108,7 @@ async function crearMateriasDelCursoAnterior(materiasAnt, anioLectivoNuevoId, Ma
 }
 
 // Evalúa si el estudiante aprueba o repite, y genera operaciones bulk
-function asignarEstudiantes(estudiantes, nivel, esUltimoNivel, notasMap, cursoAsignadoDestino, cursoAsignadoActual, anioLectivoNuevoId) {
+function asignarEstudiantes(estudiantes, nivel, esUltimoNivel, notasMap, reprobadosSet, cursoAsignadoDestino, cursoAsignadoActual, anioLectivoNuevoId) {
     const estudiantesARepetir = [];
     const estudiantesAPromover = [];
     const observacionesBulk = [];
@@ -119,8 +119,9 @@ function asignarEstudiantes(estudiantes, nivel, esUltimoNivel, notasMap, cursoAs
         const notas = notasMap.get(idStr) || [];
         if (!notasMap.has(idStr)) continue;
 
-        const reprobado = (nivel > 4 && notas.length === 0) ||
-            (nivel > 4 && notas.some(n => n.esMateriaReprobada && n.esMateriaReprobada()));
+        // Antes se llamaba a esMateriaReprobada() (async) sin await: la Promise siempre es "truthy"
+        // y todos los estudiantes con notas se marcaban como reprobados. Ahora se usa un Set precalculado.
+        const reprobado = nivel > 4 && (notas.length === 0 || reprobadosSet.has(idStr));
 
         const yaAsignado = cursoAsignadoDestino.estudiantes.some(id => id.equals(estudianteId)) ||
             cursoAsignadoActual.estudiantes.some(id => id.equals(estudianteId));
@@ -160,6 +161,14 @@ cursoAsignadoSchema.statics.promoverEstudiantesPorNivel = async function (anioLe
             .populate('estudiante', 'estado');
 
         const notasMap = agruparNotasPorEstudiante(notasPorEstudiante);
+
+        // Calcula de antemano (con await) qué estudiantes reprobaron al menos una materia
+        const anioLectivoAnterior = await model('AnioLectivo').findById(anioLectivoAnteriorId);
+        const ponderaciones = anioLectivoAnterior?.obtenerPonderaciones() || null;
+        const reprobadosSet = new Set();
+        for (const [idEstudiante, notas] of notasMap) {
+            if (notas.some(n => n.esMateriaReprobada(ponderaciones))) reprobadosSet.add(idEstudiante);
+        }
 
         // Asegura cursos nivel 1
         const paralelos = ['A', 'B', 'C', 'D', 'E'];
@@ -223,7 +232,7 @@ cursoAsignadoSchema.statics.promoverEstudiantesPorNivel = async function (anioLe
             }
 
             const { estudiantesARepetir, estudiantesAPromover, observacionesBulk, asistenciasBulk } =
-                asignarEstudiantes(estudiantes, nivel, esUltimoNivel, notasMap, cursoAsignadoDestino, cursoAsignadoActual, anioLectivoNuevoId);
+                asignarEstudiantes(estudiantes, nivel, esUltimoNivel, notasMap, reprobadosSet, cursoAsignadoDestino, cursoAsignadoActual, anioLectivoNuevoId);
 
             if (estudiantesARepetir.length) {
                 cursoAsignadoActual.estudiantes.push(...estudiantesARepetir);

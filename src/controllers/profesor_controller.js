@@ -100,27 +100,21 @@ const subirNotasEstudiantes = async (req, res) => {
         examenes: 'Examen'
     };
     try {
-        // 1. Obtener el mayor número de evaluaciones del tipo para todos los estudiantes
-        let maxCantidad = 0;
-        for (const estudianteId of Object.keys(notas)) {
-            let notasEstudiante = await Notas.findOne({ estudiante: estudianteId, materia: materiaBDD._id, anioLectivo });
-            const cantidad = (notasEstudiante?.evaluaciones?.[tipo]?.length || 0);
-            if (cantidad > maxCantidad) maxCantidad = cantidad;
-        }
-        const descripcion = `${tipoMap[tipo] || tipo} ${maxCantidad}`;
-        // 2. Registrar la nota para todos los estudiantes con la misma descripción
+        const estudianteIds = Object.keys(notas);
+        // 1. Una sola consulta para todos los estudiantes (antes eran 2 consultas por estudiante)
+        const documentos = await Notas.find({ estudiante: { $in: estudianteIds }, materia: materiaBDD._id, anioLectivo });
+        const notasPorEstudiante = new Map(documentos.map(d => [d.estudiante.toString(), d]));
+        // 2. La nota se registra en la última evaluación creada; si aún no existe ninguna se crea la nº 1
+        //    (antes se generaba la descripción "Deber 0")
+        const maxCantidad = documentos.reduce((max, d) => Math.max(max, d.evaluaciones?.[tipo]?.length || 0), 0);
+        const descripcion = `${tipoMap[tipo] || tipo} ${Math.max(maxCantidad, 1)}`;
+        // 3. Registrar la nota para todos los estudiantes con la misma descripción
         const errores = [];
         for (const [estudianteId, nota] of Object.entries(notas)) {
-            let notasEstudiante = await Notas.findOne({ estudiante: estudianteId, materia: materiaBDD._id, anioLectivo });
-            if (!notasEstudiante) {
-                notasEstudiante = new Notas({ estudiante: estudianteId, materia: materiaBDD._id, anioLectivo });
-            }
+            const notasEstudiante = notasPorEstudiante.get(estudianteId)
+                || new Notas({ estudiante: estudianteId, materia: materiaBDD._id, anioLectivo });
             const resultado = await notasEstudiante.agregarNota(tipo, nota, descripcion);
-            if (resultado?.error) {
-                errores.push(`Error en estudiante ${estudianteId}: ${resultado.error}`);
-            } else {
-                await notasEstudiante.save();
-            }
+            if (resultado?.error) errores.push(`Error en estudiante ${estudianteId}: ${resultado.error}`);
         }
         if (errores.length > 0) return res.status(400).json({ error: errores.join(', ') });
         res.status(200).json({ msg: 'Notas registradas correctamente', descripcion });
@@ -146,9 +140,8 @@ const modificarNotasEstudiantes = async (req, res) => {
                 // Si existe pero no tiene la evidencia, también intenta completarla
                 await notasEstudiante.completarEvidenciaDesdeOtros(tipo, descripcion, materiaBDD._id, anioLectivo);
             }
-            // Actualizar o crear la nota
+            // Actualizar o crear la nota (actualizarNota ya guarda el documento)
             await notasEstudiante.actualizarNota(tipo, nota, descripcion);
-            await notasEstudiante.save();
         }
         res.status(200).json({ msg: 'Notas actualizadas correctamente' });
     } catch (error) {
@@ -163,8 +156,12 @@ const observacionesEstudiantes = async (req, res) => {
     const date = new Date();
     const fecha = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
     const nuevaObservacion = { fecha, observacion, profesor: profesorBDD._id };
-    await observacionBDD.registrarObservacion(nuevaObservacion);
-    res.status(200).json({ msg: 'Observación registrada correctamente' });
+    try {
+        await observacionBDD.registrarObservacion(nuevaObservacion);
+        res.status(200).json({ msg: 'Observación registrada correctamente' });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al registrar la observación' });
+    }
 }
 
 // Visualiza los estudiantes de un curso para una materia y profesor
@@ -172,7 +169,7 @@ const visualizarEstudiantesCurso = async (req, res) => {
     const { cursoBDD } = req;
     const { anio } = req.userBDD;
     const listado = await cursoAsignado.findOne({ curso: cursoBDD._id, anioLectivo: anio }).populate('estudiantes', 'nombre apellido cedula estado');
-    if (listado?.estudiantes.length === 0) return res.status(404).json({ error: 'No hay estudiantes en este curso' });
+    if (!listado || listado.estudiantes.length === 0) return res.status(404).json({ error: 'No hay estudiantes en este curso' });
     const estudiantes = listado.estudiantes.filter(estudiante => estudiante.estado === true);
     if (estudiantes.length === 0) return res.status(404).json({ error: 'No hay estudiantes activos en este curso' });
     res.status(200).json({ estudiantes });
@@ -181,7 +178,7 @@ const visualizarEstudiantesCurso = async (req, res) => {
 const visualizarCursosAsociados = async (req, res) => {
     const { id } = req.userBDD;
     // 1. Buscar las materias que dicta el profesor
-    const materiasProfesor = await materias.find({ profesor: id });
+    const materiasProfesor = await materias.find({ profesor: id, anioLectivo: req.userBDD.anio, estado: true });
     if (!materiasProfesor.length) {
         return res.status(404).json({ error: 'No hay materias asociadas a este profesor' });
     }

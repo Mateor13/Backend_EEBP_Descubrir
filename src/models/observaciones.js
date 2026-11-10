@@ -8,9 +8,11 @@ const observacionSchema = new Schema({
         fecha: {
             type: String,
             required: true,
-            // Por defecto, asigna la fecha actual (como objeto Date)
+            // Por defecto, la fecha actual en formato D/M/AAAA (igual que el controlador).
+            // Antes usaba una variable "date" no declarada (ReferenceError en módulos ES).
             default: function () {
-                return date = new Date();
+                const date = new Date();
+                return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
             }
         },
         observacion: {

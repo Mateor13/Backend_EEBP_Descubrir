@@ -1,5 +1,6 @@
 import { Schema, model } from 'mongoose'
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcryptjs'
+import { generarTokenSeguro, generarPasswordTemporal } from '../utils/seguridad.js';
 
 // Esquema para el modelo de Profesor
 const profesorSchema = new Schema({
@@ -57,6 +58,11 @@ const profesorSchema = new Schema({
         type: String,
         default: null
     },
+    // Fecha de expiración del token de recuperación (null = sin expiración, p. ej. confirmación de cuenta)
+    tokenExpira: {
+        type: Date,
+        default: null
+    },
     // Indica si el email fue confirmado
     confirmEmail: {
         type: Boolean,
@@ -65,7 +71,7 @@ const profesorSchema = new Schema({
     // Referencia al administrador que lo registró
     admin: {
         type: Schema.Types.ObjectId,
-        ref: 'admin'
+        ref: 'Administrador'
     }
 }, {
     timestamps: true,
@@ -79,25 +85,17 @@ profesorSchema.methods.compararPassword = async function (password) {
 
 // Método para generar y encriptar una contraseña aleatoria
 profesorSchema.methods.generarPassword = async function () {
-    const password = Math.random().toString(36).slice(2, 7)
+    const password = generarPasswordTemporal('prof')
     const salt = await bcrypt.genSalt(10)
-    this.password = await bcrypt.hash('prof-' + password, salt)
-    return 'prof-' + password
+    this.password = await bcrypt.hash(password, salt)
+    return password
 };
 
 // Método para generar un token aleatorio
 profesorSchema.methods.generarToken = async function () {
-    const token = Math.random().toString(36).slice(2)
+    const token = generarTokenSeguro()
     this.token = token
     return token
-}
-
-// Método para ingresar un curso al profesor (evita duplicados)
-profesorSchema.methods.ingresarCurso = async function (curso) {
-    const existeCurso = this.cursos.includes(curso)
-    if (existeCurso) return { error: 'El curso ya está registrado' }
-    this.cursos.push(curso)
-    await this.save()
 }
 
 // Método para encriptar una contraseña proporcionada

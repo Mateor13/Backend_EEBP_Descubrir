@@ -1,11 +1,4 @@
 import jwt from 'jsonwebtoken'
-import dotenv from 'dotenv'
-
-// Suprimir logs de dotenv temporalmente
-const originalLog = console.log;
-console.log = () => {};
-dotenv.config()
-console.log = originalLog;
 
 // Genera un JWT con id, rol y año lectivo, válido por 1 hora
 const generarJWT = (id, rol, anio) => {
@@ -13,37 +6,38 @@ const generarJWT = (id, rol, anio) => {
 }
 
 // Middleware para verificar autenticación mediante JWT
+// 401 = no autenticado (falta el token o no es válido). Antes se respondía 404 ("no encontrado").
 const verificarAutenticacion = async (req, res, next) => {
-    // Verifica que exista el header de autorización
-    if (!req.headers.authorization) return res.status(404).json({ error: "Lo sentimos, debes proprocionar un token" })
     const { authorization } = req.headers
+    const [esquema, token] = (authorization || '').split(' ')
+    if (esquema?.toLowerCase() !== 'bearer' || !token) return res.status(401).json({ error: "Lo sentimos, debes proporcionar un token" })
     try {
         // Decodifica el token y extrae datos del usuario
-        const { id, rol, anio } = jwt.verify(authorization.split(' ')[1], process.env.JWT_SECRET)
+        const { id, rol, anio } = jwt.verify(token, process.env.JWT_SECRET)
         req.userBDD = { id, rol, anio }
         next()
     } catch (error) {
-        const e = new Error("Formato del token no válido")
-        return res.status(404).json({ error: e.message })
+        const mensaje = error.name === 'TokenExpiredError' ? 'La sesión ha expirado' : 'Formato del token no válido'
+        return res.status(401).json({ error: mensaje })
     }
 }
 
 // Middleware para verificar si el usuario es profesor
 const verificarRolProfesor = (req, res, next) => {
     if (req.userBDD.rol === "profesor") next()
-    else return res.status(401).json({ error: "Lo sentimos, no tienes permisos de profesor para realizar esta acción" })
+    else return res.status(403).json({ error: "Lo sentimos, no tienes permisos de profesor para realizar esta acción" })
 }
 
 // Middleware para verificar si el usuario es administrador
 const verificarRolAdmin = (req, res, next) => {
     if (req.userBDD.rol === "administrador") next()
-    else return res.status(401).json({ error: "Lo sentimos, no tienes permisos de administrador para realizar esta acción" })
+    else return res.status(403).json({ error: "Lo sentimos, no tienes permisos de administrador para realizar esta acción" })
 }
 
 // Middleware para verificar si el usuario es representante
 const verificarRolRepresentante = (req, res, next) => {
     if (req.userBDD.rol === "representante") next()
-    else return res.status(401).json({ error: "Lo sentimos, no tienes permisos para realizar esta acción" })
+    else return res.status(403).json({ error: "Lo sentimos, no tienes permisos para realizar esta acción" })
 }
 
 // Middleware para verificar que el año lectivo esté activo

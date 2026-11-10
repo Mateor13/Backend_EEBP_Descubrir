@@ -3,6 +3,7 @@ import profesor from "../models/profesor.js";
 import administradores from "../models/administradores.js";
 import aniosLectivo from "../models/anioLectivo.js";
 import { generarJWT } from "../middlewares/JWT.js";
+import { DURACION_TOKEN_RECUPERACION_MS } from "../utils/seguridad.js";
 import { sendMailToChangeEmail, sendMailToRecoveryPassword, sendMailToRecoveryPasswordProfesor, sendMailToRecoveryPasswordRepresentante } from "../config/nodemailer.js";
 
 // Lista de roles con su modelo, nombre, función de correo y campos a excluir en consultas
@@ -67,8 +68,11 @@ const confirmarCuenta = async (req, res) => {
         if (!usuarioBDD) {
             return res.status(400).json({ error: 'El token no es válido' });
         }
-        // Confirmar el email y guardar los cambios
+        // Confirmar el email e invalidar el token: antes quedaba guardado y el mismo enlace de
+        // confirmación servía indefinidamente para /nuevo-password (cambiar la contraseña ajena).
         usuarioBDD.confirmEmail = true;
+        usuarioBDD.token = null;
+        usuarioBDD.tokenExpira = null;
         await usuarioBDD.save();
         return res.status(200).json({ mensaje: 'La cuenta se ha confirmado exitosamente, ya puede iniciar sesión' });
     } catch (error) {
@@ -90,12 +94,13 @@ const recuperarPassword = async (req, res) => {
         if (!usuarioBDD) {
             return res.status(400).json({ error: 'No se ha encontrado el email ingresado' });
         }
-        // Generar el token y enviar el correo
+        // Generar el token (válido por tiempo limitado), guardarlo y DESPUÉS enviar el correo,
+        // para no enviar enlaces que no existen si el guardado falla
         const token = await usuarioBDD.generarToken();
+        usuarioBDD.tokenExpira = new Date(Date.now() + DURACION_TOKEN_RECUPERACION_MS);
+        await usuarioBDD.save();
         const rolModelo = roles.find(r => r.model === usuarioBDD.constructor);
         await rolModelo.correo(email, token);
-        // Guardar el usuario con el nuevo token
-        await usuarioBDD.save();
         return res.status(200).json({ mensaje: 'Para recuperar su contraseña, se le ha enviado un correo' });
     } catch (error) {
         return res.status(500).json({ error: 'Error interno al procesar la solicitud' });
@@ -143,8 +148,16 @@ const nuevaContrasena = async (req, res) => {
         if (!usuarioBDD) {
             return res.status(400).json({ error: 'El token no es válido' });
         }
+        // Un token de recuperación caducado ya no sirve
+        if (usuarioBDD.tokenExpira && usuarioBDD.tokenExpira.getTime() < Date.now()) {
+            usuarioBDD.token = null;
+            usuarioBDD.tokenExpira = null;
+            await usuarioBDD.save();
+            return res.status(400).json({ error: 'El token ha expirado, solicite uno nuevo' });
+        }
         // Actualizar la contraseña y eliminar el token
         usuarioBDD.token = null;
+        usuarioBDD.tokenExpira = null;
         await usuarioBDD.encriptarPassword(password);
         await usuarioBDD.save();
         return res.status(200).json({ mensaje: 'La contraseña ha sido actualizada exitosamente' });
@@ -157,16 +170,18 @@ const nuevaContrasena = async (req, res) => {
 const cambiarPassword = async (req, res) => {
     const { password, newPassword } = req.body
     const { id, rol } = req.userBDD
-    const rolModelo = rolActual(rol)
-    const userBDD = await rolModelo.model.findById(id);
-    if (userBDD) {
+    try {
+        const rolModelo = rolActual(rol)
+        const userBDD = await rolModelo?.model.findById(id);
+        if (!userBDD) return res.status(400).json({ error: 'Error al actualizar el usuario' });
         const verificarPassword = await userBDD.compararPassword(password);
         if (!verificarPassword) return res.status(400).json({ error: 'La contraseña actual es incorrecta' });
         await userBDD.encriptarPassword(newPassword);
         await userBDD.save();
         return res.status(200).json({ mensaje: 'La contraseña ha sido actualizada exitosamente' });
+    } catch (error) {
+        return res.status(500).json({ error: 'Error al actualizar la contraseña' });
     }
-    return res.status(400).json({ error: 'Error al actualizar el usuario' });
 }
 
 // Permite cambiar los datos personales del usuario autenticado
@@ -181,44 +196,28 @@ const cambiarDatos = async (req, res) => {
         if (!userBDD) {
                 return res.status(404).json({ error: 'Usuario no encontrado' });
         }
-        const promesas = [];
-        // Verificar si el email ha cambiado
-        if (userBDD.email !== email) {
-            email = email.toLowerCase().trim();
-            promesas.push(
-                Promise.all(
-                    roles.map(({ model }) => model.findOne({ email }).select('_id'))
-                ).then(resultados => {
-                    const existeEmail = resultados.some(res => res !== null);
-                    if (existeEmail) {
-                        throw new Error('El email ya está registrado');
-                    }
-                })
-            );
-            promesas.push(sendMailToChangeEmail(userBDD.email, email));
+        email = email.toLowerCase().trim();
+        const emailCambio = userBDD.email !== email;
+        // 1. Validar unicidad ANTES de modificar nada. Antes el correo de cambio de email se enviaba
+        //    en paralelo con la validación, así que se enviaba aunque el email ya estuviera registrado.
+        if (emailCambio) {
+            const resultados = await Promise.all(roles.map(({ model }) => model.findOne({ email }).select('_id')));
+            if (resultados.some(r => r !== null)) throw new Error('El email ya está registrado');
         }
-        // Verificar si el teléfono ha cambiado
         if (userBDD.telefono !== telefono) {
-            promesas.push(
-                Promise.all(
-                    roles.map(({ model }) => model.findOne({ telefono }).select('_id'))
-                ).then(resultados => {
-                    const existeTelefono = resultados.some(res => res !== null);
-                    if (existeTelefono) {
-                        throw new Error('El teléfono ya está registrado');
-                    }
-                })
-            );
+            const resultados = await Promise.all(roles.map(({ model }) => model.findOne({ telefono }).select('_id')));
+            if (resultados.some(r => r !== null)) throw new Error('El teléfono ya está registrado');
         }
-        // Actualizar los datos del usuario
+        // 2. Actualizar y guardar
+        const emailAnterior = userBDD.email;
         userBDD.telefono = telefono;
         userBDD.direccion = direccion;
         userBDD.nombre = nombre;
         userBDD.apellido = apellido;
         userBDD.email = email;
-        // Ejecutar todas las promesas en paralelo
-        await Promise.all(promesas);
         await userBDD.save();
+        // 3. Notificar al email anterior solo cuando el cambio ya se guardó
+        if (emailCambio) await sendMailToChangeEmail(emailAnterior, email);
         return res.status(200).json({ mensaje: 'Los datos se han actualizado correctamente' });
     } catch (error) {
         console.error(error);

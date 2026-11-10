@@ -7,6 +7,32 @@ import Observaciones from '../models/observaciones.js';
 import CursosAsignados from '../models/cursoAsignado.js';
 import anioLectivo from '../models/anioLectivo.js';
 
+// Busca una materia y verifica que pertenezca al profesor autenticado y al año lectivo de su sesión.
+// Antes solo se comprobaba que la materia existiera: cualquier profesor podía ver o modificar
+// las notas de materias de otros profesores cambiando el id en la URL.
+const obtenerMateriaDelProfesor = async (materiaId, req, populate) => {
+    const query = Materias.findById(materiaId);
+    if (populate) query.populate(populate, '_id nombre apellido');
+    const materiaBDD = await query;
+    const profesorId = materiaBDD?.profesor?._id ?? materiaBDD?.profesor;
+    if (!materiaBDD || !materiaBDD.estado || String(profesorId) !== String(req.userBDD.id)) {
+        throw new Error('La materia no existe o no está asignada a usted');
+    }
+    if (String(materiaBDD.anioLectivo) !== String(req.userBDD.anio)) {
+        throw new Error('La materia no pertenece al año lectivo actual');
+    }
+    return materiaBDD;
+};
+
+// Verifica que todos los estudiantes pertenezcan a un curso donde se dicta la materia
+const verificarEstudiantesDeLaMateria = async (estudianteIds, materiaBDD, anio) => {
+    const cursos = await CursosAsignados.find({ materias: materiaBDD._id, anioLectivo: anio }).select('estudiantes');
+    const permitidos = new Set(cursos.flatMap(c => c.estudiantes.map(String)));
+    for (const id of estudianteIds) {
+        if (!permitidos.has(String(id))) throw new Error(`El estudiante con ID ${id} no pertenece a un curso de esta materia`);
+    }
+};
+
 // Validador para subir notas de estudiantes por parte del profesor
 const subirNotasEstudiantesValidator = [
     check('materiaId')
@@ -28,9 +54,10 @@ const subirNotasEstudiantesValidator = [
             const { materiaId } = req.params;
             if (!materiaId) throw new Error('La materia es obligatoria');
             // Validar que la materia exista y esté asignada al profesor
-            const materiaBDD = await Materias.findById(materiaId);
-            if (!materiaBDD) throw new Error('La materia no existe o no está asignada a usted');
+            const materiaBDD = await obtenerMateriaDelProfesor(materiaId, req);
             req.materiaBDD = materiaBDD;
+            if (!notas || typeof notas !== 'object' || Array.isArray(notas)) throw new Error('Las notas deben enviarse como un objeto { idEstudiante: nota }');
+            await verificarEstudiantesDeLaMateria(Object.keys(notas), materiaBDD, anio);
             // Validar cada estudiante y sus datos
             for (const [estudianteId, nota] of Object.entries(notas)) {
                 // Validar existencia del estudiante
@@ -73,9 +100,10 @@ const modificarNotasEstudiantesValidator = [
             });
             const { materiaId } = req.params;
             // Validar que la materia exista y esté asignada al profesor
-            const materiaBDD = await Materias.findById(materiaId);
-            if (!materiaBDD) throw new Error('La materia no existe o no está asignada a usted');
+            const materiaBDD = await obtenerMateriaDelProfesor(materiaId, req);
             req.materiaBDD = materiaBDD;
+            if (!notas || typeof notas !== 'object' || Array.isArray(notas)) throw new Error('Las notas deben enviarse como un objeto { idEstudiante: nota }');
+            await verificarEstudiantesDeLaMateria(Object.keys(notas), materiaBDD, anio);
             // Validar cada estudiante y sus datos
             for (const [estudianteId, nota] of Object.entries(notas)) {
                 // Validar existencia del estudiante
@@ -120,8 +148,10 @@ const subirEvidenciasEstudiantesValidator = [
         .isMongoId()
         .withMessage('El id de la materia debe tener un formato válido')
         .custom(async (materiaId, { req }) => {
-            const materiaBDD = await Materias.findById(materiaId);
-            if (!materiaBDD) throw new Error('La materia no existe o no está asignada a usted');
+            const materiaBDD = await obtenerMateriaDelProfesor(materiaId, req);
+            if (req.cursoBDD && !req.cursoBDD.materias.some(m => String(m) === String(materiaBDD._id))) {
+                throw new Error('La materia no pertenece a este curso');
+            }
             req.materiaBDD = materiaBDD;
             return true;
         }),
@@ -205,6 +235,10 @@ const visualizarEstudiantesCursoValidator = [
         .custom(async (cursoId, { req }) => {
             const cursoBDD = await Cursos.findById(cursoId);
             if (!cursoBDD) throw new Error('El curso no existe');
+            // El profesor solo puede ver cursos donde dicta alguna materia
+            const cursoAsignado = await CursosAsignados.findOne({ curso: cursoId, anioLectivo: req.userBDD.anio }).populate('materias', 'profesor');
+            const dictaEnCurso = cursoAsignado?.materias.some(m => String(m.profesor) === String(req.userBDD.id));
+            if (!dictaEnCurso) throw new Error('No tiene materias asignadas en este curso');
             req.cursoBDD = cursoBDD;
             return true;
         }),
@@ -226,6 +260,7 @@ const visualizarMateriasAsignadasValidator = [
             const cursoBDD = await Cursos.findById(cursoId)
             if (!cursoBDD) throw new Error('El curso no existe');
             const cursoAsignado = await CursosAsignados.findOne({ curso: cursoId, anioLectivo: req.userBDD.anio }).populate('materias', '_id nombre profesor').populate('materias.profesor', '_id nombre apellido');
+            if (!cursoAsignado) throw new Error('El curso no está registrado en el año lectivo actual');
             req.cursoAsignadoBDD = cursoAsignado;
             return true;
         }),
@@ -244,8 +279,7 @@ const visualizarEstudiantesPorMateriaValidator = [
         .isMongoId()
         .withMessage('El id de la materia debe tener un formato válido')
         .custom(async (materiaId, { req }) => {
-            const materiaBDD = await Materias.findById(materiaId).populate('profesor', '_id nombre apellido');
-            if (!materiaBDD) throw new Error('La materia no existe');
+            const materiaBDD = await obtenerMateriaDelProfesor(materiaId, req, 'profesor');
             req.materiaBDD = materiaBDD;
             return true;
         }),
@@ -267,8 +301,7 @@ const visualizarTiposNotasEstudiantesValidator = [
         .isMongoId()
         .withMessage('El id de la materia debe tener un formato válido')
         .custom(async (materiaId, { req }) => {
-            const materiaBDD = await Materias.findById(materiaId);
-            if (!materiaBDD) throw new Error('La materia no existe');
+            const materiaBDD = await obtenerMateriaDelProfesor(materiaId, req);
             req.materiaBDD = materiaBDD;
             return true;
         }),
@@ -290,8 +323,7 @@ const visualizarEstudiantesPorTipoValidator = [
         .isMongoId()
         .withMessage('El id de la materia debe tener un formato válido')
         .custom(async (materiaId, { req }) => {
-            const materiaBDD = await Materias.findById(materiaId);
-            if (!materiaBDD) throw new Error('La materia no existe');
+            const materiaBDD = await obtenerMateriaDelProfesor(materiaId, req);
             req.materiaBDD = materiaBDD;
             return true;
         }),
@@ -303,6 +335,9 @@ const visualizarEstudiantesPorTipoValidator = [
         .custom(async (cursoId, { req }) => {
             const cursoBDD = await CursosAsignados.findOne({ curso: cursoId, anioLectivo: req.userBDD.anio }).populate('estudiantes', '_id nombre apellido cedula');
             if (!cursoBDD) throw new Error('El curso no existe');
+            if (req.materiaBDD && !cursoBDD.materias.some(m => String(m) === String(req.materiaBDD._id))) {
+                throw new Error('La materia no pertenece a este curso');
+            }
             req.cursoBDD = cursoBDD;
             return true;
         }),
