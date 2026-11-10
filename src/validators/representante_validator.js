@@ -1,4 +1,5 @@
-import { check, validationResult } from 'express-validator';
+import { check } from 'express-validator';
+import { manejarErroresValidacion } from './manejarErrores.js';
 import Estudiantes from '../models/estudiantes.js';
 import Materias from '../models/materias.js';
 import Representante from '../models/representante.js';
@@ -28,11 +29,7 @@ const validarIdEstudiante = [
             return true;
         }),
     // Middleware para devolver el primer error de validación encontrado
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
-        next();
-    }
+    manejarErroresValidacion
 ];
 
 const validarIdEstudianteIdMateria = [
@@ -65,11 +62,7 @@ const validarIdEstudianteIdMateria = [
             return true;
         }),
     // Middleware para devolver el primer error de validación encontrado
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 export {

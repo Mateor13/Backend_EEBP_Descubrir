@@ -1,4 +1,5 @@
-import { check, validationResult } from 'express-validator';
+import { check } from 'express-validator';
+import { manejarErroresValidacion } from './manejarErrores.js';
 import Profesor from '../models/profesor.js';
 import Cursos from '../models/cursos.js';
 import Materias from '../models/materias.js';
@@ -70,11 +71,7 @@ const subirNotasEstudiantesValidator = [
             }
             return true;
         }),
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 // Validador para modificar notas de estudiantes por parte del profesor
@@ -116,11 +113,7 @@ const modificarNotasEstudiantesValidator = [
             }
             return true;
         }),
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 // Validador para subir evidencias de estudiantes
@@ -176,11 +169,7 @@ const subirEvidenciasEstudiantesValidator = [
         }
         return true;
     }),
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 // Validador para registrar observaciones sobre estudiantes
@@ -218,11 +207,7 @@ const observacionesEstudiantesValidator = [
             req.profesorBDD = profesorBDD;
             return true;
         }),
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 // Validador para visualizar estudiantes de un curso y materia
@@ -242,11 +227,7 @@ const visualizarEstudiantesCursoValidator = [
             req.cursoBDD = cursoBDD;
             return true;
         }),
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 // Validador para visualizar materias asignadas a un curso
@@ -264,11 +245,7 @@ const visualizarMateriasAsignadasValidator = [
             req.cursoAsignadoBDD = cursoAsignado;
             return true;
         }),
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 // Validador para visualizar estudiantes por materia
@@ -283,11 +260,7 @@ const visualizarEstudiantesPorMateriaValidator = [
             req.materiaBDD = materiaBDD;
             return true;
         }),
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 const visualizarTiposNotasEstudiantesValidator = [
@@ -305,11 +278,7 @@ const visualizarTiposNotasEstudiantesValidator = [
             req.materiaBDD = materiaBDD;
             return true;
         }),
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 const visualizarEstudiantesPorTipoValidator = [
@@ -344,11 +313,7 @@ const visualizarEstudiantesPorTipoValidator = [
     check('descripcion')
         .notEmpty()
         .withMessage('La descripción es obligatoria'),
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 export {

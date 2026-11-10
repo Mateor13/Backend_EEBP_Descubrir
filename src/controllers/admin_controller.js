@@ -31,6 +31,25 @@ const guardarYNotificar = async (documento, enviarCorreo) => {
     }
 };
 
+// Crea el controlador que actualiza los datos de un usuario (administrador, profesor o representante).
+// Antes eran tres funciones idénticas que solo cambiaban el texto del mensaje.
+const crearModificadorUsuario = (rol) => async (req, res) => {
+    const { usuarioBDD } = req;
+    const { nombre, apellido, direccion, telefono, cedula } = req.body;
+    try {
+        usuarioBDD.nombre = nombre;
+        usuarioBDD.apellido = apellido;
+        usuarioBDD.email = req.body.email.toLowerCase().trim();
+        usuarioBDD.direccion = direccion;
+        usuarioBDD.telefono = telefono;
+        usuarioBDD.cedula = cedula;
+        await usuarioBDD.save();
+        res.status(200).json({ msg: `${rol} modificado correctamente` });
+    } catch (error) {
+        res.status(500).json({ error: `Error al modificar ${rol.toLowerCase()}` });
+    }
+};
+
 // ==================== ADMINISTRADOR ====================
 
 // Registra un nuevo administrador y envía credenciales por correo
@@ -59,24 +78,7 @@ const listarAdministradores = async (req, res) => {
 };
 
 // Modifica los datos de un administrador existente
-const modificarAdministrador = async (req, res) => {
-    const { usuarioBDD } = req;
-    const { nombre, apellido, direccion, telefono, cedula } = req.body;
-    let { email } = req.body;
-    email = email.toLowerCase().trim();
-    try {
-        usuarioBDD.nombre = nombre;
-        usuarioBDD.apellido = apellido;
-        usuarioBDD.email = email;
-        usuarioBDD.direccion = direccion;
-        usuarioBDD.telefono = telefono;
-        usuarioBDD.cedula = cedula;
-        await usuarioBDD.save();
-        res.status(200).json({ msg: 'Administrador modificado correctamente' });
-    } catch (error) {
-        res.status(500).json({ error: 'Error al modificar administrador' });
-    }
-}
+const modificarAdministrador = crearModificadorUsuario('Administrador');
 
 // Elimina (desactiva) un administrador
 const eliminarAdministrador = async (req, res) => {
@@ -118,24 +120,7 @@ const listarProfesores = async (req, res) => {
 };
 
 // Modifica los datos de un profesor existente
-const modificarProfesor = async (req, res) => {
-    const { usuarioBDD } = req;
-    const { nombre, apellido, direccion, telefono, cedula } = req.body;
-    let { email } = req.body;
-    try {
-        email = email.toLowerCase().trim();
-        usuarioBDD.nombre = nombre;
-        usuarioBDD.apellido = apellido;
-        usuarioBDD.email = email;
-        usuarioBDD.direccion = direccion;
-        usuarioBDD.telefono = telefono;
-        usuarioBDD.cedula = cedula;
-        await usuarioBDD.save();
-        res.status(200).json({ msg: 'Profesor modificado correctamente' });
-    } catch (error) {
-        res.status(500).json({ error: 'Error al modificar profesor' });
-    }
-}
+const modificarProfesor = crearModificadorUsuario('Profesor');
 
 // Elimina (desactiva) un profesor
 const eliminarProfesor = async (req, res) => {
@@ -209,24 +194,7 @@ const listarRepresentantes = async (req, res) => {
 };
 
 // Modifica los datos de un representante existente
-const modificarRepresentante = async (req, res) => {
-    const { usuarioBDD } = req;
-    const { nombre, apellido, direccion, telefono, cedula } = req.body;
-    let { email } = req.body;
-    try {
-        email = email.toLowerCase().trim();
-        usuarioBDD.nombre = nombre;
-        usuarioBDD.apellido = apellido;
-        usuarioBDD.email = email;
-        usuarioBDD.direccion = direccion;
-        usuarioBDD.telefono = telefono;
-        usuarioBDD.cedula = cedula;
-        await usuarioBDD.save();
-        res.status(200).json({ msg: 'Representante modificado correctamente' });
-    } catch (error) {
-        res.status(500).json({ error: 'Error al modificar representante' });
-    }
-}
+const modificarRepresentante = crearModificadorUsuario('Representante');
 
 // Elimina (desactiva) un representante
 const eliminarRepresentante = async (req, res) => {

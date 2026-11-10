@@ -144,6 +144,9 @@ test('contrato de la API v1 con el frontend', { skip: omitir }, async () => {
     await paso('modificar profesor', admin.patch(`/modificar-profesor/${diego._id}`).send(usuario(5, { nombre: 'Diego', apellido: 'Ruiz', email: 'diego@escuela.test' })))
     await paso('registrar representante 1', admin.post('/registro-representante').send(usuario(6, { nombre: 'Elena', email: 'elena@correo.test' })))
     await paso('registrar representante 2', admin.post('/registro-representante').send(usuario(7, { nombre: 'Fabio', email: 'fabio@correo.test' })))
+    const representantes = await modelos.Representante.find().sort({ cedula: 1 }).lean()
+    await paso('modificar representante', admin.patch(`/modificar-representante/${representantes[1]._id}`).send(usuario(7, { nombre: 'Fabio', apellido: 'Vera', email: 'fabio@correo.test' })))
+    await paso('modificar representante con email inválido', admin.patch(`/modificar-representante/${representantes[1]._id}`).send(usuario(7, { email: 'malo' })))
 
     // ---------- Cursos, materias, ponderaciones ----------
     await paso('registrar curso 5A', admin.post('/registro-curso').send({ nivel: 5, paralelo: 'A' }))

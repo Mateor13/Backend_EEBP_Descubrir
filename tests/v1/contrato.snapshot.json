@@ -196,6 +196,20 @@
     }
   },
   {
+    "paso": "modificar representante",
+    "status": 200,
+    "cuerpo": {
+      "msg": "Representante modificado correctamente"
+    }
+  },
+  {
+    "paso": "modificar representante con email inválido",
+    "status": 400,
+    "cuerpo": {
+      "error": "El email no es válido"
+    }
+  },
+  {
     "paso": "registrar curso 5A",
     "status": 201,
     "cuerpo": {
@@ -361,7 +375,7 @@
       },
       {
         "_id": "<id7>",
-        "apellido": "Apellido",
+        "apellido": "Vera",
         "cedula": "1700000007",
         "direccion": "Calle Falsa 123",
         "email": "fabio@correo.test",
