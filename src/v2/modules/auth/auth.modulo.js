@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import rateLimit from 'express-rate-limit'
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit'
 import { ruta } from '../../shared/middlewares/ruta.js'
 import { validar } from '../../shared/middlewares/validar.js'
 import { email, password, nombrePropio, telefono } from '../../shared/esquemas.js'
@@ -39,7 +39,7 @@ export const crearRutasAuth = ({ authServicio, autenticar }) => {
     const limite = rateLimit({
         windowMs: 15 * 60 * 1000, limit: Number(process.env.AUTH_LIMITE_INTENTOS) || 10, standardHeaders: 'draft-7', legacyHeaders: false,
         skipSuccessfulRequests: true,
-        keyGenerator: (req) => `${req.ip}|${String(req.body?.email ?? '').toLowerCase().trim()}`,
+        keyGenerator: (req) => `${ipKeyGenerator(req.ip)}|${String(req.body?.email ?? '').toLowerCase().trim()}`,
         message: { error: 'Demasiados intentos, intente de nuevo en 15 minutos' } })
     const router = Router()
     router.post('/login', limite, validar({ body: esquemas.login }), ruta(c.login))

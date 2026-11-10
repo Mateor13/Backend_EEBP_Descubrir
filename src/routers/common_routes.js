@@ -1,6 +1,6 @@
 // Importaciones necesarias
 import Router from 'express'; // Importa el enrutador de Express
-import rateLimit from 'express-rate-limit'; // Limita peticiones repetidas
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit'; // Limita peticiones repetidas
 import {
     cambiarDatos,
     cambiarPassword,
@@ -36,7 +36,7 @@ const limiteIntentos = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutos
     limit: 10,
     skipSuccessfulRequests: true,
-    keyGenerator: (req) => `${req.ip}|${String(req.body?.email ?? req.params?.token ?? '').toLowerCase().trim()}`,
+    keyGenerator: (req) => `${ipKeyGenerator(req.ip)}|${String(req.body?.email ?? req.params?.token ?? '').toLowerCase().trim()}`,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
     message: { error: 'Demasiados intentos, por favor intente de nuevo en 15 minutos' }
