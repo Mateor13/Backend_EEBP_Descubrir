@@ -8,6 +8,11 @@ export const crearAcademicoRepositorio = () => ({
     obtenerOCrearCurso: (nivel, paralelo, session) => Curso.findOneAndUpdate(
         { nivel, paralelo }, { $setOnInsert: { nivel, paralelo } }, { upsert: true, new: true, session }
     ),
+    buscarCursos: (ids) => Curso.find({ _id: { $in: ids } }).lean(),
+    // Crea de una sola vez (bulk) los cursos que falten: [{ nivel, paralelo }]
+    asegurarCursos: (pares) => Curso.bulkWrite(pares.map(({ nivel, paralelo }) => ({
+        updateOne: { filter: { nivel, paralelo }, update: { $setOnInsert: { nivel, paralelo } }, upsert: true }
+    }))),
     // Asignaturas
     listarAsignaturas: () => Asignatura.find({ activo: true }).sort({ nombre: 1 }).lean(),
     buscarAsignatura: (id) => Asignatura.findById(id).lean(),
@@ -22,6 +27,7 @@ export const crearAcademicoRepositorio = () => ({
     cursosDeProfesor: (profesorId, periodoId) => Clase.distinct('curso', { profesor: profesorId, periodo: periodoId, activo: true }),
     crearClase: (datos) => Clase.create(datos),
     actualizarClase: (id, cambios) => Clase.findByIdAndUpdate(id, cambios, { new: true, runValidators: true }).lean(),
+    clasesDelCurso: (cursoId, periodoId) => Clase.find({ curso: cursoId, periodo: periodoId, activo: true }, { _id: 1 }).lean(),
     clasesDelPeriodo: (periodoId, session) => Clase.find({ periodo: periodoId, activo: true }).session(session ?? null).lean(),
     insertarClases: (clases, session) => Clase.insertMany(clases, { session, ordered: false })
 })

@@ -41,8 +41,10 @@ Base: `/api/v2`. Todas las rutas, salvo `/salud` y `/auth/{login,activar,recuper
 | POST | `/periodos` | Admin | `{ nombre: '2025-2026', inicio: 'AAAA-MM-DD', fin?, ponderaciones?, notaMinima?, nivelMinimoReprobacion? }` → planificado |
 | PATCH | `/periodos/:id` | Admin | `{ ponderaciones?, notaMinima?, nivelMinimoReprobacion?, fin? }` (las ponderaciones deben sumar 100) |
 | POST | `/periodos/:id/activar`, `/periodos/:id/cerrar` | Admin | |
-| GET | `/periodos/:id/promocion` | Admin | Vista previa: quién aprueba o repite, sin guardar nada |
-| POST | `/periodos/:id/promocion` | Admin | `{ destino, copiarClases? }`: matricula en el periodo destino (idempotente) |
+| GET | `/periodos/:id/promocion/vista-previa?curso=` | Admin | Quién aprueba o repite en un curso, sin guardar nada |
+| POST | `/periodos/:id/promocion` | Admin | `{ destino, copiarClases? }`: **inicia** el proceso y devuelve `{ estado, total, procesados, resumen }` |
+| POST | `/periodos/:id/promocion/procesar` | Admin | **Avanza** el proceso (los cursos que quepan en ~7 s). Repetir hasta `estado: 'completado'`. |
+| GET | `/periodos/:id/promocion` | Admin | Estado y avance del proceso |
 
 ## Catálogo académico
 | Método | Ruta | Quién | Cuerpo / notas |
@@ -92,3 +94,23 @@ Base: `/api/v2`. Todas las rutas, salvo `/salud` y `/auth/{login,activar,recuper
 |---|---|---|---|
 | POST | `/estudiantes/:id/observaciones` | Admin o profesor del estudiante | `{ texto }` |
 | GET | `/estudiantes/:id/observaciones` | Admin, su profesor o su representante | |
+
+## Promoción de año por partes
+
+En Vercel cada petición tiene un tiempo máximo (según el plan). Por eso la promoción no se hace en una sola llamada: se **inicia** y luego se **procesa** por partes. Cada llamada avanza los cursos que quepan en `PROMOCION_PRESUPUESTO_MS` (7 s por defecto) y guarda el avance. Si una llamada se corta, no queda nada a medias: el curso en curso se revierte y se procesa en la siguiente.
+
+Ejemplo en el frontend, con barra de progreso:
+
+```js
+async function promover(api, origenId, destinoId, onProgreso) {
+  let estado = await api.post(`/api/v2/periodos/${origenId}/promocion`, { destino: destinoId })
+  while (estado.estado !== 'completado') {
+    estado = await api.post(`/api/v2/periodos/${origenId}/promocion/procesar`)
+    onProgreso(estado.procesados / estado.total) // 0..1
+  }
+  return estado.resumen // { promovidos, repiten, egresados, yaMatriculados, clasesCopiadas }
+}
+```
+
+- Si dos pestañas procesan a la vez, una recibe **409**: basta con reintentar en unos segundos.
+- Alternativa sin límite de tiempo, desde tu PC: `npm run promocion -- 2024-2025 2025-2026`.

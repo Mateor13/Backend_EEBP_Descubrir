@@ -13,29 +13,42 @@ export const validarPonderaciones = (ponderaciones) => {
 }
 
 /**
+ * Promedio final ponderado a partir de los promedios por tipo ({ deber: 8.5, examen: null, ... }).
+ * Se normaliza con los pesos de los tipos que sí tienen notas: un tipo sin evaluaciones no resta.
+ * Es la regla ÚNICA: la usan el boletín (cálculo en memoria) y la promoción (cálculo en MongoDB).
+ */
+export const promedioFinalDesdeTipos = (porTipo, ponderaciones) => {
+    let suma = 0
+    let pesoUsado = 0
+    for (const tipo of TIPOS_EVALUACION) {
+        const promedio = porTipo[tipo]
+        if (typeof promedio !== 'number') continue
+        const peso = Number(ponderaciones?.[tipo]) || 0
+        suma += promedio * peso
+        pesoUsado += peso
+    }
+    return pesoUsado === 0 ? null : redondear(suma / pesoUsado)
+}
+
+/**
  * Promedio de un estudiante en una clase.
  * - Promedio simple por tipo (deber, taller, prueba, examen) de las evaluaciones con nota.
  *   Una evaluación sin nota del estudiante no cuenta (no se asume 0); el docente decide registrar 0.
- * - Promedio final ponderado, normalizado con los pesos de los tipos que sí tienen notas.
+ * - Promedio final ponderado (ver promedioFinalDesdeTipos).
  * @returns {{ porTipo: Record<string, number|null>, final: number|null }}
  */
 export const calcularPromedioClase = ({ evaluaciones, notasPorEvaluacion, ponderaciones }) => {
     const porTipo = {}
-    let suma = 0
-    let pesoUsado = 0
+    const sinRedondear = {}
     for (const tipo of TIPOS_EVALUACION) {
         const notas = evaluaciones
             .filter(e => e.tipo === tipo)
             .map(e => notasPorEvaluacion.get(String(e._id)))
             .filter(n => typeof n === 'number')
-        if (notas.length === 0) { porTipo[tipo] = null; continue }
-        const promedio = notas.reduce((a, b) => a + b, 0) / notas.length
-        porTipo[tipo] = redondear(promedio)
-        const peso = Number(ponderaciones?.[tipo]) || 0
-        suma += promedio * peso
-        pesoUsado += peso
+        sinRedondear[tipo] = notas.length === 0 ? null : notas.reduce((a, b) => a + b, 0) / notas.length
+        porTipo[tipo] = sinRedondear[tipo] === null ? null : redondear(sinRedondear[tipo])
     }
-    return { porTipo, final: pesoUsado === 0 ? null : redondear(suma / pesoUsado) }
+    return { porTipo, final: promedioFinalDesdeTipos(sinRedondear, ponderaciones) }
 }
 
 /**

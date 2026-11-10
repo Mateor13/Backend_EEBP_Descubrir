@@ -154,6 +154,29 @@ const observacionSchema = new Schema({
 }, { ...opciones, collection: 'observaciones' })
 observacionSchema.index({ estudiante: 1, periodo: 1, fecha: -1 })
 
+// ---------- Procesos de promoción: avance guardado para poder hacerlo por partes ----------
+// En un servidor sin estado (Vercel) cada petición tiene un tiempo máximo. La promoción se divide
+// por cursos y este documento recuerda qué falta, así cada petición avanza un poco y nada se pierde.
+const procesoPromocionSchema = new Schema({
+    origen: { ...ref('Periodo'), unique: true },
+    destino: ref('Periodo'),
+    copiarClases: { type: Boolean, default: true },
+    estado: { type: String, enum: ['en_progreso', 'completado'], default: 'en_progreso' },
+    total: { type: Number, required: true },
+    cursosPendientes: [{ type: Schema.Types.ObjectId, ref: 'Curso' }],
+    resumen: {
+        promovidos: { type: Number, default: 0 },
+        repiten: { type: Number, default: 0 },
+        egresados: { type: Number, default: 0 },
+        yaMatriculados: { type: Number, default: 0 },
+        clasesCopiadas: { type: Number, default: 0 }
+    },
+    // Candado con vencimiento: evita que dos peticiones procesen a la vez; si una muere, expira solo
+    bloqueadoHasta: { type: Date, default: null },
+    iniciadoPor: ref('Usuario', false),
+    finalizado: { type: Date, default: null }
+}, { ...opciones, collection: 'procesosPromocion' })
+
 export const Usuario = conexionV2.model('Usuario', usuarioSchema)
 export const Estudiante = conexionV2.model('Estudiante', estudianteSchema)
 export const Periodo = conexionV2.model('Periodo', periodoSchema)
@@ -165,5 +188,6 @@ export const Evaluacion = conexionV2.model('Evaluacion', evaluacionSchema)
 export const Calificacion = conexionV2.model('Calificacion', calificacionSchema)
 export const Asistencia = conexionV2.model('Asistencia', asistenciaSchema)
 export const Observacion = conexionV2.model('Observacion', observacionSchema)
+export const ProcesoPromocion = conexionV2.model('ProcesoPromocion', procesoPromocionSchema)
 
-export const todosLosModelos = [Usuario, Estudiante, Periodo, Curso, Asignatura, Clase, Matricula, Evaluacion, Calificacion, Asistencia, Observacion]
+export const todosLosModelos = [Usuario, Estudiante, Periodo, Curso, Asignatura, Clase, Matricula, Evaluacion, Calificacion, Asistencia, Observacion, ProcesoPromocion]

@@ -9,7 +9,9 @@
     "test": "node --test --test-concurrency=1 'tests/**/*.test.js'",
     "test:integracion": "MONGODB_URI_TEST=${MONGODB_URI_TEST:-mongodb://127.0.0.1:27017/?replicaSet=rs0&directConnection=true} node --test --test-concurrency=1 'tests/**/*.test.js'",
     "lint": "eslint src/v2 scripts tests",
-    "migrar:v2": "node scripts/migrar-v1-a-v2.js"
+    "migrar:v2": "node scripts/migrar-v1-a-v2.js",
+    "promocion": "node scripts/promover.js",
+    "benchmark:promocion": "node scripts/benchmark-promocion.js"
   },
   "keywords": [],
   "author": "",

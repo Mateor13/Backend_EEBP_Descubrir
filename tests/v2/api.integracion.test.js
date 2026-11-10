@@ -185,21 +185,34 @@ test('año escolar completo con permisos', { skip: omitir }, async (t) => {
         assert.equal((await admin.post(`/api/v2/periodos/${periodo.id}/cerrar`)).status, 200)
         assert.equal((await calificar(profe.http, deber, [{ estudiante: pedro.id, nota: 1 }])).status, 409, 'periodo cerrado no admite cambios')
         const siguiente = (await admin.post('/api/v2/periodos').send({ nombre: '2025-2026', inicio: '2025-09-01' })).body
-        const previa = (await admin.get(`/api/v2/periodos/${periodo.id}/promocion`)).body
+        const previa = (await admin.get(`/api/v2/periodos/${periodo.id}/promocion/vista-previa?curso=${quintoA.id}`)).body
         assert.equal(previa.find(r => r.estudiante === pedro.id).aprueba, true)
         assert.equal(previa.find(r => r.estudiante === juan.id).aprueba, false) // Matemáticas: (4*20+5*40)/60 = 4.67
 
-        const res = await admin.post(`/api/v2/periodos/${periodo.id}/promocion`).send({ destino: siguiente.id })
-        assert.equal(res.status, 200, JSON.stringify(res.body))
-        assert.deepEqual(res.body, { promovidos: 2, repiten: 1, egresados: 0, yaMatriculados: 0, clasesCopiadas: 3 })
+        // Por partes: iniciar y luego "procesar" hasta completar (así lo haría el frontend)
+        const inicio = await admin.post(`/api/v2/periodos/${periodo.id}/promocion`).send({ destino: siguiente.id })
+        assert.equal(inicio.status, 201, JSON.stringify(inicio.body))
+        assert.deepEqual([inicio.body.estado, inicio.body.total, inicio.body.procesados], ['en_progreso', 2, 0])
+        let estado
+        do {
+            const res = await admin.post(`/api/v2/periodos/${periodo.id}/promocion/procesar`)
+            assert.equal(res.status, 200, JSON.stringify(res.body))
+            estado = res.body
+        } while (estado.estado !== 'completado')
+        assert.deepEqual(estado.resumen, { promovidos: 2, repiten: 1, egresados: 0, yaMatriculados: 0, clasesCopiadas: 3 })
+        assert.equal((await admin.get(`/api/v2/periodos/${periodo.id}/promocion`)).body.procesados, 2)
 
         const detalle = async (id) => (await admin.get(`/api/v2/estudiantes/${id}?periodo=${siguiente.id}`)).body.matricula.curso.nombre
         assert.equal(await detalle(pedro.id), 'Sexto A')
         assert.equal(await detalle(juan.id), 'Quinto A')
         assert.equal(await detalle(ajeno.id), 'Sexto B', 'sin notas no hay evidencia para reprobar')
 
-        const repetida = await admin.post(`/api/v2/periodos/${periodo.id}/promocion`).send({ destino: siguiente.id })
-        assert.equal(repetida.body.yaMatriculados, 3, 'ejecutar la promoción dos veces no duplica matrículas')
+        // Repetir la promoción completa no duplica matrículas
+        await admin.post(`/api/v2/periodos/${periodo.id}/promocion`).send({ destino: siguiente.id })
+        const repetida = await admin.post(`/api/v2/periodos/${periodo.id}/promocion/procesar`)
+        assert.equal(repetida.body.resumen.yaMatriculados, 3)
+        const otroDestino = (await admin.post('/api/v2/periodos').send({ nombre: '2026-2027', inicio: '2026-09-01' })).body
+        assert.equal((await admin.post(`/api/v2/periodos/${periodo.id}/promocion`).send({ destino: otroDestino.id })).status, 409)
     })
 
     await t.test('el boletín del periodo anterior sigue disponible', async () => {

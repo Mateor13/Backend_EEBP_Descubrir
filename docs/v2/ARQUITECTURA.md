@@ -92,7 +92,25 @@ MongoDB (BDD "descubrir_v2")
 | **D** (inversión de dependencias) | Los servicios reciben sus dependencias por parámetro y no importan Mongoose, Nodemailer ni axios. |
 | **DRY** (no repetirse) | Esquemas de validación compartidos (`shared/esquemas.js`), un solo manejador de errores, una sola definición de roles. |
 
-## 4. Seguridad
+## 4. Rendimiento: la promoción de año
+
+En la v1, la promoción hacía todo el colegio en una sola petición. Con los años tardaba cada vez más y en Vercel superaba el tiempo máximo por petición del plan gratuito. Se midió con un colegio realista (`npm run benchmark:promocion`): 35 cursos, 1 050 alumnos, 10 materias por curso, 40 evaluaciones por materia y **420 000 notas por año**.
+
+| Versión | Tiempo | Peticiones |
+|---|---|---|
+| Primera versión de la v2 (todo en memoria y en una petición) | **54,2 s** | 1 |
+| v2 actual | **2,9 s** | 1 con presupuesto de 7 s (5 peticiones de < 1 s con presupuesto de 1 s) |
+| v2 actual con **4 años** de historial (1,68 M de notas) | **2,9 s** | igual: el historial no afecta |
+
+Qué se cambió y por qué:
+
+1. **Sin listas anidadas.** El cálculo recorría, por cada alumno, todas las clases y, por cada clase, todas las evaluaciones: cientos de millones de operaciones (51 de los 54 s). Ahora se agrupa con un `Map` en una sola pasada.
+2. **Por curso, solo lo necesario.** Cada curso trae solo sus notas, con 3 campos cada una (≈12 000 documentos pequeños), en lugar de las 420 000 notas completas de una vez. Se midió también agrupar con `$lookup` en MongoDB, pero fue 5 a 7 veces más lento que agrupar en Node.
+3. **Consultas acotadas por periodo y curso, con índices.** Por eso los años anteriores no afectan el tiempo.
+4. **Proceso reanudable** (`procesosPromocion`): cada petición avanza los cursos que caben en el presupuesto de tiempo. Cada curso se guarda en una transacción **junto con su avance**: un corte (timeout) no deja nada a medias ni duplicado. Un candado con vencimiento impide que dos peticiones procesen lo mismo.
+5. **Escrituras masivas.** Cursos destino y planta docente se crean con una sola operación; las matrículas de cada curso, con `insertMany` y `bulkWrite`. Ya no hay una consulta por cada alumno.
+
+## 5. Seguridad
 
 - Contraseñas con bcrypt. Ya no se envían contraseñas por correo: la persona crea la suya desde un enlace de activación válido 72 horas.
 - Tokens de activación y recuperación aleatorios (`crypto`), de un solo uso, con caducidad y **guardados como hash**.
@@ -103,7 +121,7 @@ MongoDB (BDD "descubrir_v2")
 - Imágenes validadas por tipo y tamaño **antes** de cargarlas en memoria.
 - CORS configurable con `CORS_ORIGINS`.
 
-## 5. Pruebas
+## 6. Pruebas
 
 | Tipo | Archivo | Requiere |
 |---|---|---|
@@ -111,6 +129,7 @@ MongoDB (BDD "descubrir_v2")
 | Políticas con repositorios falsos | `tests/v2/politicas.test.js` | Nada |
 | API de punta a punta (año escolar completo y permisos) | `tests/v2/api.integracion.test.js` | MongoDB replica set |
 | Migración v1 → v2 | `tests/v2/migracion.integracion.test.js` | MongoDB replica set |
+| Promoción ante cortes y peticiones simultáneas | `tests/v2/promocion.integracion.test.js` | MongoDB replica set |
 
 ```bash
 npm test                     # sin MongoDB, las de integración se omiten

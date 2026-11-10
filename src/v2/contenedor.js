@@ -9,6 +9,7 @@ import { crearAlmacenamientoFalso, crearAlmacenamientoImgur } from './infra/alma
 import { crearPoliticas } from './shared/politicas.js'
 import { crearUsuariosRepositorio } from './modules/usuarios/usuarios.repositorio.js'
 import { crearPeriodosRepositorio } from './modules/periodos/periodos.repositorio.js'
+import { crearProcesosRepositorio } from './modules/periodos/procesos.repositorio.js'
 import { crearAcademicoRepositorio } from './modules/academico/academico.repositorio.js'
 import { crearEstudiantesRepositorio } from './modules/estudiantes/estudiantes.repositorio.js'
 import { crearCalificacionesRepositorio } from './modules/calificaciones/calificaciones.repositorio.js'
@@ -34,6 +35,7 @@ export const crearContenedor = (sobrescrituras = {}) => {
     const repos = {
         usuariosRepo: crearUsuariosRepositorio(),
         periodosRepo: crearPeriodosRepositorio(),
+        procesosRepo: crearProcesosRepositorio(),
         academicoRepo: crearAcademicoRepositorio(),
         estudiantesRepo: crearEstudiantesRepositorio(),
         calificacionesRepo: crearCalificacionesRepositorio(),

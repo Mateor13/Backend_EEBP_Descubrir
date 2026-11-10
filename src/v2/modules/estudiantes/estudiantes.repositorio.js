@@ -20,9 +20,10 @@ export const crearEstudiantesRepositorio = () => ({
         .populate({ path: 'estudiante', match: { activo: true }, select: 'nombre apellido cedula' }).lean()
         .then(ms => ms.filter(m => m.estudiante).sort((a, b) => a.estudiante.apellido.localeCompare(b.estudiante.apellido))),
     idsEstudiantesDelCurso: (cursoId, periodoId) => Matricula.distinct('estudiante', { curso: cursoId, periodo: periodoId, estado: 'activa' }),
-    // Matrículas vigentes (no retiradas) de un periodo, con curso y estado del estudiante
-    matriculasVigentesDelPeriodo: (periodoId, session) => Matricula.find({ periodo: periodoId, estado: { $ne: 'retirada' } })
-        .populate('curso').populate('estudiante', 'activo').session(session ?? null).lean(),
+    cursosConMatriculas: (periodoId) => Matricula.distinct('curso', { periodo: periodoId, estado: { $ne: 'retirada' } }),
+    matriculasVigentesDelCurso: (cursoId, periodoId) => Matricula.find({ curso: cursoId, periodo: periodoId, estado: { $ne: 'retirada' } })
+        .populate('estudiante', 'activo').lean(),
+    estudiantesMatriculadosEn: (periodoId, estudianteIds, session) => Matricula.distinct('estudiante', { periodo: periodoId, estudiante: { $in: estudianteIds } }).session(session ?? null),
     insertarMatriculas: (matriculas, session) => Matricula.insertMany(matriculas, { session }),
     actualizarEstadosMatricula: (operaciones, session) => Matricula.bulkWrite(operaciones, { session })
 })

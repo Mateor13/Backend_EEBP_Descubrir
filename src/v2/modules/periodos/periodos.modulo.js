@@ -22,7 +22,8 @@ const esquemas = {
         ...configuracion
     }).strict().refine(d => !d.fin || d.fin > d.inicio, { message: 'La fecha de fin debe ser posterior al inicio', path: ['fin'] }),
     configurar: z.object(configuracion).strict(),
-    promocion: z.object({ destino: idMongo, copiarClases: z.boolean().default(true) }).strict()
+    promocion: z.object({ destino: idMongo, copiarClases: z.boolean().default(true) }).strict(),
+    vistaPrevia: z.object({ curso: idMongo })
 }
 
 const aPeriodo = (p) => ({
@@ -37,14 +38,10 @@ const crearControlador = (periodos, promocion) => ({
     activar: async (req, res) => res.json(aPeriodo(await periodos.activar(req.params.id))),
     cerrar: async (req, res) => res.json(aPeriodo(await periodos.cerrar(req.params.id))),
     configurar: async (req, res) => res.json(aPeriodo(await periodos.configurar(req.params.id, req.body))),
-    vistaPrevia: async (req, res) => {
-        const resultados = await promocion.calcular(req.params.id)
-        res.json(resultados.map(r => ({
-            estudiante: String(r.matricula.estudiante._id), curso: String(r.matricula.curso._id),
-            aprueba: r.aprueba, clasesReprobadas: r.clasesReprobadas, nivelDestino: r.nivelDestino
-        })))
-    },
-    promover: async (req, res) => res.json(await promocion.promover({ origen: req.params.id, ...req.body }))
+    vistaPrevia: async (req, res) => res.json(await promocion.vistaPrevia(req.params.id, req.consulta.curso)),
+    estadoPromocion: async (req, res) => res.json(await promocion.estado(req.params.id)),
+    iniciarPromocion: async (req, res) => res.status(201).json(await promocion.iniciar({ origen: req.params.id, ...req.body }, req.usuario.id)),
+    procesarPromocion: async (req, res) => res.json(await promocion.procesar(req.params.id))
 })
 
 export const crearRutasPeriodos = ({ periodosServicio, promocionServicio, autenticar }) => {
@@ -58,7 +55,10 @@ export const crearRutasPeriodos = ({ periodosServicio, promocionServicio, autent
     router.patch('/:id', soloAdmin, validar({ params: paramsId, body: esquemas.configurar }), ruta(c.configurar))
     router.post('/:id/activar', soloAdmin, validar({ params: paramsId }), ruta(c.activar))
     router.post('/:id/cerrar', soloAdmin, validar({ params: paramsId }), ruta(c.cerrar))
-    router.get('/:id/promocion', soloAdmin, validar({ params: paramsId }), ruta(c.vistaPrevia))
-    router.post('/:id/promocion', soloAdmin, validar({ params: paramsId, body: esquemas.promocion }), ruta(c.promover))
+    // Promoción por partes (ver docs/v2/API.md): iniciar -> procesar (repetir hasta "completado")
+    router.get('/:id/promocion/vista-previa', soloAdmin, validar({ params: paramsId, query: esquemas.vistaPrevia }), ruta(c.vistaPrevia))
+    router.get('/:id/promocion', soloAdmin, validar({ params: paramsId }), ruta(c.estadoPromocion))
+    router.post('/:id/promocion', soloAdmin, validar({ params: paramsId, body: esquemas.promocion }), ruta(c.iniciarPromocion))
+    router.post('/:id/promocion/procesar', soloAdmin, validar({ params: paramsId }), ruta(c.procesarPromocion))
     return router
 }
