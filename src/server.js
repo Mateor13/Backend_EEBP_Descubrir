@@ -7,6 +7,7 @@ import representanteRouter from './routers/representante_routes.js'
 import comunRouter from './routers/common_routes.js'
 import multer from 'multer'
 import { crearApiV2 } from './v2/app.js'
+import { crearRutasDocs } from './docs/rutas.js'
 
 // Inicializadores de la aplicación
 const app = express()
@@ -42,6 +43,9 @@ app.use((req, res, next) => {
         });
     }
 });
+
+// Documentación de la API (Swagger UI en /api/docs, OpenAPI en /api/docs/openapi.json)
+app.use('/api', crearRutasDocs())
 
 // API v2 (nueva arquitectura). Se monta antes que la v1 para que sus rutas no choquen.
 app.use('/api/v2', crearApiV2())

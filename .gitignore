@@ -1,3 +1,6 @@
 node_modules
 .env
 .vercel
+
+# Archivos de paquetes de Python descargados por error
+*.whl

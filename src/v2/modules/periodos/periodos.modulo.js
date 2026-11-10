@@ -15,7 +15,7 @@ const configuracion = {
     nivelMinimoReprobacion: z.number().int().min(1).max(7).optional(),
     fin: fechaISO.transform(diaDesdeISO).optional()
 }
-const esquemas = {
+export const esquemas = {
     crear: z.strictObject({
         nombre: z.string().trim().regex(/^\d{4}-\d{4}$/, 'El nombre debe tener el formato 2025-2026'),
         inicio: fechaISO.transform(diaDesdeISO),

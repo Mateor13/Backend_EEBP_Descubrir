@@ -8,10 +8,11 @@
     "dev": "node --watch src/index.js",
     "test": "node --test --test-concurrency=1 'tests/**/*.test.js'",
     "test:integracion": "MONGODB_URI_TEST=${MONGODB_URI_TEST:-mongodb://127.0.0.1:27017/?replicaSet=rs0&directConnection=true} node --test --test-concurrency=1 'tests/**/*.test.js'",
-    "lint": "eslint src/v2 scripts tests",
+    "lint": "eslint src/v2 src/docs scripts tests",
     "migrar:v2": "node scripts/migrar-v1-a-v2.js",
     "promocion": "node scripts/promover.js",
-    "benchmark:promocion": "node scripts/benchmark-promocion.js"
+    "benchmark:promocion": "node scripts/benchmark-promocion.js",
+    "docs:generar": "node scripts/generar-openapi.js"
   },
   "keywords": [],
   "author": "",
@@ -33,6 +34,7 @@
   "description": "",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@readme/openapi-parser": "^10.0.0",
     "eslint": "^10.14.0",
     "globals": "^17.14.0",
     "supertest": "^7.3.2"

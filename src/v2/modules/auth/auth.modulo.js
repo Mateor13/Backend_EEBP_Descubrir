@@ -7,7 +7,7 @@ import { rechazarBots } from '../../shared/middlewares/antiSpam.js'
 import { email, password, nombrePropio, telefono } from '../../shared/esquemas.js'
 
 // ---------- Esquemas (solo forma de los datos) ----------
-const esquemas = {
+export const esquemas = {
     login: z.object({ email, password: z.string().min(1, 'La contraseña es obligatoria') }),
     tokenYPassword: z.object({ token: z.string().length(64, 'Token no válido'), password }),
     recuperar: z.object({ email }),

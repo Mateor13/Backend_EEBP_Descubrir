@@ -6,8 +6,8 @@ import { autorizar } from '../../shared/middlewares/autenticacion.js'
 import { ROLES } from '../../shared/roles.js'
 import { cedula, idMongo, nombrePropio, paramsId } from '../../shared/esquemas.js'
 
-const consultaPeriodo = z.object({ periodo: idMongo.optional() })
-const esquemas = {
+export const consultaPeriodo = z.object({ periodo: idMongo.optional() })
+export const esquemas = {
     crear: z.strictObject({
         nombre: nombrePropio, apellido: nombrePropio, cedula,
         representantes: z.array(idMongo).max(4).default([]),

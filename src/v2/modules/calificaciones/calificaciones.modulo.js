@@ -25,7 +25,7 @@ const datosEvaluacion = {
     descripcion: z.string().trim().max(500).optional(),
     fecha: fechaISO.optional()
 }
-const esquemas = {
+export const esquemas = {
     crear: z.strictObject(datosEvaluacion),
     actualizar: z.strictObject(datosEvaluacion).partial(),
     paramsClase: z.object({ claseId: idMongo }),

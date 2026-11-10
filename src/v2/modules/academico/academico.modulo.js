@@ -6,7 +6,7 @@ import { autorizar } from '../../shared/middlewares/autenticacion.js'
 import { ROLES } from '../../shared/roles.js'
 import { idMongo, paramsId } from '../../shared/esquemas.js'
 
-const esquemas = {
+export const esquemas = {
     curso: z.strictObject({ nivel: z.number().int().min(1).max(7), paralelo: z.enum(['A', 'B', 'C', 'D', 'E']) }),
     asignatura: z.strictObject({ nombre: z.string().trim().min(2).max(60) }),
     actualizarAsignatura: z.strictObject({ nombre: z.string().trim().min(2).max(60).optional(), activo: z.boolean().optional() }),

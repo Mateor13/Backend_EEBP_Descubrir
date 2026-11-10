@@ -6,7 +6,7 @@ import { autorizar } from '../../shared/middlewares/autenticacion.js'
 import { ROLES } from '../../shared/roles.js'
 import { fechaISO, idMongo, paramsId } from '../../shared/esquemas.js'
 
-const esquemas = {
+export const esquemas = {
     paramsCurso: z.object({ cursoId: idMongo }),
     fecha: z.object({ fecha: fechaISO.optional() }),
     registrar: z.strictObject({
