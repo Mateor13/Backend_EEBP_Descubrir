@@ -26,14 +26,14 @@ const datosEvaluacion = {
     fecha: fechaISO.optional()
 }
 const esquemas = {
-    crear: z.object(datosEvaluacion).strict(),
-    actualizar: z.object(datosEvaluacion).partial().strict(),
+    crear: z.strictObject(datosEvaluacion),
+    actualizar: z.strictObject(datosEvaluacion).partial(),
     paramsClase: z.object({ claseId: idMongo }),
     listar: z.object({ tipo: z.enum(TIPOS_EVALUACION).optional() }),
-    calificaciones: z.object({
-        calificaciones: z.array(z.object({ estudiante: idMongo, nota: z.number().min(0).max(10) }).strict()).min(1)
+    calificaciones: z.strictObject({
+        calificaciones: z.array(z.strictObject({ estudiante: idMongo, nota: z.number().min(0).max(10) })).min(1)
             .refine(l => new Set(l.map(c => c.estudiante)).size === l.length, 'Hay estudiantes repetidos')
-    }).strict(),
+    }),
     boletin: z.object({ periodo: idMongo.optional() })
 }
 

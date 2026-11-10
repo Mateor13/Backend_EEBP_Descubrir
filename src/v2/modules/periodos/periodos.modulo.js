@@ -16,13 +16,13 @@ const configuracion = {
     fin: fechaISO.transform(diaDesdeISO).optional()
 }
 const esquemas = {
-    crear: z.object({
+    crear: z.strictObject({
         nombre: z.string().trim().regex(/^\d{4}-\d{4}$/, 'El nombre debe tener el formato 2025-2026'),
         inicio: fechaISO.transform(diaDesdeISO),
         ...configuracion
-    }).strict().refine(d => !d.fin || d.fin > d.inicio, { message: 'La fecha de fin debe ser posterior al inicio', path: ['fin'] }),
-    configurar: z.object(configuracion).strict(),
-    promocion: z.object({ destino: idMongo, copiarClases: z.boolean().default(true) }).strict(),
+    }).refine(d => !d.fin || d.fin > d.inicio, { message: 'La fecha de fin debe ser posterior al inicio', path: ['fin'] }),
+    configurar: z.strictObject(configuracion),
+    promocion: z.strictObject({ destino: idMongo, copiarClases: z.boolean().default(true) }),
     vistaPrevia: z.object({ curso: idMongo })
 }
 

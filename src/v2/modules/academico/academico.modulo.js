@@ -7,11 +7,11 @@ import { ROLES } from '../../shared/roles.js'
 import { idMongo, paramsId } from '../../shared/esquemas.js'
 
 const esquemas = {
-    curso: z.object({ nivel: z.number().int().min(1).max(7), paralelo: z.enum(['A', 'B', 'C', 'D', 'E']) }).strict(),
-    asignatura: z.object({ nombre: z.string().trim().min(2).max(60) }).strict(),
-    actualizarAsignatura: z.object({ nombre: z.string().trim().min(2).max(60).optional(), activo: z.boolean().optional() }).strict(),
-    clase: z.object({ curso: idMongo, asignatura: idMongo, profesor: idMongo, periodo: idMongo.optional() }).strict(),
-    cambiarProfesor: z.object({ profesor: idMongo }).strict(),
+    curso: z.strictObject({ nivel: z.number().int().min(1).max(7), paralelo: z.enum(['A', 'B', 'C', 'D', 'E']) }),
+    asignatura: z.strictObject({ nombre: z.string().trim().min(2).max(60) }),
+    actualizarAsignatura: z.strictObject({ nombre: z.string().trim().min(2).max(60).optional(), activo: z.boolean().optional() }),
+    clase: z.strictObject({ curso: idMongo, asignatura: idMongo, profesor: idMongo, periodo: idMongo.optional() }),
+    cambiarProfesor: z.strictObject({ profesor: idMongo }),
     listarClases: z.object({ periodo: idMongo.optional(), curso: idMongo.optional(), profesor: idMongo.optional() })
 }
 

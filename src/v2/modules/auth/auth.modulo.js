@@ -10,10 +10,10 @@ const esquemas = {
     login: z.object({ email, password: z.string().min(1, 'La contraseña es obligatoria') }),
     tokenYPassword: z.object({ token: z.string().length(64, 'Token no válido'), password }),
     recuperar: z.object({ email }),
-    perfil: z.object({
+    perfil: z.strictObject({
         nombre: nombrePropio.optional(), apellido: nombrePropio.optional(), email: email.optional(),
         telefono: telefono.optional(), direccion: z.string().trim().min(5).max(120).optional()
-    }).strict(),
+    }),
     cambiarPassword: z.object({ actual: z.string().min(1), nueva: password })
         .refine(d => d.actual !== d.nueva, { message: 'La nueva contraseña debe ser diferente', path: ['nueva'] })
 }

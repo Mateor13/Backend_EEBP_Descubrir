@@ -9,13 +9,13 @@ import { fechaISO, idMongo, paramsId } from '../../shared/esquemas.js'
 const esquemas = {
     paramsCurso: z.object({ cursoId: idMongo }),
     fecha: z.object({ fecha: fechaISO.optional() }),
-    registrar: z.object({
+    registrar: z.strictObject({
         fecha: fechaISO.optional(),
         // "justificado" no se registra directamente: se llega a él justificando una ausencia
-        registros: z.array(z.object({ estudiante: idMongo, estado: z.enum(['presente', 'ausente', 'atraso']) }).strict()).min(1)
+        registros: z.array(z.strictObject({ estudiante: idMongo, estado: z.enum(['presente', 'ausente', 'atraso']) })).min(1)
             .refine(l => new Set(l.map(r => r.estudiante)).size === l.length, 'Hay estudiantes repetidos')
-    }).strict(),
-    justificar: z.object({ justificacion: z.string().trim().min(5, 'Describa el motivo (mínimo 5 caracteres)').max(300) }).strict(),
+    }),
+    justificar: z.strictObject({ justificacion: z.string().trim().min(5, 'Describa el motivo (mínimo 5 caracteres)').max(300) }),
     periodo: z.object({ periodo: idMongo.optional() })
 }
 

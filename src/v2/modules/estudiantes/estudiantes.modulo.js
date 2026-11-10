@@ -8,16 +8,16 @@ import { cedula, idMongo, nombrePropio, paramsId } from '../../shared/esquemas.j
 
 const consultaPeriodo = z.object({ periodo: idMongo.optional() })
 const esquemas = {
-    crear: z.object({
+    crear: z.strictObject({
         nombre: nombrePropio, apellido: nombrePropio, cedula,
         representantes: z.array(idMongo).max(4).default([]),
         curso: idMongo.optional() // si se indica, se matricula en el periodo activo
-    }).strict(),
-    actualizar: z.object({ nombre: nombrePropio.optional(), apellido: nombrePropio.optional(), cedula: cedula.optional() }).strict(),
-    representante: z.object({ representante: idMongo }).strict(),
+    }),
+    actualizar: z.strictObject({ nombre: nombrePropio.optional(), apellido: nombrePropio.optional(), cedula: cedula.optional() }),
+    representante: z.strictObject({ representante: idMongo }),
     paramsRepresentante: z.object({ id: idMongo, representanteId: idMongo }),
-    matricular: z.object({ estudiante: idMongo, curso: idMongo, periodo: idMongo.optional() }).strict(),
-    cambiarCurso: z.object({ curso: idMongo }).strict(),
+    matricular: z.strictObject({ estudiante: idMongo, curso: idMongo, periodo: idMongo.optional() }),
+    cambiarCurso: z.strictObject({ curso: idMongo }),
     paramsCurso: z.object({ cursoId: idMongo })
 }
 

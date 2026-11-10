@@ -12,8 +12,8 @@ const datosUsuario = {
     roles: z.array(z.enum(TODOS_LOS_ROLES)).min(1, 'Debe indicar al menos un rol').transform(r => [...new Set(r)])
 }
 const esquemas = {
-    crear: z.object(datosUsuario).strict(),
-    actualizar: z.object(datosUsuario).partial().strict(),
+    crear: z.strictObject(datosUsuario),
+    actualizar: z.strictObject(datosUsuario).partial(),
     listar: z.object({ rol: z.enum(TODOS_LOS_ROLES).optional(), activo: z.enum(['true', 'false']).default('true').transform(v => v === 'true') })
 }
 
