@@ -68,11 +68,20 @@ const confirmarCuenta = async (req, res) => {
         if (!usuarioBDD) {
             return res.status(400).json({ error: 'El token no es válido' });
         }
-        // Confirmar el email e invalidar el token: antes quedaba guardado y el mismo enlace de
-        // confirmación servía indefinidamente para /nuevo-password (cambiar la contraseña ajena).
+        // Un token ya caducado no sirve
+        if (usuarioBDD.tokenExpira && usuarioBDD.tokenExpira.getTime() < Date.now()) {
+            usuarioBDD.token = null;
+            usuarioBDD.tokenExpira = null;
+            await usuarioBDD.save();
+            return res.status(400).json({ error: 'El token ha expirado, solicite uno nuevo' });
+        }
+        // El frontend usa ESTE MISMO token justo después para crear la contraseña (PATCH /nuevo-password/:token),
+        // así que no se borra aquí. Pero antes quedaba válido para siempre: ahora caduca en 1 hora
+        // desde la confirmación y se elimina en cuanto se crea la contraseña.
         usuarioBDD.confirmEmail = true;
-        usuarioBDD.token = null;
-        usuarioBDD.tokenExpira = null;
+        if (!usuarioBDD.tokenExpira) {
+            usuarioBDD.tokenExpira = new Date(Date.now() + DURACION_TOKEN_RECUPERACION_MS);
+        }
         await usuarioBDD.save();
         return res.status(200).json({ mensaje: 'La cuenta se ha confirmado exitosamente, ya puede iniciar sesión' });
     } catch (error) {
