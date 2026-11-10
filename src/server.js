@@ -22,6 +22,9 @@ app.set('trust proxy', 1) // Necesario detrás del proxy de Vercel para que el l
 const origenesPermitidos = process.env.CORS_ORIGINS?.split(',').map(o => o.trim()).filter(Boolean)
 app.use(cors(origenesPermitidos?.length ? { origin: origenesPermitidos } : undefined))
 app.use(express.json()) // Para parsear JSON en las peticiones
+// En Express 5 req.body queda undefined si la petición no trae cuerpo (en Express 4 era {}).
+// Los controladores v1 hacen "const { x } = req.body", así que se mantiene el comportamiento anterior.
+app.use((req, res, next) => { req.body ??= {}; next() })
 
 // Aplicar upload.none() globalmente a todas las rutas
 app.use((req, res, next) => {
@@ -225,8 +228,8 @@ app.get('/', (req, res) => {
 });
 
 
-// Middleware para manejar rutas no encontradas
-app.use('/api/*', (req, res, next) => {
+// Middleware para manejar rutas no encontradas (Express 5 exige nombrar el comodín: *ruta)
+app.use('/api/*ruta', (req, res, next) => {
     res.status(404).json({ error: 'La ruta solicitada no existe' });
 });
 
