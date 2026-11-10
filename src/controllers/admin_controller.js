@@ -15,6 +15,7 @@ import Observacion from '../models/observaciones.js';
 import AnioLectivo from '../models/anioLectivo.js';
 import CursoAsignado from '../models/cursoAsignado.js';
 import Notas from '../models/notas.js'
+import { enTransaccionSiEsPosible, promoverEstudiantes } from '../services/promocion.js'
 
 // Guarda el usuario y DESPUÉS envía el correo con sus credenciales.
 // Antes se enviaba el correo primero: si el guardado fallaba (p. ej. email duplicado),
@@ -27,6 +28,25 @@ const guardarYNotificar = async (documento, enviarCorreo) => {
     } catch (error) {
         await documento.deleteOne();
         throw error;
+    }
+};
+
+// Crea el controlador que actualiza los datos de un usuario (administrador, profesor o representante).
+// Antes eran tres funciones idénticas que solo cambiaban el texto del mensaje.
+const crearModificadorUsuario = (rol) => async (req, res) => {
+    const { usuarioBDD } = req;
+    const { nombre, apellido, direccion, telefono, cedula } = req.body;
+    try {
+        usuarioBDD.nombre = nombre;
+        usuarioBDD.apellido = apellido;
+        usuarioBDD.email = req.body.email.toLowerCase().trim();
+        usuarioBDD.direccion = direccion;
+        usuarioBDD.telefono = telefono;
+        usuarioBDD.cedula = cedula;
+        await usuarioBDD.save();
+        res.status(200).json({ msg: `${rol} modificado correctamente` });
+    } catch (error) {
+        res.status(500).json({ error: `Error al modificar ${rol.toLowerCase()}` });
     }
 };
 
@@ -58,24 +78,7 @@ const listarAdministradores = async (req, res) => {
 };
 
 // Modifica los datos de un administrador existente
-const modificarAdministrador = async (req, res) => {
-    const { usuarioBDD } = req;
-    const { nombre, apellido, direccion, telefono, cedula } = req.body;
-    let { email } = req.body;
-    email = email.toLowerCase().trim();
-    try {
-        usuarioBDD.nombre = nombre;
-        usuarioBDD.apellido = apellido;
-        usuarioBDD.email = email;
-        usuarioBDD.direccion = direccion;
-        usuarioBDD.telefono = telefono;
-        usuarioBDD.cedula = cedula;
-        await usuarioBDD.save();
-        res.status(200).json({ msg: 'Administrador modificado correctamente' });
-    } catch (error) {
-        res.status(500).json({ error: 'Error al modificar administrador' });
-    }
-}
+const modificarAdministrador = crearModificadorUsuario('Administrador');
 
 // Elimina (desactiva) un administrador
 const eliminarAdministrador = async (req, res) => {
@@ -117,24 +120,7 @@ const listarProfesores = async (req, res) => {
 };
 
 // Modifica los datos de un profesor existente
-const modificarProfesor = async (req, res) => {
-    const { usuarioBDD } = req;
-    const { nombre, apellido, direccion, telefono, cedula } = req.body;
-    let { email } = req.body;
-    try {
-        email = email.toLowerCase().trim();
-        usuarioBDD.nombre = nombre;
-        usuarioBDD.apellido = apellido;
-        usuarioBDD.email = email;
-        usuarioBDD.direccion = direccion;
-        usuarioBDD.telefono = telefono;
-        usuarioBDD.cedula = cedula;
-        await usuarioBDD.save();
-        res.status(200).json({ msg: 'Profesor modificado correctamente' });
-    } catch (error) {
-        res.status(500).json({ error: 'Error al modificar profesor' });
-    }
-}
+const modificarProfesor = crearModificadorUsuario('Profesor');
 
 // Elimina (desactiva) un profesor
 const eliminarProfesor = async (req, res) => {
@@ -208,24 +194,7 @@ const listarRepresentantes = async (req, res) => {
 };
 
 // Modifica los datos de un representante existente
-const modificarRepresentante = async (req, res) => {
-    const { usuarioBDD } = req;
-    const { nombre, apellido, direccion, telefono, cedula } = req.body;
-    let { email } = req.body;
-    try {
-        email = email.toLowerCase().trim();
-        usuarioBDD.nombre = nombre;
-        usuarioBDD.apellido = apellido;
-        usuarioBDD.email = email;
-        usuarioBDD.direccion = direccion;
-        usuarioBDD.telefono = telefono;
-        usuarioBDD.cedula = cedula;
-        await usuarioBDD.save();
-        res.status(200).json({ msg: 'Representante modificado correctamente' });
-    } catch (error) {
-        res.status(500).json({ error: 'Error al modificar representante' });
-    }
-}
+const modificarRepresentante = crearModificadorUsuario('Representante');
 
 // Elimina (desactiva) un representante
 const eliminarRepresentante = async (req, res) => {
@@ -287,12 +256,13 @@ const listarCursos = async (req, res) => {
             estado: true
         }).populate('curso');
 
-        const cursosBDD = cursos.map(curso => ({
+        // Ordenados por nivel y paralelo (antes el orden dependía de cómo se insertaron)
+        const cursosBDD = cursos.filter(curso => curso.curso).map(curso => ({
             _id: curso.curso._id,
             nombre: curso.curso.nombre,
             nivel: curso.curso.nivel,
             paralelo: curso.curso.paralelo,
-        }));
+        })).sort((a, b) => a.nivel - b.nivel || a.paralelo.localeCompare(b.paralelo));
 
         if (cursosBDD.length === 0) return res.status(404).json({ error: 'No hay cursos registrados' });
 
@@ -587,15 +557,19 @@ const terminarAnioLectivo = async (req, res) => {
     }
 }
 
-// Comienza un nuevo año lectivo
+// Comienza un nuevo año lectivo y promueve a los estudiantes del anterior.
+// Crear el año y promover van en UNA transacción: si la promoción falla, no queda un año
+// lectivo nuevo a medias (antes quedaba activo y sin estudiantes).
 const comenzarAnioLectivo = async (req, res) => {
     try {
         const ultimoAnioLectivo = await AnioLectivo.findOne().sort({ fechaFin: -1 });
-        const anio = await AnioLectivo.iniciarPeriodo();
-
-        if (ultimoAnioLectivo && ultimoAnioLectivo.estado === false) {
-            await CursoAsignado.promoverEstudiantesPorNivel(ultimoAnioLectivo._id, anio._id);
-        }
+        const anio = await enTransaccionSiEsPosible(async (session) => {
+            const nuevo = await AnioLectivo.iniciarPeriodo(session);
+            if (ultimoAnioLectivo && ultimoAnioLectivo.estado === false) {
+                await promoverEstudiantes(ultimoAnioLectivo._id, nuevo._id, session);
+            }
+            return nuevo;
+        });
         res.status(201).json({
             msg: "Año Lectivo iniciado correctamente",
             anio: {

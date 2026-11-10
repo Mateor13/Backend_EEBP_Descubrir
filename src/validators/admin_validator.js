@@ -1,4 +1,5 @@
-import { check, validationResult } from 'express-validator';
+import { check } from 'express-validator';
+import { manejarErroresValidacion } from './manejarErrores.js';
 import Administrador from '../models/administradores.js';
 import Profesor from '../models/profesor.js';
 import Representante from '../models/representante.js';
@@ -31,6 +32,76 @@ const rolesEstudianteAdministrador = [
     { model: Administrador, rol: 'administrador' }
 ]
 
+// Reglas comunes para registrar a una persona con cuenta (administrador, profesor o representante).
+// Antes estaban copiadas tres veces, idénticas, en cada validador de registro.
+const reglasRegistroPersona = [
+    // Validación de campos obligatorios
+    check(['nombre', 'apellido', 'email', 'direccion', 'telefono', 'cedula'])
+        .notEmpty()
+        .withMessage('Todos los campos son obligatorios'),
+    // Validación de email
+    check('email')
+        .isEmail()
+        .withMessage('El email no es válido')
+        .custom(async (email) => {
+            email = email.toLowerCase().trim();
+            for (const { model } of todosRolesSinEstudiantes) {
+                const usuarioBDD = await model.findOne({ email });
+                if (usuarioBDD) throw new Error('El email ya está registrado');
+            }
+            return true;
+        }),
+    // Validación de nombre y apellido
+    check('nombre')
+        .isAlpha('es-ES', { ignore: ' ' })
+        .withMessage('El nombre y apellido solo pueden contener letras'),
+    check('apellido')
+        .isAlpha('es-ES', { ignore: ' ' })
+        .withMessage('El nombre y apellido solo pueden contener letras'),
+    // Validación de teléfono
+    check('telefono')
+        .matches(/^\d{10}$/)
+        .withMessage('El teléfono debe tener exactamente 10 dígitos y solo números')
+        .custom(async (telefono) => {
+            for (const { model } of todosRolesSinEstudiantes) {
+                const usuarioBDD = await model.findOne({ telefono });
+                if (usuarioBDD) throw new Error('El teléfono ya está registrado');
+            }
+            return true;
+        }),
+    // Validación de cédula
+    check('cedula')
+        .matches(/^\d{10}$/)
+        .withMessage('La cédula debe tener exactamente 10 dígitos y solo números')
+        .custom(async (cedula) => {
+            for (const { model } of todosRoles) {
+                const usuarioBDD = await model.findOne({ cedula });
+                if (usuarioBDD) throw new Error('La cédula ya está registrada');
+            }
+            return true;
+        }),
+    // Validación de dirección
+    check('direccion')
+        .isLength({ min: 5, max: 100 })
+        .withMessage('La dirección debe tener entre 5 y 100 caracteres')
+        .custom((value) => {
+            if (/^(\d)\1{4,}$/.test(value)) throw new Error('La dirección no puede ser solo números repetidos');
+            if (/^([a-zA-Z])\1{4,}$/.test(value)) throw new Error('La dirección no puede ser un solo carácter repetido');
+            if (/^\d+$/.test(value)) throw new Error('La dirección no puede ser solo números');
+            return true;
+        }),
+    // Validar el año lectivo
+    check('anioLectivo')
+        .custom(async (_, { req }) => {
+            const anioLectivo = req.userBDD.anio;
+            const anioLectivoBDD = await AnioLectivo.findById(anioLectivo);
+            if (!anioLectivoBDD) throw new Error('El año lectivo no está registrado');
+            if (anioLectivoBDD.estado !== true) throw new Error('El año lectivo no está activo');
+            req.anioLectivoBDD = anioLectivoBDD;
+            return true;
+        })
+];
+
 // Validador para registro de administradores
 const registroAdminValidator = [
     check('anio')
@@ -42,234 +113,20 @@ const registroAdminValidator = [
             });
             return true;
         }),
-    // Validación de campos obligatorios
-    check(['nombre', 'apellido', 'email', 'telefono', 'cedula', 'direccion'])
-        .notEmpty()
-        .withMessage('Todos los campos son obligatorios'),
-    // Validación de email
-    check('email')
-        .isEmail()
-        .withMessage('El email no es válido')
-        .custom(async (email) => {
-            email = email.toLowerCase().trim();
-            for (const { model } of todosRolesSinEstudiantes) {
-                const usuarioBDD = await model.findOne({ email });
-                if (usuarioBDD) throw new Error('El email ya está registrado');
-            }
-            return true;
-        }),
-    // Validación de nombre y apellido
-    check('nombre')
-        .isAlpha('es-ES', { ignore: ' ' })
-        .withMessage('El nombre y apellido solo pueden contener letras'),
-    check('apellido')
-        .isAlpha('es-ES', { ignore: ' ' })
-        .withMessage('El nombre y apellido solo pueden contener letras'),
-    // Validación de teléfono
-    check('telefono')
-        .matches(/^\d{10}$/)
-        .withMessage('El teléfono debe tener exactamente 10 dígitos y solo números')
-        .custom(async (telefono) => {
-            for (const { model } of todosRolesSinEstudiantes) {
-                const usuarioBDD = await model.findOne({ telefono });
-                if (usuarioBDD) throw new Error('El teléfono ya está registrado');
-            }
-            return true;
-        }),
-    // Validación de cédula
-    check('cedula')
-        .matches(/^\d{10}$/)
-        .withMessage('La cédula debe tener exactamente 10 dígitos y solo números')
-        .custom(async (cedula) => {
-            for (const { model } of todosRoles) {
-                const usuarioBDD = await model.findOne({ cedula });
-                if (usuarioBDD) throw new Error('La cédula ya está registrada');
-            }
-            return true;
-        }),
-    // Validación de dirección
-    check('direccion')
-        .isLength({ min: 5, max: 100 })
-        .withMessage('La dirección debe tener entre 5 y 100 caracteres')
-        .custom((value) => {
-            if (/^(\d)\1{4,}$/.test(value)) throw new Error('La dirección no puede ser solo números repetidos');
-            if (/^([a-zA-Z])\1{4,}$/.test(value)) throw new Error('La dirección no puede ser un solo carácter repetido');
-            if (/^\d+$/.test(value)) throw new Error('La dirección no puede ser solo números');
-            return true;
-        }),
-    // Validar el año lectivo
-    check('anioLectivo')
-        .custom(async (_, { req }) => {
-            const anioLectivo = req.userBDD.anio;
-            const anioLectivoBDD = await AnioLectivo.findById(anioLectivo);
-            if (!anioLectivoBDD) throw new Error('El año lectivo no está registrado');
-            if (anioLectivoBDD.estado !== true) throw new Error('El año lectivo no está activo');
-            req.anioLectivoBDD = anioLectivoBDD;
-            return true;
-        }),
-    // Manejo de errores
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
-        next();
-    }
+    ...reglasRegistroPersona,
+    manejarErroresValidacion
 ];
 
 // Validador para registro de profesores
 const registroProfesorValidator = [
-
-    // Validación de campos obligatorios
-    check(['nombre', 'apellido', 'email', 'direccion', 'telefono', 'cedula'])
-        .notEmpty()
-        .withMessage('Todos los campos son obligatorios'),
-    // Validación de email
-    check('email')
-        .isEmail()
-        .withMessage('El email no es válido')
-        .custom(async (email) => {
-            email = email.toLowerCase().trim();
-            for (const { model } of todosRolesSinEstudiantes) {
-                const usuarioBDD = await model.findOne({ email });
-                if (usuarioBDD) throw new Error('El email ya está registrado');
-            }
-            return true;
-        }),
-    // Validación de nombre y apellido
-    check('nombre')
-        .isAlpha('es-ES', { ignore: ' ' })
-        .withMessage('El nombre y apellido solo pueden contener letras'),
-    check('apellido')
-        .isAlpha('es-ES', { ignore: ' ' })
-        .withMessage('El nombre y apellido solo pueden contener letras'),
-    // Validación de teléfono
-    check('telefono')
-        .matches(/^\d{10}$/)
-        .withMessage('El teléfono debe tener exactamente 10 dígitos y solo números')
-        .custom(async (telefono) => {
-            for (const { model } of todosRolesSinEstudiantes) {
-                const usuarioBDD = await model.findOne({ telefono });
-                if (usuarioBDD) throw new Error('El teléfono ya está registrado');
-            }
-            return true;
-        }),
-    // Validación de cédula
-    check('cedula')
-        .matches(/^\d{10}$/)
-        .withMessage('La cédula debe tener exactamente 10 dígitos y solo números')
-        .custom(async (cedula) => {
-            for (const { model } of todosRoles) {
-                const usuarioBDD = await model.findOne({ cedula });
-                if (usuarioBDD) throw new Error('La cédula ya está registrada');
-            }
-            return true;
-        }),
-    // Validación de dirección
-    check('direccion')
-        .isLength({ min: 5, max: 100 })
-        .withMessage('La dirección debe tener entre 5 y 100 caracteres')
-        .custom((value) => {
-            if (/^(\d)\1{4,}$/.test(value)) throw new Error('La dirección no puede ser solo números repetidos');
-            if (/^([a-zA-Z])\1{4,}$/.test(value)) throw new Error('La dirección no puede ser un solo carácter repetido');
-            if (/^\d+$/.test(value)) throw new Error('La dirección no puede ser solo números');
-            return true;
-        }),
-    // Validar el año lectivo
-    check('anioLectivo')
-        .custom(async (_, { req }) => {
-            const anioLectivo = req.userBDD.anio;
-            const anioLectivoBDD = await AnioLectivo.findById(anioLectivo);
-            if (!anioLectivoBDD) throw new Error('El año lectivo no está registrado');
-            if (anioLectivoBDD.estado !== true) throw new Error('El año lectivo no está activo');
-            req.anioLectivoBDD = anioLectivoBDD;
-            return true;
-        }),
-    // Manejo de errores
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
-        next();
-    }
+    ...reglasRegistroPersona,
+    manejarErroresValidacion
 ];
 
 // Validador para registro de representantes
 const registroRepresentanteValidator = [
-    // Validación de campos obligatorios
-    check(['nombre', 'apellido', 'email', 'direccion', 'telefono', 'cedula'])
-        .notEmpty()
-        .withMessage('Todos los campos son obligatorios'),
-    // Validación de email
-    check('email')
-        .isEmail()
-        .withMessage('El email no es válido')
-        .custom(async (email) => {
-            email = email.toLowerCase().trim();
-            for (const { model } of todosRolesSinEstudiantes) {
-                const usuarioBDD = await model.findOne({ email });
-                if (usuarioBDD) throw new Error('El email ya está registrado');
-            }
-            return true;
-        }),
-    // Validación de nombre y apellido
-    check('nombre')
-        .isAlpha('es-ES', { ignore: ' ' })
-        .withMessage('El nombre y apellido solo pueden contener letras'),
-    check('apellido')
-        .isAlpha('es-ES', { ignore: ' ' })
-        .withMessage('El nombre y apellido solo pueden contener letras'),
-    // Validación de teléfono
-    check('telefono')
-        .matches(/^\d{10}$/)
-        .withMessage('El teléfono debe tener exactamente 10 dígitos y solo números')
-        .custom(async (telefono) => {
-            for (const { model } of todosRolesSinEstudiantes) {
-                const usuarioBDD = await model.findOne({ telefono });
-                if (usuarioBDD) throw new Error('El teléfono ya está registrado');
-            }
-            return true;
-        }),
-    // Validación de cédula
-    check('cedula')
-        .matches(/^\d{10}$/)
-        .withMessage('La cédula debe tener exactamente 10 dígitos y solo números')
-        .custom(async (cedula) => {
-            for (const { model } of todosRoles) {
-                const usuarioBDD = await model.findOne({ cedula });
-                if (usuarioBDD) throw new Error('La cédula ya está registrada');
-            }
-            return true;
-        }),
-    // Validación de dirección
-    check('direccion')
-        .isLength({ min: 5, max: 100 })
-        .withMessage('La dirección debe tener entre 5 y 100 caracteres')
-        .custom((value) => {
-            if (/^(\d)\1{4,}$/.test(value)) throw new Error('La dirección no puede ser solo números repetidos');
-            if (/^([a-zA-Z])\1{4,}$/.test(value)) throw new Error('La dirección no puede ser un solo carácter repetido');
-            if (/^\d+$/.test(value)) throw new Error('La dirección no puede ser solo números');
-            return true;
-        }),
-    // Validar el año lectivo
-    check('anioLectivo')
-        .custom(async (_, { req }) => {
-            const anioLectivo = req.userBDD.anio;
-            const anioLectivoBDD = await AnioLectivo.findById(anioLectivo);
-            if (!anioLectivoBDD) throw new Error('El año lectivo no está registrado');
-            if (anioLectivoBDD.estado !== true) throw new Error('El año lectivo no está activo');
-            req.anioLectivoBDD = anioLectivoBDD;
-            return true;
-        }),
-    // Manejo de errores
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
-        next();
-    }
+    ...reglasRegistroPersona,
+    manejarErroresValidacion
 ]
 
 // Validador para registro de cursos
@@ -288,13 +145,7 @@ const registroCursoValidator = [
         return true;
     }),
 
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
-        next();
-    }
+    manejarErroresValidacion
 ];
 
 // Validador para registro de materias
@@ -347,13 +198,7 @@ const registroMateriaValidator = [
             return true;
         }),
     // Manejo de errores
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 // Validador para registro de estudiantes
@@ -410,13 +255,7 @@ const registroEstudianteValidator = [
             return true;
         }),
     // Manejo de errores
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 // Validador para asignar representante a estudiante
@@ -456,13 +295,7 @@ const asignarRepresentanteValidator = [
             return true;
         }),
     // Manejo de errores
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 // Validador para asignar estudiante a curso
@@ -505,13 +338,7 @@ const asignarEstudianteACursoValidator = [
             return true;
         }),
     // Manejo de errores
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 // Validador para asignar ponderaciones
@@ -548,13 +375,7 @@ const asignarPonderacionesValidator = [
             };
             return true;
         }),
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
-        next();
-    }
+    manejarErroresValidacion
 ];
 
 // Validador para registro de asistencia de estudiantes
@@ -570,7 +391,8 @@ const registroAsistenciaEstudiantesValidator = [
         .custom(async (curso, { req }) => {
             const cursoBDD = await Curso.findById(curso);
             if (!cursoBDD) throw new Error('El curso no está registrado');
-            const cursoAsignadoBDD = await CursoAsignado.findOne({ curso: cursoBDD._id, anioLectivo: req.userBDD.anio });
+            // Se cargan los nombres para que los mensajes de error identifiquen al estudiante
+            const cursoAsignadoBDD = await CursoAsignado.findOne({ curso: cursoBDD._id, anioLectivo: req.userBDD.anio }).populate('estudiantes', 'nombre apellido');
             if (!cursoAsignadoBDD) throw new Error('El curso no está asignado a un año lectivo');
             req.cursoAsignadoBDD = cursoAsignadoBDD;
             return true;
@@ -592,13 +414,7 @@ const registroAsistenciaEstudiantesValidator = [
             return true;
         }),
     // Manejo de errores
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 // Modificar usuarios
@@ -693,13 +509,7 @@ const modificarUsuarioValidator = [
             return true;
         }),
     // Manejo de errores
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
-        next();
-    }
+    manejarErroresValidacion
 ];
 
 // Validador para modificar estudiantes
@@ -742,13 +552,7 @@ const modificarEstudianteValidator = [
             return true;
         }),
     // Manejo de errores
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 // Validador para justificar inasistencia de estudiante
@@ -797,13 +601,7 @@ const justificarInasistenciaValidator = [
             return true;
         }),
     // Manejo de errores
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 // Validador para terminar año lectivo
@@ -816,13 +614,7 @@ const terminarAnioLectivoValidator = [
         return true;
     }),
     // Manejo de errores
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 // Validador para registrar fecha de fin de año lectivo
@@ -856,13 +648,7 @@ const registrarFechaFinValidator = [
         }
         ),
     // Manejo de errores
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 // Validador para eliminar profesor
@@ -893,13 +679,7 @@ const eliminarProfesorValidator = [
             return true;
         }),
     // Manejo de errores
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
-        next();
-    }
+    manejarErroresValidacion
 
 ]
 
@@ -931,13 +711,7 @@ const eliminarRepresentanteValidator = [
             return true;
         }),
     // Manejo de errores
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 const eliminarCursoValidator = [
@@ -970,13 +744,7 @@ const eliminarCursoValidator = [
             return true;
         }),
     // Manejo de errores
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 // Validador para eliminar materia
@@ -1005,13 +773,7 @@ const eliminarMateriaValidator = [
             return true;
         }),
     // Manejo de errores
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 // Validador para eliminar estudiante
@@ -1049,13 +811,7 @@ const eliminarEstAdminValidator = [
             req.anioLectivoBDD = anioLectivoBDD;
             return true;
         }),
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
-        next();
-    }
+    manejarErroresValidacion
 ];
 
 // Validador para modificar materia
@@ -1119,13 +875,7 @@ const modificarMateriaValidator = [
             return true;
         }),
     // Manejo de errores
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
-        next();
-    }
+    manejarErroresValidacion
 ];
 
 // Reasignar curso a estudiante
@@ -1178,13 +928,7 @@ const reasignarCursoEstudianteValidator = [
             return true;
         }),
     // Manejo de errores
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 const comenzarAnioLectivoValidator = [
@@ -1195,13 +939,7 @@ const comenzarAnioLectivoValidator = [
         return true;
     }),
     // Manejo de errores
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: errors.array()[0].msg });
-        }
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 export {

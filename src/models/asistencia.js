@@ -61,8 +61,10 @@ asistenciaSchema.methods.justificarInasistencia = async function (fecha, justifi
     // Si la fecha ya está en formato "YYYY/M/D", usarla directamente
     let normalizedFecha;
     if (typeof fecha === 'string' && fecha.match(/^\d{4}\/\d{1,2}\/\d{1,2}$/)) {
-        // La fecha ya está en el formato correcto
-        normalizedFecha = fecha;
+        // Se quitan los ceros a la izquierda: el frontend envía "2026/12/05" pero la asistencia
+        // se guarda como "2026/12/5" (antes no coincidían y fallaba en días y meses de un dígito)
+        const [anio, mes, dia] = fecha.split('/').map(Number);
+        normalizedFecha = `${anio}/${mes}/${dia}`;
     } else {
         // Normaliza la fecha al formato "YYYY/M/D" usando zona horaria de Ecuador
         const dateObj = new Date(fecha)

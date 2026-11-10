@@ -1,12 +1,31 @@
 # 🎓 Sistema de Gestión Académica - Escuela Descubrir
 
-![Node.js](https://img.shields.io/badge/Node.js-v18+-339933?style=flat&logo=node.js&logoColor=white)
-![Express](https://img.shields.io/badge/Express-v4.21+-000000?style=flat&logo=express&logoColor=white)
-![MongoDB](https://img.shields.io/badge/MongoDB-v8.16+-47A248?style=flat&logo=mongodb&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-v20.19+-339933?style=flat&logo=node.js&logoColor=white)
+![Express](https://img.shields.io/badge/Express-v5-000000?style=flat&logo=express&logoColor=white)
+![Mongoose](https://img.shields.io/badge/Mongoose-v9-47A248?style=flat&logo=mongodb&logoColor=white)
 
 ## 📋 Descripción
 
 Plataforma integral para la gestión de notas, asistencias y procesos académicos de la **Escuela Descubrir**. Sistema completo que permite la administración de estudiantes, profesores, representantes y cursos de manera eficiente y segura.
+
+## 🆕 Versión 2.0
+
+El repositorio incluye una **API v2** (`/api/v2`) rediseñada desde cero, que convive con la v1 (`/api`) mientras el frontend migra:
+
+- **Nuevo modelo de datos:** usuarios unificados con roles, evaluaciones separadas de las calificaciones, matrículas, asistencia por día, fechas reales e índices únicos.
+- **Arquitectura por capas:** rutas → controlador → servicio → repositorio, con inyección de dependencias y errores tipados.
+- **Permisos por recurso:** el profesor solo ve sus clases; el representante, solo a sus hijos.
+- **Transacciones**, validación con zod, pruebas automáticas y lint.
+- **Script de migración** v1 → v2 idempotente, que no modifica la BDD v1.
+
+📖 Documentación: [Arquitectura](docs/v2/ARQUITECTURA.md) · [Endpoints](docs/v2/API.md) · [Plan de migración](docs/v2/MIGRACION.md) · [Mantenimiento de la v1](docs/v1/MANTENIMIENTO.md)
+
+```bash
+npm test                 # pruebas unitarias
+npm run test:integracion # requiere MongoDB con replica set; incluye la prueba de contrato v1 con el frontend
+npm run lint
+npm run migrar:v2        # copia los datos de la v1 al modelo v2
+```
 
 ## ✨ Características Principales
 
@@ -50,7 +69,7 @@ Plataforma integral para la gestión de notas, asistencias y procesos académico
 ## 🛠️ Instalación y Configuración
 
 ### **Prerrequisitos**
-- Node.js (v18 o superior)
+- Node.js (v20.19 o superior)
 - MongoDB Atlas o MongoDB local
 - Cuenta de Gmail para envío de correos
 

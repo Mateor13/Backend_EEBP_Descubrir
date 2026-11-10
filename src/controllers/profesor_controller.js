@@ -1,7 +1,7 @@
 import cursoAsignado from "../models/cursoAsignado.js";
 import materias from "../models/materias.js";
 import Notas from "../models/notas.js";
-import axios from 'axios';
+import { subirImagenImgur } from '../config/imgur.js';
 
 // Subir una imagen a Imgur y devolver la URL
 const subirFotoEvidencia = async (req, res) => {
@@ -17,19 +17,7 @@ const subirFotoEvidencia = async (req, res) => {
     try {
         const imagen = req.file;
         // Subir la imagen a Imgur
-        const response = await axios.post(
-            'https://api.imgur.com/3/image',
-            {
-                image: imagen.buffer.toString('base64'),
-                type: 'base64'
-            },
-            {
-                headers: {
-                    Authorization: `Client-ID ${process.env.IMGUR_CLIENT_ID}`
-                }
-            }
-        );
-        const url = response.data.data.link;
+        const url = await subirImagenImgur(imagen.buffer);
         // Obtener todas las notas de los estudiantes en una sola consulta
         const notasEstudiantes = await Notas.find({
             estudiante: { $in: cursoBDD.estudiantes },

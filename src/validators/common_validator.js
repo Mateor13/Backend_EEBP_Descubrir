@@ -1,4 +1,5 @@
-import { check, validationResult } from "express-validator";
+import { check } from "express-validator";
+import { manejarErroresValidacion } from './manejarErrores.js';
 import aniosLectivo from "../models/anioLectivo.js";
 
 // Validador para login de cualquier usuario (admin, profesor, representante)
@@ -27,11 +28,7 @@ const loginValidator = [
             req.anioLectivoBDD = anioLectivoBDD;
             return true;
         }),
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
-        next();
-    }
+    manejarErroresValidacion
 ];
 
 // Validador para confirmar cuenta mediante token
@@ -41,11 +38,7 @@ const confirmarCuentaValidator = [
             if (!req.params.token) throw new Error('El token es obligatorio');
             return true;
         }),
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 // Validador para solicitar recuperación de contraseña
@@ -55,11 +48,7 @@ const recuperarPasswordValidator = [
         .withMessage('El email es obligatorio')
         .isEmail()
         .withMessage('El email no es válido'),
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 // Validador para verificar que el usuario está autenticado y cargado en req.userBDD
@@ -67,11 +56,7 @@ const perfilValidator = [
     check('userBDD').custom(async (_, { req }) => {
         if (!req.userBDD) throw new Error('Falló al procesar los datos');
     }),
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 // Validador para establecer una nueva contraseña usando token
@@ -94,11 +79,7 @@ const nuevaContrasenaValidator = [
             if (value !== req.body.password) throw new Error('Las contraseñas no coinciden');
             return true;
         }),
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 // Validador para cambiar la contraseña desde el perfil autenticado
@@ -120,11 +101,7 @@ const cambiarPasswordValidator = [
             if (newPassword !== req.body.confirmPassword) throw new Error('Las contraseñas no coinciden');
             return true;
         }),
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
-        next();
-    }
+    manejarErroresValidacion
 ]
 
 // Validador para cambiar datos personales (email, teléfono, dirección, nombre, apellido)
@@ -148,11 +125,7 @@ const cambiarDatosValidator = [
     check(['nombre', 'apellido'])
         .isAlpha('es-ES', { ignore: ' ' })
         .withMessage('El nombre y apellido solo pueden contener letras'),
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
-        next();
-    }
+    manejarErroresValidacion
 ];
 
 export {
