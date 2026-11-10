@@ -4,7 +4,7 @@ export const crearCalificacionesRepositorio = () => ({
     // Evaluaciones
     crearEvaluacion: (datos) => Evaluacion.create(datos),
     buscarEvaluacion: (id) => Evaluacion.findById(id).lean(),
-    actualizarEvaluacion: (id, cambios) => Evaluacion.findByIdAndUpdate(id, cambios, { new: true, runValidators: true }).lean(),
+    actualizarEvaluacion: (id, cambios) => Evaluacion.findByIdAndUpdate(id, cambios, { returnDocument: 'after', runValidators: true }).lean(),
     eliminarEvaluacion: (id, session) => Evaluacion.deleteOne({ _id: id }, { session }),
     evaluacionesDeClase: (claseId, tipo) => Evaluacion.find({ clase: claseId, ...(tipo && { tipo }) }).sort({ fecha: 1, createdAt: 1 }).lean(),
     evaluacionesDeClases: (claseIds) => Evaluacion.find({ clase: { $in: claseIds } }).sort({ fecha: 1 }).lean(),

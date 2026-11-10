@@ -79,7 +79,7 @@ async function obtenerOCrearCurso(nivel, paralelo, Curso) {
     return await Curso.findOneAndUpdate(
         { nivel, paralelo },
         { nivel, paralelo, nombre },
-        { new: true, upsert: true, setDefaultsOnInsert: true }
+        { returnDocument: 'after', upsert: true, setDefaultsOnInsert: true }
     );
 }
 
@@ -178,7 +178,7 @@ cursoAsignadoSchema.statics.promoverEstudiantesPorNivel = async function (anioLe
                 return this.findOneAndUpdate(
                     { curso: curso._id, anioLectivo: anioLectivoNuevoId },
                     { curso: curso._id, anioLectivo: anioLectivoNuevoId, estudiantes: [] },
-                    { upsert: true, new: true }
+                    { upsert: true, returnDocument: 'after' }
                 );
             })
         );

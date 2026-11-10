@@ -13,7 +13,7 @@ export const crearUsuariosRepositorio = () => ({
         ...(excluirId && { _id: { $ne: excluirId } })
     }),
     crear: (datos) => Usuario.create(datos),
-    actualizar: (id, cambios) => Usuario.findByIdAndUpdate(id, cambios, { new: true, runValidators: true }).lean(),
+    actualizar: (id, cambios) => Usuario.findByIdAndUpdate(id, cambios, { returnDocument: 'after', runValidators: true }).lean(),
     listar: ({ rol, activo = true }) => Usuario.find({ activo, ...(rol && { roles: rol }) }).sort({ apellido: 1, nombre: 1 }).lean(),
     contarAdminsActivos: () => Usuario.countDocuments({ roles: 'admin', activo: true }),
     eliminar: (id) => Usuario.deleteOne({ _id: id })

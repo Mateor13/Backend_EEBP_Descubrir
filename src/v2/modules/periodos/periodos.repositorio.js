@@ -5,7 +5,7 @@ export const crearPeriodosRepositorio = () => ({
     buscarActivo: () => Periodo.findOne({ estado: 'activo' }).lean(),
     listar: () => Periodo.find().sort({ inicio: -1 }).lean(),
     crear: (datos) => Periodo.create(datos),
-    actualizar: (id, cambios, session) => Periodo.findByIdAndUpdate(id, cambios, { new: true, runValidators: true, session }).lean(),
+    actualizar: (id, cambios, session) => Periodo.findByIdAndUpdate(id, cambios, { returnDocument: 'after', runValidators: true, session }).lean(),
     cerrarVencidos: (ahora) => Periodo.updateMany(
         { estado: 'activo', fin: { $ne: null, $lte: ahora } },
         { estado: 'cerrado' }

@@ -5,9 +5,9 @@ export const crearEstudiantesRepositorio = () => ({
     buscarDetallado: (id) => Estudiante.findById(id).populate('representantes', 'nombre apellido email telefono').lean(),
     existeCedula: (cedula, excluirId) => Estudiante.exists({ cedula, ...(excluirId && { _id: { $ne: excluirId } }) }),
     crear: (datos, session) => Estudiante.create([datos], { session }).then(([e]) => e),
-    actualizar: (id, cambios) => Estudiante.findByIdAndUpdate(id, cambios, { new: true, runValidators: true }).lean(),
-    agregarRepresentante: (id, representanteId) => Estudiante.findByIdAndUpdate(id, { $addToSet: { representantes: representanteId } }, { new: true }).lean(),
-    quitarRepresentante: (id, representanteId) => Estudiante.findByIdAndUpdate(id, { $pull: { representantes: representanteId } }, { new: true }).lean(),
+    actualizar: (id, cambios) => Estudiante.findByIdAndUpdate(id, cambios, { returnDocument: 'after', runValidators: true }).lean(),
+    agregarRepresentante: (id, representanteId) => Estudiante.findByIdAndUpdate(id, { $addToSet: { representantes: representanteId } }, { returnDocument: 'after' }).lean(),
+    quitarRepresentante: (id, representanteId) => Estudiante.findByIdAndUpdate(id, { $pull: { representantes: representanteId } }, { returnDocument: 'after' }).lean(),
     deRepresentante: (representanteId) => Estudiante.find({ representantes: representanteId, activo: true }).sort({ apellido: 1 }).lean(),
     esRepresentante: (estudianteId, usuarioId) => Estudiante.exists({ _id: estudianteId, representantes: usuarioId }),
 
@@ -15,7 +15,7 @@ export const crearEstudiantesRepositorio = () => ({
     buscarMatricula: (id) => Matricula.findById(id).lean(),
     matriculaDe: (estudianteId, periodoId) => Matricula.findOne({ estudiante: estudianteId, periodo: periodoId }).populate('curso').lean(),
     crearMatricula: (datos, session) => Matricula.create([datos], { session }).then(([m]) => m),
-    actualizarMatricula: (id, cambios, session) => Matricula.findByIdAndUpdate(id, cambios, { new: true, runValidators: true, session }).lean(),
+    actualizarMatricula: (id, cambios, session) => Matricula.findByIdAndUpdate(id, cambios, { returnDocument: 'after', runValidators: true, session }).lean(),
     matriculasDelCurso: (cursoId, periodoId) => Matricula.find({ curso: cursoId, periodo: periodoId, estado: { $ne: 'retirada' } })
         .populate({ path: 'estudiante', match: { activo: true }, select: 'nombre apellido cedula' }).lean()
         .then(ms => ms.filter(m => m.estudiante).sort((a, b) => a.estudiante.apellido.localeCompare(b.estudiante.apellido))),

@@ -14,5 +14,5 @@ export const crearAsistenciasRepositorio = () => ({
     ),
     delCursoEnFecha: (cursoId, fecha) => Asistencia.find({ curso: cursoId, fecha }).lean(),
     delEstudiante: (estudianteId, periodoId) => Asistencia.find({ estudiante: estudianteId, periodo: periodoId }).sort({ fecha: -1 }).lean(),
-    actualizar: (id, cambios) => Asistencia.findByIdAndUpdate(id, cambios, { new: true, runValidators: true }).lean()
+    actualizar: (id, cambios) => Asistencia.findByIdAndUpdate(id, cambios, { returnDocument: 'after', runValidators: true }).lean()
 })
