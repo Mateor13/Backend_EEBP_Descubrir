@@ -910,13 +910,6 @@
     "status": 200,
     "cuerpo": [
       {
-        "_id": "<id12>",
-        "apellido": "Paz",
-        "cedula": "1750000001",
-        "estado": true,
-        "nombre": "Pedro"
-      },
-      {
         "_id": "<id13>",
         "apellido": "Luna Sol",
         "cedula": "1750000002",
@@ -927,10 +920,16 @@
   },
   {
     "paso": "nuevo año: estudiantes 6A (promovidos)",
-    "status": 404,
-    "cuerpo": {
-      "error": "No hay estudiantes registrados"
-    }
+    "status": 200,
+    "cuerpo": [
+      {
+        "_id": "<id12>",
+        "apellido": "Paz",
+        "cedula": "1750000001",
+        "estado": true,
+        "nombre": "Pedro"
+      }
+    ]
   },
   {
     "paso": "nuevo año: materias 5A copiadas",
@@ -988,9 +987,9 @@
   },
   {
     "paso": "eliminar curso con estudiantes",
-    "status": 200,
+    "status": 400,
     "cuerpo": {
-      "msg": "Curso eliminado correctamente"
+      "error": "No se puede eliminar el curso porque tiene estudiantes activos asignados"
     }
   },
   {

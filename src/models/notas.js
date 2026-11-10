@@ -146,27 +146,33 @@ notaSchema.methods.calcularPromedioPorTipo = async function (tipo) {
     return promedio * (ponderacion / 100);
 };
 
-// Calcula el promedio general ponderado (síncrono: recibe las ponderaciones ya cargadas).
-// - Solo cuentan los tipos que tienen al menos una nota; el resultado se normaliza con la suma
-//   de los pesos usados, así un tipo sin evaluaciones no "resta" puntos.
+// Promedio general ponderado de una materia a partir de sus evaluaciones (función pura).
+// - Solo cuentan los tipos con al menos una nota; se normaliza con la suma de los pesos usados.
 // - Si el año no tiene ponderaciones configuradas (todas en 0), todos los tipos pesan igual.
-notaSchema.methods.calcularPromedioGeneral = function (ponderaciones) {
+// - Devuelve null si la materia no tiene ninguna nota: sin evidencia no se puede reprobar
+//   (antes devolvía 0 y una materia sin notas hacía repetir el año al estudiante).
+export const promedioPonderado = (evaluaciones, ponderaciones) => {
     const totalConfigurado = TIPOS_EVALUACION.reduce((acc, t) => acc + (Number(ponderaciones?.[t]) || 0), 0);
     let suma = 0;
     let pesoUsado = 0;
     for (const tipo of TIPOS_EVALUACION) {
-        const promedio = promedioSimple(this.evaluaciones?.[tipo]);
+        const promedio = promedioSimple(evaluaciones?.[tipo]);
         if (promedio === null) continue;
         const peso = totalConfigurado > 0 ? (Number(ponderaciones[tipo]) || 0) : 1;
         suma += promedio * peso;
         pesoUsado += peso;
     }
-    return pesoUsado === 0 ? 0 : suma / pesoUsado;
+    return pesoUsado === 0 ? null : suma / pesoUsado;
 };
 
-// Determina si la materia está reprobada (promedio general < 7)
+notaSchema.methods.calcularPromedioGeneral = function (ponderaciones) {
+    return promedioPonderado(this.evaluaciones, ponderaciones);
+};
+
+// Determina si la materia está reprobada (promedio general < 7). Sin notas no hay reprobación.
 notaSchema.methods.esMateriaReprobada = function (ponderaciones) {
-    return this.calcularPromedioGeneral(ponderaciones) < 7;
+    const promedio = this.calcularPromedioGeneral(ponderaciones);
+    return promedio !== null && promedio < 7;
 };
 
 // Agrega una nueva nota a un tipo de evaluación, evitando duplicados por descripción

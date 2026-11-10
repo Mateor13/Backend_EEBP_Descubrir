@@ -15,6 +15,7 @@ import Observacion from '../models/observaciones.js';
 import AnioLectivo from '../models/anioLectivo.js';
 import CursoAsignado from '../models/cursoAsignado.js';
 import Notas from '../models/notas.js'
+import { enTransaccionSiEsPosible, promoverEstudiantes } from '../services/promocion.js'
 
 // Guarda el usuario y DESPUÉS envía el correo con sus credenciales.
 // Antes se enviaba el correo primero: si el guardado fallaba (p. ej. email duplicado),
@@ -587,15 +588,19 @@ const terminarAnioLectivo = async (req, res) => {
     }
 }
 
-// Comienza un nuevo año lectivo
+// Comienza un nuevo año lectivo y promueve a los estudiantes del anterior.
+// Crear el año y promover van en UNA transacción: si la promoción falla, no queda un año
+// lectivo nuevo a medias (antes quedaba activo y sin estudiantes).
 const comenzarAnioLectivo = async (req, res) => {
     try {
         const ultimoAnioLectivo = await AnioLectivo.findOne().sort({ fechaFin: -1 });
-        const anio = await AnioLectivo.iniciarPeriodo();
-
-        if (ultimoAnioLectivo && ultimoAnioLectivo.estado === false) {
-            await CursoAsignado.promoverEstudiantesPorNivel(ultimoAnioLectivo._id, anio._id);
-        }
+        const anio = await enTransaccionSiEsPosible(async (session) => {
+            const nuevo = await AnioLectivo.iniciarPeriodo(session);
+            if (ultimoAnioLectivo && ultimoAnioLectivo.estado === false) {
+                await promoverEstudiantes(ultimoAnioLectivo._id, nuevo._id, session);
+            }
+            return nuevo;
+        });
         res.status(201).json({
             msg: "Año Lectivo iniciado correctamente",
             anio: {
