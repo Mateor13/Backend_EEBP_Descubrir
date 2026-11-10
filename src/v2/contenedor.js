@@ -25,7 +25,10 @@ import { crearCalificacionesServicio } from './modules/calificaciones/calificaci
 import { crearAsistenciasServicio } from './modules/asistencias/asistencias.servicio.js'
 import { crearObservacionesServicio } from './modules/observaciones/observaciones.servicio.js'
 
-const usarServiciosReales = () => process.env.NODE_ENV === 'production' || process.env.V2_SERVICIOS_REALES === 'true'
+// En Vercel (VERCEL=1) siempre se usan los servicios reales: si faltara NODE_ENV=production, las cuentas se
+// crearían sin enviar el correo de activación y nadie podría activarlas.
+const usarServiciosReales = () => process.env.NODE_ENV === 'production' || process.env.VERCEL === '1'
+    || process.env.V2_SERVICIOS_REALES === 'true'
 
 export const crearContenedor = (sobrescrituras = {}) => {
     const mailer = sobrescrituras.mailer ?? (usarServiciosReales() ? crearMailerNodemailer() : crearMailerConsola())
